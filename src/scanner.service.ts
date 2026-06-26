@@ -146,6 +146,18 @@ export class ScannerService {
           items.push({ nombre, cantidad, precioUnitario });
         }
       }
+    } else if (format === 'ECUADOR') {
+      const detallesNode = obj.detalles?.[0] || this.findDeepValue(obj, 'detalles');
+      const detalleRaw = detallesNode?.detalle || [];
+      const detalles = Array.isArray(detalleRaw) ? detalleRaw : [detalleRaw];
+      for (const det of detalles) {
+        const nombre = this.getText(this.findDeepValue(det, 'descripcion'));
+        const cantidad = parseFloat(this.getText(this.findDeepValue(det, 'cantidad')) || '1');
+        const precioUnitario = parseFloat(this.getText(this.findDeepValue(det, 'preciounitario')) || '0');
+        if (nombre) {
+          items.push({ nombre, cantidad, precioUnitario });
+        }
+      }
     }
 
     return items.length > 0 ? items : undefined;
@@ -174,6 +186,10 @@ export class ScannerService {
           break;
         } else if (cleanKey === 'Comprobante') {
           format = 'CFDI';
+          rootKey = key;
+          break;
+        } else if (cleanKey?.toLowerCase() === 'factura') {
+          format = 'ECUADOR';
           rootKey = key;
           break;
         }
@@ -221,6 +237,15 @@ export class ScannerService {
         }
         
         items = this.extractItems(rootNode, 'CFDI');
+      } else if (format === 'ECUADOR') {
+        const infoTributaria = rootNode.infoTributaria?.[0] || this.findDeepValue(rootNode, 'infotributaria');
+        ruc = this.getText(this.findDeepValue(infoTributaria, 'ruc'));
+        name = this.getText(this.findDeepValue(infoTributaria, 'razonSocial') || this.findDeepValue(infoTributaria, 'nombreComercial'));
+
+        const infoFactura = rootNode.infoFactura?.[0] || this.findDeepValue(rootNode, 'infofactura');
+        total = parseFloat(this.getText(this.findDeepValue(infoFactura, 'importeTotal')) || '0');
+
+        items = this.extractItems(rootNode, 'ECUADOR');
       } else {
         ruc = this.getText(this.findDeepValue(rootNode, 'rutemisor') || this.findDeepValue(rootNode, 'ruc') || this.findDeepValue(rootNode, 'rfc'));
         name = this.getText(this.findDeepValue(rootNode, 'rznsocemisor') || this.findDeepValue(rootNode, 'rznsoc') || this.findDeepValue(rootNode, 'razonsocial') || this.findDeepValue(rootNode, 'name'));
