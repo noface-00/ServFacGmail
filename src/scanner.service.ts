@@ -349,7 +349,7 @@ export class ScannerService {
   /**
    * Scans a Gmail inbox for messages from matching supplier emails and downloads invoice attachments.
    */
-  public async scanInbox(req: ScanRequest): Promise<ScanResponseItem[]> {
+  public async scanInbox(req: ScanRequest): Promise<ParsedInvoiceData[]> {
     if (!req.supplierEmails || req.supplierEmails.length === 0) {
       return [];
     }
@@ -362,7 +362,7 @@ export class ScannerService {
     });
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-    const results: ScanResponseItem[] = [];
+    const results: ParsedInvoiceData[] = [];
 
     // Formulate search date (default to 30 days ago if not provided)
     let afterQuery = '';
@@ -408,133 +408,153 @@ export class ScannerService {
           id: msgRef.id,
         });
 
-        const headers = msg.data.payload?.headers || [];
-        const subject = headers.find((h) => h.name?.toLowerCase() === 'subject')?.value || 'Sin Asunto';
-        const dateStr = headers.find((h) => h.name?.toLowerCase() === 'date')?.value || '';
-        const emailDate = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
-        const fromHeader = headers.find((h) => h.name?.toLowerCase() === 'from')?.value || '';
-        
-        // Extract email address from From header (e.g., "Supplier Name <email@supplier.com>" -> "email@supplier.com")
-        const emailMatch = fromHeader.match(/<([^>]+)>/) || [null, fromHeader];
-        const senderEmail = (emailMatch[1] || fromHeader).trim().toLowerCase();
-
-        // Recursively extract attachments from payload parts
-        const handleParts = async (parts: any[]) => {
+        // Collect all potential attachments of interest from payload
+        const attachments: { filename: string; attachmentId: string; mimeType: string }[] = [];
+        const collectAttachments = (parts: any[]) => {
           for (const part of parts) {
             const filename = part.filename;
             const attachmentId = part.body?.attachmentId;
-
             if (part.parts && part.parts.length > 0) {
-              await handleParts(part.parts);
+              collectAttachments(part.parts);
             }
-
             if (filename && attachmentId) {
               const ext = filename.split('.').pop()?.toLowerCase();
               const allowedExtensions = ['pdf', 'xml', 'zip'];
-              
               if (ext && allowedExtensions.includes(ext)) {
-                // Fetch the actual attachment contents
-                const attachment = await gmail.users.messages.attachments.get({
-                  userId: 'me',
-                  messageId: msgRef.id!,
-                  id: attachmentId,
-                });
-
-                const dataBase64Url = attachment.data.data;
-                if (!dataBase64Url) continue;
-
-                // Decode base64url to Buffer
-                const buffer = Buffer.from(dataBase64Url, 'base64');
-
-                if (ext === 'pdf') {
-                  const parsedData = req.geminiApiKey 
-                    ? await this.parsePDFInvoice(buffer, req.geminiApiKey)
-                    : undefined;
-                  results.push({
-                    gmailMessageId: msgRef.id!,
-                    gmailAttachmentId: attachmentId,
-                    filename,
-                    mimeType: part.mimeType || 'application/pdf',
-                    fileBase64: buffer.toString('base64'),
-                    emailSubject: subject,
-                    emailDate,
-                    senderEmail,
-                    parsedData,
-                  });
-                } else if (ext === 'xml') {
-                  const xmlContent = buffer.toString('utf-8');
-                  const parsedData = await this.parseXMLInvoice(xmlContent);
-                  results.push({
-                    gmailMessageId: msgRef.id!,
-                    gmailAttachmentId: attachmentId,
-                    filename,
-                    mimeType: part.mimeType || 'text/xml',
-                    fileBase64: buffer.toString('base64'),
-                    emailSubject: subject,
-                    emailDate,
-                    senderEmail,
-                    parsedData,
-                  });
-                } else if (ext === 'zip') {
-                  // Process ZIP using adm-zip
-                  try {
-                    const zip = new AdmZip(buffer);
-                    const zipEntries = zip.getEntries();
-                    
-                    for (const entry of zipEntries) {
-                      if (entry.isDirectory) continue;
-                      
-                      const zipFilename = entry.entryName.split('/').pop() || entry.entryName;
-                      const zipExt = zipFilename.split('.').pop()?.toLowerCase();
-                      
-                      if (zipExt === 'pdf') {
-                        const fileBuffer = entry.getData();
-                        const parsedData = req.geminiApiKey
-                          ? await this.parsePDFInvoice(fileBuffer, req.geminiApiKey)
-                          : undefined;
-                        results.push({
-                          gmailMessageId: msgRef.id!,
-                          gmailAttachmentId: attachmentId, // Shares attachment ID, filename is unique
-                          filename: zipFilename,
-                          mimeType: 'application/pdf',
-                          fileBase64: fileBuffer.toString('base64'),
-                          emailSubject: subject,
-                          emailDate,
-                          senderEmail,
-                          parsedData,
-                        });
-                      } else if (zipExt === 'xml') {
-                        const fileBuffer = entry.getData();
-                        const xmlContent = fileBuffer.toString('utf-8');
-                        const parsedData = await this.parseXMLInvoice(xmlContent);
-                        results.push({
-                          gmailMessageId: msgRef.id!,
-                          gmailAttachmentId: attachmentId,
-                          filename: zipFilename,
-                          mimeType: 'text/xml',
-                          fileBase64: fileBuffer.toString('base64'),
-                          emailSubject: subject,
-                          emailDate,
-                          senderEmail,
-                          parsedData,
-                        });
-                      }
-                    }
-                  } catch (zipError) {
-                    console.error(`Failed to process ZIP attachment ${filename}:`, zipError);
-                  }
-                }
+                attachments.push({ filename, attachmentId, mimeType: part.mimeType || '' });
               }
             }
           }
         };
 
         if (msg.data.payload?.parts) {
-          await handleParts(msg.data.payload.parts);
+          collectAttachments(msg.data.payload.parts);
         } else if (msg.data.payload?.body?.attachmentId) {
-          // If the message body itself is an attachment (rare but possible)
-          await handleParts([msg.data.payload]);
+          collectAttachments([msg.data.payload]);
         }
+
+        if (attachments.length === 0) continue;
+
+        const messageInvoices: ParsedInvoiceData[] = [];
+        let hasSuccessfulXml = false;
+
+        const xmlAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'xml');
+        const zipAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'zip');
+        const pdfAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'pdf');
+
+        // 1. Process direct XML files first
+        for (const att of xmlAttachments) {
+          try {
+            const attachment = await gmail.users.messages.attachments.get({
+              userId: 'me',
+              messageId: msgRef.id!,
+              id: att.attachmentId,
+            });
+            const dataBase64Url = attachment.data.data;
+            if (dataBase64Url) {
+              const buffer = Buffer.from(dataBase64Url, 'base64');
+              const xmlContent = buffer.toString('utf-8');
+              const parsedData = await this.parseXMLInvoice(xmlContent);
+              if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                messageInvoices.push(parsedData);
+                hasSuccessfulXml = true;
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to process direct XML attachment ${att.filename}:`, err);
+          }
+        }
+
+        // 2. Process ZIP files (extracting content, parsing XMLs inside them first)
+        const extractedZips: {
+          zipFilename: string;
+          xmls: { entryName: string; buffer: Buffer }[];
+          pdfs: { entryName: string; buffer: Buffer }[];
+        }[] = [];
+
+        for (const att of zipAttachments) {
+          try {
+            const attachment = await gmail.users.messages.attachments.get({
+              userId: 'me',
+              messageId: msgRef.id!,
+              id: att.attachmentId,
+            });
+            const dataBase64Url = attachment.data.data;
+            if (dataBase64Url) {
+              const buffer = Buffer.from(dataBase64Url, 'base64');
+              const zip = new AdmZip(buffer);
+              const zipEntries = zip.getEntries();
+              
+              const xmls: { entryName: string; buffer: Buffer }[] = [];
+              const pdfs: { entryName: string; buffer: Buffer }[] = [];
+
+              for (const entry of zipEntries) {
+                if (entry.isDirectory) continue;
+                const zipFilename = entry.entryName.split('/').pop() || entry.entryName;
+                const zipExt = zipFilename.split('.').pop()?.toLowerCase();
+                if (zipExt === 'xml') {
+                  xmls.push({ entryName: entry.entryName, buffer: entry.getData() });
+                } else if (zipExt === 'pdf') {
+                  pdfs.push({ entryName: entry.entryName, buffer: entry.getData() });
+                }
+              }
+
+              extractedZips.push({ zipFilename: att.filename, xmls, pdfs });
+
+              // Parse XML files found in the ZIP
+              for (const xmlFile of xmls) {
+                const xmlContent = xmlFile.buffer.toString('utf-8');
+                const parsedData = await this.parseXMLInvoice(xmlContent);
+                if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                  messageInvoices.push(parsedData);
+                  hasSuccessfulXml = true;
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to process ZIP attachment ${att.filename}:`, err);
+          }
+        }
+
+        // 3. Process PDF files ONLY if no XML parsed successfully for this message
+        if (!hasSuccessfulXml) {
+          // Process PDFs inside ZIP files first
+          for (const extZip of extractedZips) {
+            for (const pdfFile of extZip.pdfs) {
+              if (req.geminiApiKey) {
+                const parsedData = await this.parsePDFInvoice(pdfFile.buffer, req.geminiApiKey);
+                if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                  messageInvoices.push(parsedData);
+                }
+              }
+            }
+          }
+
+          // Process direct PDF attachments
+          for (const att of pdfAttachments) {
+            try {
+              const attachment = await gmail.users.messages.attachments.get({
+                userId: 'me',
+                messageId: msgRef.id!,
+                id: att.attachmentId,
+              });
+              const dataBase64Url = attachment.data.data;
+              if (dataBase64Url) {
+                const buffer = Buffer.from(dataBase64Url, 'base64');
+                if (req.geminiApiKey) {
+                  const parsedData = await this.parsePDFInvoice(buffer, req.geminiApiKey);
+                  if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                    messageInvoices.push(parsedData);
+                  }
+                }
+              }
+            } catch (err) {
+              console.error(`Failed to process direct PDF attachment ${att.filename}:`, err);
+            }
+          }
+        }
+
+        results.push(...messageInvoices);
       } catch (msgError) {
         console.error(`Failed to retrieve details for message ID ${msgRef.id}:`, msgError);
       }

@@ -130,8 +130,7 @@ describe('ScannerService', () => {
       const result = await scannerService.scanInbox(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].filename).toBe('dte.xml');
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
         supplierRuc: '76123456-7',
         supplierName: 'Distribuidora SpA',
         total: 119000,
@@ -178,7 +177,7 @@ describe('ScannerService', () => {
       const result = await scannerService.scanInbox(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
         supplierRuc: '20123456789',
         supplierName: 'UBL Supplier S.A.C.',
         total: 2500.5,
@@ -207,7 +206,7 @@ describe('ScannerService', () => {
       const result = await scannerService.scanInbox(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
         supplierRuc: 'ABC123456T1',
         supplierName: 'CFDI Emisor SA de CV',
         total: 1500,
@@ -246,7 +245,7 @@ describe('ScannerService', () => {
       const result = await scannerService.scanInbox(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
         supplierRuc: '1791234567001',
         supplierName: 'Ecuadorian Supplier CIA. LTDA.',
         total: 450,
@@ -292,8 +291,7 @@ describe('ScannerService', () => {
       const result = await scannerService.scanInbox(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].filename).toBe('ecuador_envelope.xml');
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
         supplierRuc: '1791234567001',
         supplierName: 'Ecuadorian Supplier CIA. LTDA.',
         total: 450,
@@ -321,7 +319,7 @@ describe('ScannerService', () => {
       const result = await scannerService.scanInbox(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
         supplierRuc: '12345',
         supplierName: 'Generic Company',
         total: 999,
@@ -330,8 +328,8 @@ describe('ScannerService', () => {
     });
   });
 
-  describe('ZIP Decompression', () => {
-    test('should extract and parse XML and PDF from ZIP attachment', async () => {
+  describe('ZIP Decompression & XML Prioritization', () => {
+    test('should extract and parse XML from ZIP attachment, skipping PDF when XML is successful', async () => {
       const xmlChile = `
         <DTE>
           <Documento>
@@ -355,7 +353,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('invoices.zip', 'application/zip', zipBuffer);
 
-      // We provide geminiApiKey to parse the nested PDF
+      // We mock Gemini, but it should NOT be called because the XML parses successfully
       mockInteractionsCreate.mockResolvedValue({
         status: 'completed',
         output_text: JSON.stringify({
@@ -375,18 +373,16 @@ describe('ScannerService', () => {
 
       const result = await scannerService.scanInbox(requestWithGemini);
 
-      // Should find 2 attachments inside the zip: 1 xml and 1 pdf
-      expect(result).toHaveLength(2);
+      // XML is prioritized, so it should only find 1 parsed invoice and NOT run Gemini
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        supplierRuc: '76123456-7',
+        supplierName: 'Distribuidora SpA',
+        total: 1000,
+        items: undefined,
+      });
 
-      const xmlResult = result.find(r => r.filename === 'nested-dte.xml');
-      const pdfResult = result.find(r => r.filename === 'nested-invoice.pdf');
-
-      expect(xmlResult).toBeDefined();
-      expect(xmlResult?.parsedData?.total).toBe(1000);
-
-      expect(pdfResult).toBeDefined();
-      expect(pdfResult?.parsedData?.total).toBe(20000);
-      expect(pdfResult?.parsedData?.supplierName).toBe('Gemini Zipped Vendor');
+      expect(mockInteractionsCreate).not.toHaveBeenCalled();
     });
   });
 
@@ -414,7 +410,7 @@ describe('ScannerService', () => {
       const result = await scannerService.scanInbox(requestWithGemini);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
         supplierRuc: '77665544-3',
         supplierName: 'PDF Vendor LLC',
         total: 10500.5,
@@ -435,13 +431,92 @@ describe('ScannerService', () => {
       expect(mockInteractionsCreate).toHaveBeenCalledTimes(1);
     });
 
-    test('should NOT parse PDF (parsedData undefined) when geminiApiKey is NOT provided', async () => {
+    test('should NOT parse PDF (returns empty list) when geminiApiKey is NOT provided', async () => {
       setupGmailAttachmentMock('invoice.pdf', 'application/pdf', Buffer.from('%PDF-1.4 dummy pdf', 'utf-8'));
 
       const result = await scannerService.scanInbox(defaultScanRequest);
 
+      expect(result).toHaveLength(0);
+      expect(mockInteractionsCreate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('XML vs PDF Prioritization (Multiple Attachments)', () => {
+    test('should only parse XML and skip PDF when both are attached to the same message', async () => {
+      // Mock a message with two attachments: one XML and one PDF
+      mockList.mockResolvedValue({
+        data: {
+          messages: [{ id: 'msg-prioritize' }],
+        },
+      });
+
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-prioritize',
+          payload: {
+            headers: [
+              { name: 'Subject', value: 'Factura Doble' },
+              { name: 'Date', value: 'Fri, 26 Jun 2026 12:00:00 GMT' },
+              { name: 'From', value: 'Supplier <supplier@example.com>' },
+            ],
+            parts: [
+              {
+                filename: 'invoice.xml',
+                mimeType: 'text/xml',
+                body: { attachmentId: 'att-xml' },
+              },
+              {
+                filename: 'invoice.pdf',
+                mimeType: 'application/pdf',
+                body: { attachmentId: 'att-pdf' },
+              },
+            ],
+          },
+        },
+      });
+
+      // Mock XML attachment content
+      const xmlEcuador = `
+        <factura>
+          <infoTributaria>
+            <ruc>1791234567001</ruc>
+            <razonSocial>Ecuadorian Supplier CIA. LTDA.</razonSocial>
+          </infoTributaria>
+          <infoFactura>
+            <importeTotal>450.00</importeTotal>
+          </infoFactura>
+        </factura>
+      `;
+
+      // Mock get attachment for XML, should throw if pdf is downloaded
+      mockAttachmentsGet.mockImplementation((params) => {
+        if (params.id === 'att-xml') {
+          return Promise.resolve({
+            data: {
+              data: Buffer.from(xmlEcuador).toString('base64'),
+            },
+          });
+        }
+        return Promise.reject(new Error('Should not fetch PDF!'));
+      });
+
+      const requestWithGemini = {
+        ...defaultScanRequest,
+        geminiApiKey: 'valid-gemini-key',
+      };
+
+      const result = await scannerService.scanInbox(requestWithGemini);
+
+      // Should only contain 1 parsed invoice (the XML one)
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toBeUndefined();
+      expect(result[0]).toEqual({
+        supplierRuc: '1791234567001',
+        supplierName: 'Ecuadorian Supplier CIA. LTDA.',
+        total: 450,
+        items: undefined,
+      });
+
+      // Verify Gemini was NEVER called for the PDF
       expect(mockInteractionsCreate).not.toHaveBeenCalled();
     });
   });

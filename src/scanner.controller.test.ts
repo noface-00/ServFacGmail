@@ -54,7 +54,8 @@ describe('ScannerController Integration Tests', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('Missing required parameter: accessToken');
+      expect(response.body.userMessage).toContain('Token de acceso no proporcionado.');
+      expect(response.body.technicalError).toContain('Missing required parameter: accessToken');
       expect(mockScanInbox).not.toHaveBeenCalled();
     });
 
@@ -85,7 +86,8 @@ describe('ScannerController Integration Tests', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('Missing required parameters: clientId or clientSecret');
+      expect(response.body.userMessage).toContain('Credenciales del cliente OAuth');
+      expect(response.body.technicalError).toContain('Missing required parameters: clientId or clientSecret');
       expect(mockScanInbox).not.toHaveBeenCalled();
     });
 
@@ -101,7 +103,8 @@ describe('ScannerController Integration Tests', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        error: 'Missing or invalid parameter: supplierEmails must be an array of strings',
+        userMessage: 'Lista de correos de proveedores no válida o no proporcionada.',
+        technicalError: 'Missing or invalid parameter: supplierEmails must be an array of strings',
       });
       expect(mockScanInbox).not.toHaveBeenCalled();
     });
@@ -109,19 +112,10 @@ describe('ScannerController Integration Tests', () => {
     test('should call ScannerService and return 200 with result when body validation passes', async () => {
       const mockResult = [
         {
-          gmailMessageId: 'msg-abc',
-          gmailAttachmentId: 'att-123',
-          filename: 'factura.xml',
-          mimeType: 'text/xml',
-          fileBase64: 'base64str',
-          emailSubject: 'Factura',
-          emailDate: '2026-06-25T12:00:00Z',
-          senderEmail: 'supplier@test.com',
-          parsedData: {
-            supplierRuc: '12345678-9',
-            supplierName: 'Test Supplier',
-            total: 100,
-          },
+          supplierRuc: '12345678-9',
+          supplierName: 'Test Supplier',
+          total: 100,
+          items: [],
         },
       ];
 
@@ -191,8 +185,8 @@ describe('ScannerController Integration Tests', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        error: 'An error occurred during inbox scanning',
-        message: 'Gmail API Limit Exceeded',
+        userMessage: 'Ocurrió un error al escanear la bandeja de entrada. Por favor, intente de nuevo más tarde.',
+        technicalError: 'Gmail API Limit Exceeded',
       });
     });
   });

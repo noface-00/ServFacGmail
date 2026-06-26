@@ -25,15 +25,24 @@ export class ScannerController {
 
       // Basic validation
       if (!accessToken) {
-        res.status(400).json({ error: 'Missing required parameter: accessToken (must be provided in the body or in the Authorization Bearer header)' });
+        res.status(400).json({
+          userMessage: 'Token de acceso no proporcionado.',
+          technicalError: 'Missing required parameter: accessToken (must be provided in the body or in the Authorization Bearer header)',
+        });
         return;
       }
       if (!clientId || !clientSecret) {
-        res.status(400).json({ error: 'Missing required parameters: clientId or clientSecret (must be provided in the body or configured as environment variables)' });
+        res.status(400).json({
+          userMessage: 'Credenciales del cliente OAuth (Client ID o Client Secret) no proporcionadas.',
+          technicalError: 'Missing required parameters: clientId or clientSecret (must be provided in the body or configured as environment variables)',
+        });
         return;
       }
       if (!supplierEmails || !Array.isArray(supplierEmails)) {
-        res.status(400).json({ error: 'Missing or invalid parameter: supplierEmails must be an array of strings' });
+        res.status(400).json({
+          userMessage: 'Lista de correos de proveedores no válida o no proporcionada.',
+          technicalError: 'Missing or invalid parameter: supplierEmails must be an array of strings',
+        });
         return;
       }
 
@@ -55,8 +64,8 @@ export class ScannerController {
     } catch (error: any) {
       console.error('Scan execution error:', error);
       res.status(500).json({
-        error: 'An error occurred during inbox scanning',
-        message: error.message || String(error),
+        userMessage: 'Ocurrió un error al escanear la bandeja de entrada. Por favor, intente de nuevo más tarde.',
+        technicalError: error.message || String(error),
       });
     }
   };
