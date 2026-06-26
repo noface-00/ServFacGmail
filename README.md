@@ -12,6 +12,7 @@ Este es un microservicio autónomo y sin estado (stateless) diseñado para busca
     *   **Chile (DTE)**: Identificación de `<RUTEmisor>`, `<RznSoc>`, `<MntTotal>` y líneas de detalle.
     *   **Perú / Colombia (UBL)**: Extracción del proveedor (`cac:Party`), RUC (`PartyIdentification`), Razón Social (`RegistrationName`), Total Neto (`PayableAmount`) e ítems de compra (`cac:InvoiceLine`).
     *   **México (CFDI)**: Configurado para extraer atributos (`ignoreAttrs: false`) de `<cfdi:Emisor>` (Rfc/Nombre), Total e ítems (`cfdi:Concepto`).
+    *   **Ecuador (SRI)**: Detección del nodo raíz `<factura>` y extracción de RUC/Razón Social desde `<infoTributaria>`, total desde `<importeTotal>` y productos desde `<detalles>`.
 *   **Extractor PDF Inteligente (Google Gemini 1.5 Flash)**:
     *   Si se proporciona una API Key de Gemini, el microservicio envía los PDFs de forma segura usando un esquema estructurado estricto (`responseSchema`).
     *   Extrae con precisión milimétrica la información de los ítems, totales e identificadores tributarios, incluso si el PDF es solo una imagen escaneada.
