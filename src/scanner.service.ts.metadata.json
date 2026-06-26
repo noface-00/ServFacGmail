@@ -1,0 +1,4 @@
+{
+  "summary": "Scanner service in TypeScript for the standalone microservice. Handles OAuth2 client setup, querying Gmail messages, parsing mime structures, extraction of PDFs and XMLs from ZIP files, and dynamic XML invoice parsing.",
+  "updatedAt": "2026-06-26T03:38:47.958746Z"
+}

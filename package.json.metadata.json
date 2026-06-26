@@ -1,0 +1,4 @@
+{
+  "summary": "Package.json for the standalone gmail-scanner-service microservice. Contains dependencies for Express, Google APIs, ADM-Zip, and XML2JS.",
+  "updatedAt": "2026-06-26T03:38:36.415587Z"
+}

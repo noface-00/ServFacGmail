@@ -1,0 +1,4 @@
+{
+  "summary": "Scanner controller in TypeScript for the standalone microservice. Defines the POST /scan endpoint, validates inputs, and handles service execution and error responses.",
+  "updatedAt": "2026-06-26T03:38:50.949602Z"
+}
