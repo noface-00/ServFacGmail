@@ -10,14 +10,22 @@ export class ScannerController {
 
   public scan = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { accessToken, refreshToken, supplierEmails, sinceDate } = req.body;
+      let { accessToken, refreshToken, supplierEmails, sinceDate } = req.body;
       const clientId = req.body.clientId || process.env.GOOGLE_CLIENT_ID;
       const clientSecret = req.body.clientSecret || process.env.GOOGLE_CLIENT_SECRET;
       const geminiApiKey = req.body.geminiApiKey || process.env.GEMINI_API_KEY;
 
+      // Fallback to Authorization Header for accessToken
+      if (!accessToken && req.headers.authorization) {
+        const parts = req.headers.authorization.split(' ');
+        if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
+          accessToken = parts[1];
+        }
+      }
+
       // Basic validation
       if (!accessToken) {
-        res.status(400).json({ error: 'Missing required parameter: accessToken' });
+        res.status(400).json({ error: 'Missing required parameter: accessToken (must be provided in the body or in the Authorization Bearer header)' });
         return;
       }
       if (!clientId || !clientSecret) {

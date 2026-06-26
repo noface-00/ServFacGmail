@@ -27,9 +27,13 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
-  console.log(`===============================================`);
-  console.log(`  Gmail Invoice Scanner Service running on port ${port}`);
-  console.log(`  POST /scan is active and ready`);
-  console.log(`===============================================`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`===============================================`);
+    console.log(`  Gmail Invoice Scanner Service running on port ${port}`);
+    console.log(`  POST /scan is active and ready`);
+    console.log(`===============================================`);
+  });
+}
+
+export default app;

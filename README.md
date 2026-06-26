@@ -71,6 +71,38 @@ node scratch/test_gemini.js <ruta/al/archivo/factura.pdf>
 
 ---
 
+## Pruebas con la API Real (Gmail + Gemini)
+
+Para realizar pruebas completas de escaneo de bandeja de entrada de Gmail y parseo (XML/PDF) utilizando las APIs reales y credenciales cargadas desde tu archivo `.env`, puedes seguir estos pasos:
+
+1. Modifica tu archivo `.env` agregando las siguientes variables:
+   ```env
+   # Credenciales OAuth de Google Cloud Console
+   GOOGLE_CLIENT_ID=tu-google-client-id
+   GOOGLE_CLIENT_SECRET=tu-google-client-secret
+
+   # Token de Acceso OAuth2 temporal (puedes obtener uno desde Google OAuth2 Playground)
+   GMAIL_ACCESS_TOKEN=ya29.a0ar...
+   GMAIL_REFRESH_TOKEN=1//0g... (Opcional)
+
+   # API Key de Google Gemini
+   GEMINI_API_KEY=tu-gemini-api-key
+
+   # Configuración de búsqueda de pruebas
+   SUPPLIER_EMAILS=proveedor1@mail.com,proveedor2@mail.com
+   SINCE_DATE=2026-06-01T00:00:00.000Z (Opcional)
+   ```
+2. Asegúrate de compilar el proyecto TypeScript:
+   ```bash
+   npm run build
+   ```
+3. Ejecuta el script de prueba real:
+   ```bash
+   node scratch/test_real_scanner.js
+   ```
+
+---
+
 ## Especificación del API
 
 ### `POST /scan`

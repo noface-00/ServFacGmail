@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 import AdmZip from 'adm-zip';
 import * as xml2js from 'xml2js';
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 export interface ScanRequest {
   accessToken: string;
@@ -169,7 +169,23 @@ export class ScannerService {
   private async parseXMLInvoice(xmlContent: string): Promise<ParsedInvoiceData | undefined> {
     try {
       const parser = new xml2js.Parser({ explicitArray: true, ignoreAttrs: false });
-      const result = await parser.parseStringPromise(xmlContent);
+      let result = await parser.parseStringPromise(xmlContent);
+
+      // Check if there is an authorization envelope wrapping the invoice in CDATA (Ecuador SRI style)
+      const comprobanteRaw = this.findDeepValue(result, 'comprobante');
+      if (comprobanteRaw) {
+        const comprobanteStr = this.getText(comprobanteRaw);
+        if (comprobanteStr && (comprobanteStr.includes('<factura') || comprobanteStr.includes('<?xml'))) {
+          try {
+            const innerResult = await parser.parseStringPromise(comprobanteStr);
+            if (innerResult) {
+              result = innerResult;
+            }
+          } catch (innerError) {
+            console.error('Failed to parse inner CDATA XML from comprobante:', innerError);
+          }
+        }
+      }
 
       // Determine format
       let format = 'GENERIC';
@@ -269,25 +285,42 @@ export class ScannerService {
    */
   private async parsePDFInvoice(pdfBuffer: Buffer, apiKey: string): Promise<ParsedInvoiceData | undefined> {
     try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: SchemaType.OBJECT,
+      const client = new GoogleGenAI({ apiKey, apiVersion: 'v1' });
+      const interaction = await client.interactions.create({
+        model: "gemini-3.5-flash",
+        input: [
+          {
+            type: "user_input",
+            content: [
+              {
+                type: "document",
+                data: pdfBuffer.toString("base64"),
+                mime_type: "application/pdf"
+              },
+              {
+                type: "text",
+                text: "Extract the invoice details. Parse the document carefully and return a JSON matching the requested schema."
+              }
+            ]
+          }
+        ],
+        response_format: {
+          type: "text",
+          mime_type: "application/json",
+          schema: {
+            type: "object",
             properties: {
-              supplierRuc: { type: SchemaType.STRING, description: "Tax identification number (RUT, RUC, RFC, or NIT) of the vendor/issuer" },
-              supplierName: { type: SchemaType.STRING, description: "Official business name of the vendor" },
-              total: { type: SchemaType.NUMBER, description: "Total payable amount of the invoice" },
+              supplierRuc: { type: "string", description: "Tax identification number (RUT, RUC, RFC, or NIT) of the vendor/issuer" },
+              supplierName: { type: "string", description: "Official business name of the vendor" },
+              total: { type: "number", description: "Total payable amount of the invoice" },
               items: {
-                type: SchemaType.ARRAY,
+                type: "array",
                 items: {
-                  type: SchemaType.OBJECT,
+                  type: "object",
                   properties: {
-                    nombre: { type: SchemaType.STRING, description: "Name or description of the product or service" },
-                    cantidad: { type: SchemaType.NUMBER, description: "Quantity of items" },
-                    precioUnitario: { type: SchemaType.NUMBER, description: "Unit price of the item" }
+                    nombre: { type: "string", description: "Name or description of the product or service" },
+                    cantidad: { type: "number", description: "Quantity of items" },
+                    precioUnitario: { type: "number", description: "Unit price of the item" }
                   },
                   required: ["nombre", "cantidad", "precioUnitario"]
                 }
@@ -298,17 +331,11 @@ export class ScannerService {
         }
       });
 
-      const response = await model.generateContent([
-        {
-          inlineData: {
-            data: pdfBuffer.toString("base64"),
-            mimeType: "application/pdf"
-          }
-        },
-        "Extract the invoice details. Parse the document carefully and return a JSON matching the requested schema."
-      ]);
+      if (interaction.status !== 'completed') {
+        console.error('Gemini interaction did not complete successfully. Status:', interaction.status, 'Error:', (interaction as any).error);
+      }
 
-      const text = response.response.text();
+      const text = interaction.output_text;
       if (!text) return undefined;
 
       const parsed: ParsedInvoiceData = JSON.parse(text);
@@ -341,16 +368,16 @@ export class ScannerService {
     let afterQuery = '';
     if (req.sinceDate) {
       const date = new Date(req.sinceDate);
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
+      const yyyy = date.getUTCFullYear();
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(date.getUTCDate()).padStart(2, '0');
       afterQuery = ` after:${yyyy}/${mm}/${dd}`;
     } else {
       const date = new Date();
-      date.setDate(date.getDate() - 30); // 30 days ago
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
+      date.setUTCDate(date.getUTCDate() - 30); // 30 days ago
+      const yyyy = date.getUTCFullYear();
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(date.getUTCDate()).padStart(2, '0');
       afterQuery = ` after:${yyyy}/${mm}/${dd}`;
     }
 
