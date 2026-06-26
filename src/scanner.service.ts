@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import AdmZip from 'adm-zip';
 import * as xml2js from 'xml2js';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 export interface ScanRequest {
   accessToken: string;
@@ -9,6 +10,7 @@ export interface ScanRequest {
   clientSecret: string;
   supplierEmails: string[];
   sinceDate?: string; // ISO date string
+  geminiApiKey?: string;
 }
 
 export interface ParsedItem {
@@ -238,6 +240,61 @@ export class ScannerService {
   }
 
   /**
+   * Parses PDF invoice data using Google Gemini 1.5 Flash structured JSON generation.
+   */
+  private async parsePDFInvoice(pdfBuffer: Buffer, apiKey: string): Promise<ParsedInvoiceData | undefined> {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: SchemaType.OBJECT,
+            properties: {
+              supplierRuc: { type: SchemaType.STRING, description: "Tax identification number (RUT, RUC, RFC, or NIT) of the vendor/issuer" },
+              supplierName: { type: SchemaType.STRING, description: "Official business name of the vendor" },
+              total: { type: SchemaType.NUMBER, description: "Total payable amount of the invoice" },
+              items: {
+                type: SchemaType.ARRAY,
+                items: {
+                  type: SchemaType.OBJECT,
+                  properties: {
+                    nombre: { type: SchemaType.STRING, description: "Name or description of the product or service" },
+                    cantidad: { type: SchemaType.NUMBER, description: "Quantity of items" },
+                    precioUnitario: { type: SchemaType.NUMBER, description: "Unit price of the item" }
+                  },
+                  required: ["nombre", "cantidad", "precioUnitario"]
+                }
+              }
+            },
+            required: ["supplierRuc", "supplierName", "total"]
+          }
+        }
+      });
+
+      const response = await model.generateContent([
+        {
+          inlineData: {
+            data: pdfBuffer.toString("base64"),
+            mimeType: "application/pdf"
+          }
+        },
+        "Extract the invoice details. Parse the document carefully and return a JSON matching the requested schema."
+      ]);
+
+      const text = response.response.text();
+      if (!text) return undefined;
+
+      const parsed: ParsedInvoiceData = JSON.parse(text);
+      return parsed;
+    } catch (error) {
+      console.error('Failed to parse PDF invoice using Gemini:', error);
+      return undefined;
+    }
+  }
+
+  /**
    * Scans a Gmail inbox for messages from matching supplier emails and downloads invoice attachments.
    */
   public async scanInbox(req: ScanRequest): Promise<ScanResponseItem[]> {
@@ -338,6 +395,9 @@ export class ScannerService {
                 const buffer = Buffer.from(dataBase64Url, 'base64');
 
                 if (ext === 'pdf') {
+                  const parsedData = req.geminiApiKey 
+                    ? await this.parsePDFInvoice(buffer, req.geminiApiKey)
+                    : undefined;
                   results.push({
                     gmailMessageId: msgRef.id!,
                     gmailAttachmentId: attachmentId,
@@ -347,6 +407,7 @@ export class ScannerService {
                     emailSubject: subject,
                     emailDate,
                     senderEmail,
+                    parsedData,
                   });
                 } else if (ext === 'xml') {
                   const xmlContent = buffer.toString('utf-8');
@@ -376,6 +437,9 @@ export class ScannerService {
                       
                       if (zipExt === 'pdf') {
                         const fileBuffer = entry.getData();
+                        const parsedData = req.geminiApiKey
+                          ? await this.parsePDFInvoice(fileBuffer, req.geminiApiKey)
+                          : undefined;
                         results.push({
                           gmailMessageId: msgRef.id!,
                           gmailAttachmentId: attachmentId, // Shares attachment ID, filename is unique
@@ -385,6 +449,7 @@ export class ScannerService {
                           emailSubject: subject,
                           emailDate,
                           senderEmail,
+                          parsedData,
                         });
                       } else if (zipExt === 'xml') {
                         const fileBuffer = entry.getData();
