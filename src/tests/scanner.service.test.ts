@@ -1,4 +1,4 @@
-import { ScannerService, ScanRequest } from './scanner.service.js';
+import { ScannerService, ScanRequest } from '../scanner.service.js';
 import { google } from 'googleapis';
 import { GoogleGenAI } from '@google/genai';
 import AdmZip from 'adm-zip';

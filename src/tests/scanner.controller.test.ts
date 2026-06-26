@@ -1,9 +1,9 @@
 import request from 'supertest';
-import app from './index.js';
+import app from '../index.js';
 
 const mockScanInbox = jest.fn();
 
-jest.mock('./scanner.service.js', () => {
+jest.mock('../scanner.service.js', () => {
   return {
     ScannerService: jest.fn().mockImplementation(() => {
       return {
