@@ -13,6 +13,7 @@ export class ScannerController {
       const { accessToken, refreshToken, supplierEmails, sinceDate } = req.body;
       const clientId = req.body.clientId || process.env.GOOGLE_CLIENT_ID;
       const clientSecret = req.body.clientSecret || process.env.GOOGLE_CLIENT_SECRET;
+      const geminiApiKey = req.body.geminiApiKey || process.env.GEMINI_API_KEY;
 
       // Basic validation
       if (!accessToken) {
@@ -35,6 +36,7 @@ export class ScannerController {
         clientSecret,
         supplierEmails,
         sinceDate,
+        geminiApiKey,
       };
 
       console.log(`Starting scan for ${supplierEmails.length} suppliers...`);
