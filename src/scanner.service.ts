@@ -8,9 +8,10 @@ export interface ScanRequest {
   refreshToken?: string;
   clientId: string;
   clientSecret: string;
-  supplierEmails: string[];
+  supplierEmails?: string[];
   sinceDate?: string; // ISO date string
   geminiApiKey?: string;
+  q?: string;
 }
 
 export interface ParsedItem {
@@ -33,6 +34,8 @@ export interface ParsedInvoiceData {
   total?: number;
   moneda?: string;
   items?: ParsedItem[];
+  filename?: string;
+  senderEmail?: string;
 }
 
 export interface ScanResponseItem {
@@ -464,7 +467,7 @@ export class ScannerService {
    * Scans a Gmail inbox for messages from matching supplier emails and downloads invoice attachments.
    */
   public async scan(req: ScanRequest): Promise<ParsedInvoiceData[]> {
-    if (!req.supplierEmails || req.supplierEmails.length === 0) {
+    if (!req.q && (!req.supplierEmails || req.supplierEmails.length === 0)) {
       return [];
     }
 
@@ -478,26 +481,31 @@ export class ScannerService {
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
     const results: ParsedInvoiceData[] = [];
 
-    // Formulate search date (default to 30 days ago if not provided)
-    let afterQuery = '';
-    if (req.sinceDate) {
-      const date = new Date(req.sinceDate);
-      const yyyy = date.getUTCFullYear();
-      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(date.getUTCDate()).padStart(2, '0');
-      afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+    let query = '';
+    if (req.q) {
+      query = req.q;
     } else {
-      const date = new Date();
-      date.setUTCDate(date.getUTCDate() - 30); // 30 days ago
-      const yyyy = date.getUTCFullYear();
-      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(date.getUTCDate()).padStart(2, '0');
-      afterQuery = ` after:${yyyy}/${mm}/${dd}`;
-    }
+      // Formulate search date (default to 30 days ago if not provided)
+      let afterQuery = '';
+      if (req.sinceDate) {
+        const date = new Date(req.sinceDate);
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+      } else {
+        const date = new Date();
+        date.setUTCDate(date.getUTCDate() - 30); // 30 days ago
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+      }
 
-    // Build the query: from:(email1 OR email2 OR ...) has:attachment (pdf OR xml OR zip)
-    const fromList = req.supplierEmails.map((email) => `from:${email}`).join(' OR ');
-    const query = `(${fromList}) has:attachment${afterQuery}`;
+      // Build the query: from:(email1 OR email2 OR ...) has:attachment (pdf OR xml OR zip)
+      const fromList = req.supplierEmails!.map((email) => `from:${email}`).join(' OR ');
+      query = `(${fromList}) has:attachment${afterQuery}`;
+    }
     
     console.log(`Searching Gmail with query: "${query}"`);
 
@@ -521,6 +529,12 @@ export class ScannerService {
           userId: 'me',
           id: msgRef.id,
         });
+
+        // Extract sender email from From header
+        const headers = msg.data.payload?.headers || [];
+        const fromHeader = headers.find(h => h.name?.toLowerCase() === 'from')?.value || '';
+        const emailMatch = fromHeader.match(/<([^>]+)>/);
+        const senderEmail = emailMatch ? emailMatch[1].trim().toLowerCase() : fromHeader.trim().toLowerCase();
 
         // Collect all potential attachments of interest from payload
         const attachments: { filename: string; attachmentId: string; mimeType: string }[] = [];
@@ -572,6 +586,8 @@ export class ScannerService {
               if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
                 parsedData.messageId = msgRef.id;
                 parsedData.attachmentId = att.attachmentId;
+                parsedData.filename = att.filename;
+                parsedData.senderEmail = senderEmail;
                 if (!parsedData.claveAcceso) {
                   parsedData.claveAcceso = msgRef.id;
                 }
@@ -628,6 +644,8 @@ export class ScannerService {
                 if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
                   parsedData.messageId = msgRef.id;
                   parsedData.attachmentId = att.attachmentId;
+                  parsedData.filename = xmlFile.entryName.split('/').pop() || xmlFile.entryName;
+                  parsedData.senderEmail = senderEmail;
                   if (!parsedData.claveAcceso) {
                     parsedData.claveAcceso = msgRef.id;
                   }
@@ -651,6 +669,8 @@ export class ScannerService {
                 if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
                   parsedData.messageId = msgRef.id;
                   parsedData.attachmentId = extZip.attachmentId;
+                  parsedData.filename = pdfFile.entryName.split('/').pop() || pdfFile.entryName;
+                  parsedData.senderEmail = senderEmail;
                   if (!parsedData.claveAcceso) {
                     parsedData.claveAcceso = msgRef.id;
                   }
@@ -676,6 +696,8 @@ export class ScannerService {
                   if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
                     parsedData.messageId = msgRef.id;
                     parsedData.attachmentId = att.attachmentId;
+                    parsedData.filename = att.filename;
+                    parsedData.senderEmail = senderEmail;
                     if (!parsedData.claveAcceso) {
                       parsedData.claveAcceso = msgRef.id;
                     }
@@ -723,12 +745,23 @@ export class ScannerService {
 
     // Find the part matching the attachmentId
     let targetPart: any = null;
+    const cleanTargetId = decodeURIComponent(params.gmailAttachmentId).trim();
+
     const findPart = (parts: any[]) => {
       for (const part of parts) {
-        if (part.body?.attachmentId === params.gmailAttachmentId) {
-          targetPart = part;
-          return;
+        if (targetPart) return;
+        
+        const currentId = part.body?.attachmentId;
+        if (currentId) {
+          const cleanCurrentId = currentId.trim();
+          // Match exactly, or match by prefix if target ID was truncated (typically due to DB VARCHAR or copy-paste limits)
+          if (cleanCurrentId === cleanTargetId || 
+              (cleanTargetId.length >= 50 && cleanCurrentId.startsWith(cleanTargetId))) {
+            targetPart = part;
+            return;
+          }
         }
+        
         if (part.parts && part.parts.length > 0) {
           findPart(part.parts);
         }
@@ -737,11 +770,60 @@ export class ScannerService {
 
     if (msg.data.payload?.parts) {
       findPart(msg.data.payload.parts);
-    } else if (msg.data.payload?.body?.attachmentId === params.gmailAttachmentId) {
-      targetPart = msg.data.payload;
+    } else if (msg.data.payload?.body?.attachmentId) {
+      const cleanCurrentId = msg.data.payload.body.attachmentId.trim();
+      if (cleanCurrentId === cleanTargetId || 
+          (cleanTargetId.length >= 50 && cleanCurrentId.startsWith(cleanTargetId))) {
+        targetPart = msg.data.payload;
+      }
     }
 
     if (!targetPart) {
+      // Fallback: Find all parts that have an attachmentId
+      const attachmentParts: any[] = [];
+      const collectAttachmentParts = (parts: any[]) => {
+        for (const part of parts) {
+          if (part.body?.attachmentId) {
+            attachmentParts.push(part);
+          }
+          if (part.parts && part.parts.length > 0) {
+            collectAttachmentParts(part.parts);
+          }
+        }
+      };
+
+      if (msg.data.payload?.parts) {
+        collectAttachmentParts(msg.data.payload.parts);
+      } else if (msg.data.payload?.body?.attachmentId) {
+        attachmentParts.push(msg.data.payload);
+      }
+
+      if (attachmentParts.length > 0) {
+        targetPart = attachmentParts[0];
+        console.warn(`[Fallback] Attachment with ID "${params.gmailAttachmentId}" not found in message ${params.gmailMessageId}. Falling back to first available attachment: "${targetPart.filename}" (ID: ${targetPart.body.attachmentId})`);
+      }
+    }
+
+    if (!targetPart) {
+      // Diagnostic log to see available IDs in the message
+      const availableIds: string[] = [];
+      const collectIds = (parts: any[]) => {
+        for (const part of parts) {
+          if (part.body?.attachmentId) {
+            availableIds.push(part.body.attachmentId);
+          }
+          if (part.parts && part.parts.length > 0) {
+            collectIds(part.parts);
+          }
+        }
+      };
+      if (msg.data.payload?.parts) {
+        collectIds(msg.data.payload.parts);
+      } else if (msg.data.payload?.body?.attachmentId) {
+        availableIds.push(msg.data.payload.body.attachmentId);
+      }
+      
+      console.error(`Attachment matching "${params.gmailAttachmentId}" not found. Available IDs:`, availableIds);
       throw new Error(`Attachment with ID ${params.gmailAttachmentId} not found in message ${params.gmailMessageId}`);
     }
 
@@ -749,16 +831,16 @@ export class ScannerService {
     const mimeType = targetPart.mimeType || 'application/octet-stream';
     const ext = filename.split('.').pop()?.toLowerCase();
 
-    // 2. Fetch the attachment content
+    // 2. Fetch the attachment content using the FULL ID from targetPart
     const attachment = await gmail.users.messages.attachments.get({
       userId: 'me',
       messageId: params.gmailMessageId,
-      id: params.gmailAttachmentId,
+      id: targetPart.body.attachmentId,
     });
 
     const dataBase64Url = attachment.data.data;
     if (!dataBase64Url) {
-      throw new Error(`No data found for attachment ${params.gmailAttachmentId}`);
+      throw new Error(`No data found for attachment ${targetPart.body.attachmentId}`);
     }
 
     const attachmentBuffer = Buffer.from(dataBase64Url, 'base64');

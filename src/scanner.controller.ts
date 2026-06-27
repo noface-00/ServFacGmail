@@ -10,7 +10,7 @@ export class ScannerController {
 
   public scan = async (req: Request, res: Response): Promise<void> => {
     try {
-      let { accessToken, refreshToken, supplierEmails, sinceDate } = req.body;
+      let { accessToken, refreshToken, supplierEmails, sinceDate, q } = req.body;
       const clientId = req.body.clientId || process.env.GOOGLE_CLIENT_ID;
       const clientSecret = req.body.clientSecret || process.env.GOOGLE_CLIENT_SECRET;
       const geminiApiKey = req.body.geminiApiKey || process.env.GEMINI_API_KEY;
@@ -38,31 +38,34 @@ export class ScannerController {
         });
         return;
       }
-      if (!sinceDate) {
-        res.status(400).json({
-          userMessage: 'Fecha de inicio (sinceDate) no proporcionada.',
-          technicalError: 'Missing required parameter: sinceDate is mandatory',
-        });
-        return;
-      }
 
-      if (!supplierEmails) {
-        const envEmails = process.env.SUPPLIER_EMAILS;
-        if (envEmails) {
-          supplierEmails = envEmails.split(',').map(email => email.trim());
-        } else {
+      if (!q) {
+        if (!sinceDate) {
           res.status(400).json({
-            userMessage: 'Lista de correos de proveedores no proporcionada.',
-            technicalError: 'Missing parameter: supplierEmails must be provided in the body or configured in the environment variable SUPPLIER_EMAILS',
+            userMessage: 'Fecha de inicio (sinceDate) no proporcionada.',
+            technicalError: 'Missing required parameter: sinceDate is mandatory',
           });
           return;
         }
-      } else if (!Array.isArray(supplierEmails)) {
-        res.status(400).json({
-          userMessage: 'Lista de correos de proveedores no válida.',
-          technicalError: 'Invalid parameter: supplierEmails must be an array of strings',
-        });
-        return;
+
+        if (!supplierEmails) {
+          const envEmails = process.env.SUPPLIER_EMAILS;
+          if (envEmails) {
+            supplierEmails = envEmails.split(',').map(email => email.trim());
+          } else {
+            res.status(400).json({
+              userMessage: 'Lista de correos de proveedores no proporcionada.',
+              technicalError: 'Missing parameter: supplierEmails must be provided in the body or configured in the environment variable SUPPLIER_EMAILS',
+            });
+            return;
+          }
+        } else if (!Array.isArray(supplierEmails)) {
+          res.status(400).json({
+            userMessage: 'Lista de correos de proveedores no válida.',
+            technicalError: 'Invalid parameter: supplierEmails must be an array of strings',
+          });
+          return;
+        }
       }
 
       const scanRequest: ScanRequest = {
@@ -73,9 +76,10 @@ export class ScannerController {
         supplierEmails,
         sinceDate,
         geminiApiKey,
+        q,
       };
 
-      console.log(`Starting scan for ${supplierEmails.length} suppliers...`);
+      console.log(`Starting scan${q ? ` with query "${q}"` : ` for ${supplierEmails?.length || 0} suppliers`}...`);
       const results = await this.scannerService.scan(scanRequest);
       console.log(`Scan completed. Found ${results.length} valid invoice attachments.`);
 
