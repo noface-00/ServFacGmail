@@ -105,47 +105,113 @@ Para realizar pruebas completas de escaneo de bandeja de entrada de Gmail y pars
 
 ## Especificación del API
 
-### `POST /scan`
-Busca correos de proveedores y extrae sus adjuntos de factura.
+### Seguridad y Autenticación
+Los endpoints `/scan` y `/download-pdf` requieren autenticación. Debe enviarse la clave de API configurada en la variable de entorno `SERVICE_API_KEY` mediante:
+* El encabezado HTTP `x-api-key: <clave_api>` (Recomendado).
+* El parámetro en query string `apiKey=<clave_api>`.
 
-#### **Request Body**
-```json
-{
-  "accessToken": "YA29.A0AR...",
-  "refreshToken": "1//0g...",
-  "clientId": "google-client-id... (Opcional si está en .env)",
-  "clientSecret": "google-client-secret... (Opcional si está en .env)",
-  "geminiApiKey": "gemini-api-key... (Opcional si está en .env)",
-  "supplierEmails": ["proveedor1@mail.com", "proveedor2@mail.com"],
-  "sinceDate": "2026-06-01T00:00:00.000Z"
-}
-```
+---
 
-#### **Response Body**
-Retorna un arreglo JSON con los metadatos de los correos, los archivos codificados en `Base64` y el JSON estructurado en `parsedData`:
-```json
-[
+El servicio expone los siguientes endpoints:
+
+### 1. `GET /health`
+Verifica el estado de salud y disponibilidad del servicio (no requiere API Key).
+
+* **Respuesta (`200 OK`):**
+  ```json
   {
-    "gmailMessageId": "18f5043bf7e997a3",
-    "gmailAttachmentId": "ANGjdJ84...",
-    "filename": "factura_123.pdf",
-    "mimeType": "application/pdf",
-    "fileBase64": "JVBERi0xLjQK...",
-    "emailSubject": "Factura de Compra Repuestos",
-    "emailDate": "2026-06-25T12:00:00.000Z",
-    "senderEmail": "proveedor1@mail.com",
-    "parsedData": {
-      "supplierRuc": "76123456-7",
-      "supplierName": "Distribuidora de Repuestos SpA",
-      "total": 119000,
-      "items": [
-        {
-          "nombre": "Filtro de Aceite Heavy Duty",
-          "cantidad": 5,
-          "precioUnitario": 20000
-        }
-      ]
-    }
+    "status": "ok",
+    "service": "gmail-scanner-service"
   }
-]
-```
+  ```
+
+---
+
+### 2. `POST /scan`
+Busca correos de proveedores autorizados en Gmail, descarga los archivos adjuntos (XML/ZIP/PDF) y extrae la información estructurada de las facturas. Es un servicio completamente **stateless**.
+
+* **Request Body (JSON):**
+  ```json
+  {
+    "accessToken": "YA29.A0AR...",
+    "refreshToken": "1//0g... (Opcional)",
+    "clientId": "google-client-id... (Opcional si está en .env)",
+    "clientSecret": "google-client-secret... (Opcional si está en .env)",
+    "geminiApiKey": "gemini-api-key... (Opcional si está en .env)",
+    "supplierEmails": ["proveedor1@mail.com", "proveedor2@mail.com"], // Opcional (por defecto toma de SUPPLIER_EMAILS en .env)
+    "sinceDate": "2026-06-01T00:00:00.000Z" // Requerido (ISO string o fecha para búsqueda)
+  }
+  ```
+  *Nota: El token de acceso (`accessToken`) también se puede enviar mediante el encabezado `Authorization: Bearer <token>`.*
+
+* **Response Body (`200 OK`):**
+  Retorna un objeto JSON con el listado de facturas procesadas y la cantidad de las mismas:
+  ```json
+  {
+    "facturas": [
+      {
+        "messageId": "18f5043bf7e997a3",
+        "attachmentId": "ANGjdJ84...",
+        "claveAcceso": "0926202601...", // Identificador único de la factura (o messageId si no tiene XML)
+        "supplierRuc": "76123456-7",
+        "supplierName": "Distribuidora de Repuestos SpA",
+        "numeroFactura": "001-002-000123456",
+        "fechaEmision": "2026-06-20",
+        "subtotal": 100000,
+        "iva": 19000,
+        "total": 119000,
+        "moneda": "USD",
+        "items": [
+          {
+            "nombre": "Filtro de Aceite Heavy Duty",
+            "cantidad": 5,
+            "precioUnitario": 20000,
+            "total": 100000
+          }
+        ]
+      }
+    ],
+    "count": 1
+  }
+  ```
+
+---
+
+### 3. `GET /download-pdf` y `POST /download-pdf`
+Descarga el archivo PDF binario correspondiente a un adjunto de factura en Gmail. Si el adjunto está comprimido dentro de un archivo `.zip`, el endpoint lo descomprimirá automáticamente en memoria y extraerá el PDF.
+
+* **Parámetros (enviados como Query Params en `GET` o en el cuerpo JSON en `POST`):**
+  * `messageId` (string, requerido): ID del mensaje de Gmail.
+  * `attachmentId` (string, requerido): ID del archivo adjunto en Gmail.
+  * `accessToken` (string, opcional): Token de acceso OAuth2. También se puede enviar en el header `Authorization: Bearer <token>`.
+  * `clientId` (string, opcional): ID del cliente OAuth. Opcional si ya está en el `.env`.
+  * `clientSecret` (string, opcional): Secreto del cliente OAuth. Opcional si ya está en el `.env`.
+  * `filename` (string, opcional): Nombre específico del archivo PDF dentro del archivo ZIP (si hay varios). Si se omite, se tomará el primer PDF que se encuentre.
+
+* **Ejemplo de uso con cURL (`GET`):**
+  ```bash
+  curl -G "http://localhost:3005/download-pdf" \
+    --data-urlencode "messageId=18f5043bf7e997a3" \
+    --data-urlencode "attachmentId=ANGjdJ84..." \
+    -H "x-api-key: TU_SERVICE_API_KEY" \
+    -H "Authorization: Bearer YA29.A0AR..." \
+    -o factura.pdf
+  ```
+
+* **Ejemplo de uso con cURL (`POST`):**
+  ```bash
+  curl -X POST "http://localhost:3005/download-pdf" \
+    -H "Content-Type: application/json" \
+    -H "x-api-key: TU_SERVICE_API_KEY" \
+    -H "Authorization: Bearer YA29.A0AR..." \
+    -d '{
+      "messageId": "18f5043bf7e997a3",
+      "attachmentId": "ANGjdJ84..."
+    }' \
+    -o factura.pdf
+  ```
+
+* **Respuesta (`200 OK`):**
+  Retorna el archivo binario del PDF listo para su descarga, configurando automáticamente las cabeceras correspondientes:
+  * `Content-Type: application/pdf`
+  * `Content-Disposition: attachment; filename="nombre_de_archivo.pdf"`
