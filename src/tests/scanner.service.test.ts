@@ -139,6 +139,8 @@ describe('ScannerService', () => {
         supplierName: 'Distribuidora SpA',
         total: 119000,
         moneda: 'CLP',
+        filename: 'dte.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Filtro de Aceite',
@@ -190,6 +192,8 @@ describe('ScannerService', () => {
         supplierRuc: '20123456789',
         supplierName: 'UBL Supplier S.A.C.',
         total: 2500.5,
+        filename: 'ubl.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Servicio de Desarrollo',
@@ -224,6 +228,8 @@ describe('ScannerService', () => {
         supplierName: 'CFDI Emisor SA de CV',
         total: 1500,
         subtotal: 1500,
+        filename: 'cfdi.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Consultoria TI',
@@ -268,6 +274,8 @@ describe('ScannerService', () => {
         supplierName: 'Ecuadorian Supplier CIA. LTDA.',
         total: 450,
         moneda: 'USD',
+        filename: 'ecuador.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Mantenimiento de Servidores',
@@ -319,6 +327,8 @@ describe('ScannerService', () => {
         supplierName: 'Ecuadorian Supplier CIA. LTDA.',
         total: 450,
         moneda: 'USD',
+        filename: 'ecuador_envelope.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Mantenimiento de Servidores',
@@ -351,6 +361,8 @@ describe('ScannerService', () => {
         supplierRuc: '12345',
         supplierName: 'Generic Company',
         total: 999,
+        filename: 'generic.xml',
+        senderEmail: 'supplier@example.com',
         items: [],
       });
     });
@@ -411,6 +423,8 @@ describe('ScannerService', () => {
         supplierName: 'Distribuidora SpA',
         total: 1000,
         moneda: 'CLP',
+        filename: 'nested-dte.xml',
+        senderEmail: 'supplier@example.com',
         items: undefined,
       });
 
@@ -449,6 +463,8 @@ describe('ScannerService', () => {
         supplierRuc: '77665544-3',
         supplierName: 'PDF Vendor LLC',
         total: 10500.5,
+        filename: 'invoice.pdf',
+        senderEmail: 'supplier@example.com',
         items: [
           { nombre: 'Consulting', cantidad: 1, precioUnitario: 10500.5, total: 10500.5 }
         ]
@@ -552,6 +568,8 @@ describe('ScannerService', () => {
         supplierName: 'Ecuadorian Supplier CIA. LTDA.',
         total: 450,
         moneda: 'USD',
+        filename: 'invoice.xml',
+        senderEmail: 'supplier@example.com',
         items: undefined,
       });
 

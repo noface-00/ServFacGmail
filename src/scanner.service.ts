@@ -778,31 +778,7 @@ export class ScannerService {
       }
     }
 
-    if (!targetPart) {
-      // Fallback: Find all parts that have an attachmentId
-      const attachmentParts: any[] = [];
-      const collectAttachmentParts = (parts: any[]) => {
-        for (const part of parts) {
-          if (part.body?.attachmentId) {
-            attachmentParts.push(part);
-          }
-          if (part.parts && part.parts.length > 0) {
-            collectAttachmentParts(part.parts);
-          }
-        }
-      };
 
-      if (msg.data.payload?.parts) {
-        collectAttachmentParts(msg.data.payload.parts);
-      } else if (msg.data.payload?.body?.attachmentId) {
-        attachmentParts.push(msg.data.payload);
-      }
-
-      if (attachmentParts.length > 0) {
-        targetPart = attachmentParts[0];
-        console.warn(`[Fallback] Attachment with ID "${params.gmailAttachmentId}" not found in message ${params.gmailMessageId}. Falling back to first available attachment: "${targetPart.filename}" (ID: ${targetPart.body.attachmentId})`);
-      }
-    }
 
     if (!targetPart) {
       // Diagnostic log to see available IDs in the message
