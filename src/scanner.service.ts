@@ -8,22 +8,34 @@ export interface ScanRequest {
   refreshToken?: string;
   clientId: string;
   clientSecret: string;
-  supplierEmails: string[];
+  supplierEmails?: string[];
   sinceDate?: string; // ISO date string
   geminiApiKey?: string;
+  q?: string;
 }
 
 export interface ParsedItem {
   nombre: string;
   cantidad: number;
   precioUnitario: number;
+  total?: number;
 }
 
 export interface ParsedInvoiceData {
+  messageId?: string;
+  attachmentId?: string;
+  claveAcceso?: string;
   supplierRuc?: string;
   supplierName?: string;
+  numeroFactura?: string;
+  fechaEmision?: string;
+  subtotal?: number;
+  iva?: number;
   total?: number;
+  moneda?: string;
   items?: ParsedItem[];
+  filename?: string;
+  senderEmail?: string;
 }
 
 export interface ScanResponseItem {
@@ -114,8 +126,9 @@ export class ScannerService {
           const nombre = attrs.Descripcion || attrs.descripcion || '';
           const cantidad = parseFloat(attrs.Cantidad || attrs.cantidad || '1');
           const precioUnitario = parseFloat(attrs.ValorUnitario || attrs.valorunitario || '0');
+          const total = parseFloat(attrs.Importe || attrs.importe || String(cantidad * precioUnitario));
           if (nombre) {
-            items.push({ nombre, cantidad, precioUnitario });
+            items.push({ nombre, cantidad, precioUnitario, total });
           }
         }
       }
@@ -127,8 +140,9 @@ export class ScannerService {
         const nombre = this.getText(this.findDeepValue(det, 'nmbitem') || this.findDeepValue(det, 'dscitem'));
         const cantidad = parseFloat(this.getText(this.findDeepValue(det, 'qtyitem')) || '1');
         const precioUnitario = parseFloat(this.getText(this.findDeepValue(det, 'prcitem')) || '0');
+        const total = parseFloat(this.getText(this.findDeepValue(det, 'montoitem')) || String(cantidad * precioUnitario));
         if (nombre) {
-          items.push({ nombre, cantidad, precioUnitario });
+          items.push({ nombre, cantidad, precioUnitario, total });
         }
       }
     } else if (format === 'UBL') {
@@ -141,9 +155,10 @@ export class ScannerService {
         
         const priceNode = this.findDeepValue(line, 'price');
         const precioUnitario = parseFloat(this.getText(this.findDeepValue(priceNode, 'priceamount') || this.findDeepValue(line, 'priceamount')) || '0');
+        const total = parseFloat(this.getText(this.findDeepValue(line, 'lineextensionamount')) || String(cantidad * precioUnitario));
         
         if (nombre) {
-          items.push({ nombre, cantidad, precioUnitario });
+          items.push({ nombre, cantidad, precioUnitario, total });
         }
       }
     } else if (format === 'ECUADOR') {
@@ -154,8 +169,9 @@ export class ScannerService {
         const nombre = this.getText(this.findDeepValue(det, 'descripcion'));
         const cantidad = parseFloat(this.getText(this.findDeepValue(det, 'cantidad')) || '1');
         const precioUnitario = parseFloat(this.getText(this.findDeepValue(det, 'preciounitario')) || '0');
+        const total = parseFloat(this.getText(this.findDeepValue(det, 'preciototalsinimpuesto')) || String(cantidad * precioUnitario));
         if (nombre) {
-          items.push({ nombre, cantidad, precioUnitario });
+          items.push({ nombre, cantidad, precioUnitario, total });
         }
       }
     }
@@ -216,6 +232,13 @@ export class ScannerService {
       let total = 0;
       let items: ParsedItem[] | undefined = [];
 
+      let claveAcceso: string | undefined = undefined;
+      let numeroFactura: string | undefined = undefined;
+      let fechaEmision: string | undefined = undefined;
+      let subtotal: number | undefined = undefined;
+      let iva: number | undefined = undefined;
+      let moneda: string | undefined = undefined;
+
       const rootNode = result[rootKey] || result;
 
       if (format === 'DTE') {
@@ -225,6 +248,16 @@ export class ScannerService {
         
         const totales = rootNode.Documento?.[0]?.Encabezado?.[0]?.Totales?.[0] || this.findDeepValue(rootNode, 'totales');
         total = parseFloat(this.getText(this.findDeepValue(totales, 'mnttotal')) || '0');
+        subtotal = parseFloat(this.getText(this.findDeepValue(totales, 'mntneto'))) || undefined;
+        iva = parseFloat(this.getText(this.findDeepValue(totales, 'iva'))) || undefined;
+
+        const idDoc = rootNode.Documento?.[0]?.Encabezado?.[0]?.IdDoc?.[0] || this.findDeepValue(rootNode, 'iddoc');
+        const folio = this.getText(this.findDeepValue(idDoc, 'folio'));
+        const tipoDTE = this.getText(this.findDeepValue(idDoc, 'tipodte'));
+        claveAcceso = folio && ruc ? `DTE-${ruc}-${tipoDTE || '33'}-${folio}` : undefined;
+        numeroFactura = folio || undefined;
+        fechaEmision = this.getText(this.findDeepValue(idDoc, 'fchemis')) || undefined;
+        moneda = this.getText(this.findDeepValue(idDoc, 'tpomoneda')) || 'CLP';
         
         items = this.extractItems(rootNode, 'DTE');
       } else if (format === 'UBL') {
@@ -239,6 +272,15 @@ export class ScannerService {
         
         const legalTotal = rootNode['cac:LegalMonetaryTotal']?.[0] || this.findDeepValue(rootNode, 'legalmonetarytotal');
         total = parseFloat(this.getText(this.findDeepValue(legalTotal, 'payableamount')) || '0');
+        subtotal = parseFloat(this.getText(this.findDeepValue(legalTotal, 'taxexclusiveamount') || this.findDeepValue(legalTotal, 'lineextensionamount'))) || undefined;
+
+        const taxTotalNode = rootNode['cac:TaxTotal']?.[0] || this.findDeepValue(rootNode, 'taxtotal');
+        iva = parseFloat(this.getText(this.findDeepValue(taxTotalNode, 'taxamount'))) || undefined;
+
+        claveAcceso = this.getText(rootNode['cbc:UUID']?.[0] || rootNode.UUID?.[0] || rootNode.uuid?.[0]) || undefined;
+        numeroFactura = this.getText(rootNode['cbc:ID']?.[0] || rootNode.ID?.[0] || rootNode.id?.[0]) || undefined;
+        fechaEmision = this.getText(rootNode['cbc:IssueDate']?.[0] || rootNode.IssueDate?.[0] || rootNode.issuedate?.[0]) || undefined;
+        moneda = this.getText(rootNode['cbc:DocumentCurrencyCode']?.[0] || rootNode.DocumentCurrencyCode?.[0] || rootNode.documentcurrencycode?.[0]) || undefined;
         
         items = this.extractItems(rootNode, 'UBL');
       } else if (format === 'CFDI') {
@@ -250,30 +292,98 @@ export class ScannerService {
         
         if (rootNode.$) {
           total = parseFloat(rootNode.$.Total || rootNode.$.total || '0');
+          subtotal = parseFloat(rootNode.$.SubTotal || rootNode.$.subtotal || '0') || undefined;
+          moneda = rootNode.$.Moneda || rootNode.$.moneda || undefined;
+          
+          const folio = rootNode.$.Folio || rootNode.$.folio || '';
+          const serie = rootNode.$.Serie || rootNode.$.serie || '';
+          numeroFactura = folio ? (serie ? `${serie}-${folio}` : folio) : undefined;
+          fechaEmision = (rootNode.$.Fecha || rootNode.$.fecha || '').split('T')[0] || undefined;
         }
+
+        const tfdNode = this.findDeepValue(rootNode, 'timbrefiscaldigital');
+        claveAcceso = (tfdNode?.$?.UUID || tfdNode?.$?.uuid || this.findDeepValue(tfdNode, 'uuid')) || undefined;
+
+        const impuestos = rootNode['cfdi:Impuestos']?.[0] || this.findDeepValue(rootNode, 'impuestos');
+        const traslados = impuestos?.['cfdi:Traslados']?.[0]?.['cfdi:Traslado'] || this.findDeepValue(impuestos, 'traslado') || [];
+        const trasladosArr = Array.isArray(traslados) ? traslados : [traslados];
+        let computedIva = 0;
+        for (const tr of trasladosArr) {
+          const trAttrs = tr.$ || {};
+          const imp = trAttrs.Impuesto || trAttrs.impuesto || '';
+          if (imp === '002' || imp.toLowerCase() === 'iva') {
+            computedIva += parseFloat(trAttrs.Importe || trAttrs.importe || '0');
+          }
+        }
+        iva = computedIva > 0 ? computedIva : undefined;
         
         items = this.extractItems(rootNode, 'CFDI');
       } else if (format === 'ECUADOR') {
         const infoTributaria = rootNode.infoTributaria?.[0] || this.findDeepValue(rootNode, 'infotributaria');
         ruc = this.getText(this.findDeepValue(infoTributaria, 'ruc'));
         name = this.getText(this.findDeepValue(infoTributaria, 'razonSocial') || this.findDeepValue(infoTributaria, 'nombreComercial'));
+        claveAcceso = this.getText(this.findDeepValue(infoTributaria, 'claveacceso')) || undefined;
+        
+        const estab = this.getText(this.findDeepValue(infoTributaria, 'estab'));
+        const ptoEmi = this.getText(this.findDeepValue(infoTributaria, 'ptoemi'));
+        const secuencial = this.getText(this.findDeepValue(infoTributaria, 'secuencial'));
+        numeroFactura = estab && ptoEmi && secuencial ? `${estab}-${ptoEmi}-${secuencial}` : secuencial || undefined;
 
         const infoFactura = rootNode.infoFactura?.[0] || this.findDeepValue(rootNode, 'infofactura');
         total = parseFloat(this.getText(this.findDeepValue(infoFactura, 'importeTotal')) || '0');
+        subtotal = parseFloat(this.getText(this.findDeepValue(infoFactura, 'totalsinimpuestos'))) || undefined;
+        moneda = this.getText(this.findDeepValue(infoFactura, 'moneda')) || 'USD';
+
+        const rawFecha = this.getText(this.findDeepValue(infoFactura, 'fechaemision'));
+        if (rawFecha && rawFecha.includes('/')) {
+          const parts = rawFecha.split('/');
+          if (parts.length === 3) {
+            fechaEmision = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          }
+        } else {
+          fechaEmision = rawFecha || undefined;
+        }
+
+        const totalConImpuestos = infoFactura?.totalConImpuestos?.[0] || this.findDeepValue(infoFactura, 'totalconimpuestos');
+        const totalImpuesto = totalConImpuestos?.totalImpuesto || this.findDeepValue(totalConImpuestos, 'totalimpuesto') || [];
+        const totalImpuestosArr = Array.isArray(totalImpuesto) ? totalImpuesto : [totalImpuesto];
+        let ecuIva = 0;
+        for (const imp of totalImpuestosArr) {
+          const cod = this.getText(this.findDeepValue(imp, 'codigo'));
+          if (cod === '2') {
+            ecuIva += parseFloat(this.getText(this.findDeepValue(imp, 'valor')) || '0');
+          }
+        }
+        iva = ecuIva > 0 ? ecuIva : undefined;
 
         items = this.extractItems(rootNode, 'ECUADOR');
       } else {
         ruc = this.getText(this.findDeepValue(rootNode, 'rutemisor') || this.findDeepValue(rootNode, 'ruc') || this.findDeepValue(rootNode, 'rfc'));
         name = this.getText(this.findDeepValue(rootNode, 'rznsocemisor') || this.findDeepValue(rootNode, 'rznsoc') || this.findDeepValue(rootNode, 'razonsocial') || this.findDeepValue(rootNode, 'name'));
         total = parseFloat(this.getText(this.findDeepValue(rootNode, 'mnttotal') || this.findDeepValue(rootNode, 'importetotal') || this.findDeepValue(rootNode, 'total')) || '0');
+        
+        claveAcceso = this.getText(this.findDeepValue(rootNode, 'claveacceso') || this.findDeepValue(rootNode, 'uuid')) || undefined;
+        numeroFactura = this.getText(rootNode.Folio || this.findDeepValue(rootNode, 'folio') || this.findDeepValue(rootNode, 'secuencial') || this.findDeepValue(rootNode, 'numerofactura') || this.findDeepValue(rootNode, 'id')) || undefined;
+        fechaEmision = this.getText(rootNode.Fecha || this.findDeepValue(rootNode, 'fechaemision') || this.findDeepValue(rootNode, 'fecha') || this.findDeepValue(rootNode, 'issuedate')) || undefined;
+        subtotal = parseFloat(this.getText(this.findDeepValue(rootNode, 'subtotal') || this.findDeepValue(rootNode, 'totalsinimpuestos'))) || undefined;
+        iva = parseFloat(this.getText(this.findDeepValue(rootNode, 'iva') || this.findDeepValue(rootNode, 'impuesto') || this.findDeepValue(rootNode, 'taxamount'))) || undefined;
+        moneda = this.getText(this.findDeepValue(rootNode, 'moneda') || this.findDeepValue(rootNode, 'documentcurrencycode')) || undefined;
       }
 
-      return {
+      const response: ParsedInvoiceData = {
+        claveAcceso: claveAcceso || undefined,
         supplierRuc: ruc || undefined,
         supplierName: name || undefined,
+        numeroFactura: numeroFactura || undefined,
+        fechaEmision: fechaEmision || undefined,
+        subtotal: subtotal || undefined,
+        iva: iva || undefined,
         total: total || undefined,
+        moneda: moneda || undefined,
         items: items || undefined,
       };
+
+      return this.cleanParsedData(response);
     } catch (error) {
       console.error('Failed to parse XML invoice:', error);
       return undefined;
@@ -310,9 +420,15 @@ export class ScannerService {
           schema: {
             type: "object",
             properties: {
+              claveAcceso: { type: "string", description: "Access key, UUID, electronic signature key, or transaction hash of the invoice. Null if not present." },
               supplierRuc: { type: "string", description: "Tax identification number (RUT, RUC, RFC, or NIT) of the vendor/issuer" },
               supplierName: { type: "string", description: "Official business name of the vendor" },
+              numeroFactura: { type: "string", description: "The invoice number (often in format like 001-002-000123456 or a sequential folio number)" },
+              fechaEmision: { type: "string", description: "Issue date of the invoice in YYYY-MM-DD format" },
+              subtotal: { type: "number", description: "Subtotal amount before taxes" },
+              iva: { type: "number", description: "Total value-added tax (IVA/IGV) amount" },
               total: { type: "number", description: "Total payable amount of the invoice" },
+              moneda: { type: "string", description: "Currency code (e.g. USD, CLP, COP, MXN, PEN)" },
               items: {
                 type: "array",
                 items: {
@@ -320,9 +436,10 @@ export class ScannerService {
                   properties: {
                     nombre: { type: "string", description: "Name or description of the product or service" },
                     cantidad: { type: "number", description: "Quantity of items" },
-                    precioUnitario: { type: "number", description: "Unit price of the item" }
+                    precioUnitario: { type: "number", description: "Unit price of the item" },
+                    total: { type: "number", description: "Total amount for this line item (quantity * precioUnitario)" }
                   },
-                  required: ["nombre", "cantidad", "precioUnitario"]
+                  required: ["nombre", "cantidad", "precioUnitario", "total"]
                 }
               }
             },
@@ -339,7 +456,7 @@ export class ScannerService {
       if (!text) return undefined;
 
       const parsed: ParsedInvoiceData = JSON.parse(text);
-      return parsed;
+      return this.cleanParsedData(parsed);
     } catch (error) {
       console.error('Failed to parse PDF invoice using Gemini:', error);
       return undefined;
@@ -349,8 +466,8 @@ export class ScannerService {
   /**
    * Scans a Gmail inbox for messages from matching supplier emails and downloads invoice attachments.
    */
-  public async scanInbox(req: ScanRequest): Promise<ScanResponseItem[]> {
-    if (!req.supplierEmails || req.supplierEmails.length === 0) {
+  public async scan(req: ScanRequest): Promise<ParsedInvoiceData[]> {
+    if (!req.q && (!req.supplierEmails || req.supplierEmails.length === 0)) {
       return [];
     }
 
@@ -362,28 +479,33 @@ export class ScannerService {
     });
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-    const results: ScanResponseItem[] = [];
+    const results: ParsedInvoiceData[] = [];
 
-    // Formulate search date (default to 30 days ago if not provided)
-    let afterQuery = '';
-    if (req.sinceDate) {
-      const date = new Date(req.sinceDate);
-      const yyyy = date.getUTCFullYear();
-      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(date.getUTCDate()).padStart(2, '0');
-      afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+    let query = '';
+    if (req.q) {
+      query = req.q;
     } else {
-      const date = new Date();
-      date.setUTCDate(date.getUTCDate() - 30); // 30 days ago
-      const yyyy = date.getUTCFullYear();
-      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(date.getUTCDate()).padStart(2, '0');
-      afterQuery = ` after:${yyyy}/${mm}/${dd}`;
-    }
+      // Formulate search date (default to 30 days ago if not provided)
+      let afterQuery = '';
+      if (req.sinceDate) {
+        const date = new Date(req.sinceDate);
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+      } else {
+        const date = new Date();
+        date.setUTCDate(date.getUTCDate() - 30); // 30 days ago
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+      }
 
-    // Build the query: from:(email1 OR email2 OR ...) has:attachment (pdf OR xml OR zip)
-    const fromList = req.supplierEmails.map((email) => `from:${email}`).join(' OR ');
-    const query = `(${fromList}) has:attachment${afterQuery}`;
+      // Build the query: from:(email1 OR email2 OR ...) has:attachment (pdf OR xml OR zip)
+      const fromList = req.supplierEmails!.map((email) => `from:${email}`).join(' OR ');
+      query = `(${fromList}) has:attachment${afterQuery}`;
+    }
     
     console.log(`Searching Gmail with query: "${query}"`);
 
@@ -408,138 +530,332 @@ export class ScannerService {
           id: msgRef.id,
         });
 
+        // Extract sender email from From header
         const headers = msg.data.payload?.headers || [];
-        const subject = headers.find((h) => h.name?.toLowerCase() === 'subject')?.value || 'Sin Asunto';
-        const dateStr = headers.find((h) => h.name?.toLowerCase() === 'date')?.value || '';
-        const emailDate = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
-        const fromHeader = headers.find((h) => h.name?.toLowerCase() === 'from')?.value || '';
-        
-        // Extract email address from From header (e.g., "Supplier Name <email@supplier.com>" -> "email@supplier.com")
-        const emailMatch = fromHeader.match(/<([^>]+)>/) || [null, fromHeader];
-        const senderEmail = (emailMatch[1] || fromHeader).trim().toLowerCase();
+        const fromHeader = headers.find(h => h.name?.toLowerCase() === 'from')?.value || '';
+        const emailMatch = fromHeader.match(/<([^>]+)>/);
+        const senderEmail = emailMatch ? emailMatch[1].trim().toLowerCase() : fromHeader.trim().toLowerCase();
 
-        // Recursively extract attachments from payload parts
-        const handleParts = async (parts: any[]) => {
+        // Collect all potential attachments of interest from payload
+        const attachments: { filename: string; attachmentId: string; mimeType: string }[] = [];
+        const collectAttachments = (parts: any[]) => {
           for (const part of parts) {
             const filename = part.filename;
             const attachmentId = part.body?.attachmentId;
-
             if (part.parts && part.parts.length > 0) {
-              await handleParts(part.parts);
+              collectAttachments(part.parts);
             }
-
             if (filename && attachmentId) {
               const ext = filename.split('.').pop()?.toLowerCase();
               const allowedExtensions = ['pdf', 'xml', 'zip'];
-              
               if (ext && allowedExtensions.includes(ext)) {
-                // Fetch the actual attachment contents
-                const attachment = await gmail.users.messages.attachments.get({
-                  userId: 'me',
-                  messageId: msgRef.id!,
-                  id: attachmentId,
-                });
-
-                const dataBase64Url = attachment.data.data;
-                if (!dataBase64Url) continue;
-
-                // Decode base64url to Buffer
-                const buffer = Buffer.from(dataBase64Url, 'base64');
-
-                if (ext === 'pdf') {
-                  const parsedData = req.geminiApiKey 
-                    ? await this.parsePDFInvoice(buffer, req.geminiApiKey)
-                    : undefined;
-                  results.push({
-                    gmailMessageId: msgRef.id!,
-                    gmailAttachmentId: attachmentId,
-                    filename,
-                    mimeType: part.mimeType || 'application/pdf',
-                    fileBase64: buffer.toString('base64'),
-                    emailSubject: subject,
-                    emailDate,
-                    senderEmail,
-                    parsedData,
-                  });
-                } else if (ext === 'xml') {
-                  const xmlContent = buffer.toString('utf-8');
-                  const parsedData = await this.parseXMLInvoice(xmlContent);
-                  results.push({
-                    gmailMessageId: msgRef.id!,
-                    gmailAttachmentId: attachmentId,
-                    filename,
-                    mimeType: part.mimeType || 'text/xml',
-                    fileBase64: buffer.toString('base64'),
-                    emailSubject: subject,
-                    emailDate,
-                    senderEmail,
-                    parsedData,
-                  });
-                } else if (ext === 'zip') {
-                  // Process ZIP using adm-zip
-                  try {
-                    const zip = new AdmZip(buffer);
-                    const zipEntries = zip.getEntries();
-                    
-                    for (const entry of zipEntries) {
-                      if (entry.isDirectory) continue;
-                      
-                      const zipFilename = entry.entryName.split('/').pop() || entry.entryName;
-                      const zipExt = zipFilename.split('.').pop()?.toLowerCase();
-                      
-                      if (zipExt === 'pdf') {
-                        const fileBuffer = entry.getData();
-                        const parsedData = req.geminiApiKey
-                          ? await this.parsePDFInvoice(fileBuffer, req.geminiApiKey)
-                          : undefined;
-                        results.push({
-                          gmailMessageId: msgRef.id!,
-                          gmailAttachmentId: attachmentId, // Shares attachment ID, filename is unique
-                          filename: zipFilename,
-                          mimeType: 'application/pdf',
-                          fileBase64: fileBuffer.toString('base64'),
-                          emailSubject: subject,
-                          emailDate,
-                          senderEmail,
-                          parsedData,
-                        });
-                      } else if (zipExt === 'xml') {
-                        const fileBuffer = entry.getData();
-                        const xmlContent = fileBuffer.toString('utf-8');
-                        const parsedData = await this.parseXMLInvoice(xmlContent);
-                        results.push({
-                          gmailMessageId: msgRef.id!,
-                          gmailAttachmentId: attachmentId,
-                          filename: zipFilename,
-                          mimeType: 'text/xml',
-                          fileBase64: fileBuffer.toString('base64'),
-                          emailSubject: subject,
-                          emailDate,
-                          senderEmail,
-                          parsedData,
-                        });
-                      }
-                    }
-                  } catch (zipError) {
-                    console.error(`Failed to process ZIP attachment ${filename}:`, zipError);
-                  }
-                }
+                attachments.push({ filename, attachmentId, mimeType: part.mimeType || '' });
               }
             }
           }
         };
 
         if (msg.data.payload?.parts) {
-          await handleParts(msg.data.payload.parts);
+          collectAttachments(msg.data.payload.parts);
         } else if (msg.data.payload?.body?.attachmentId) {
-          // If the message body itself is an attachment (rare but possible)
-          await handleParts([msg.data.payload]);
+          collectAttachments([msg.data.payload]);
         }
+
+        if (attachments.length === 0) continue;
+
+        const messageInvoices: ParsedInvoiceData[] = [];
+        let hasSuccessfulXml = false;
+
+        const xmlAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'xml');
+        const zipAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'zip');
+        const pdfAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'pdf');
+
+        // 1. Process direct XML files first
+        for (const att of xmlAttachments) {
+          try {
+            const attachment = await gmail.users.messages.attachments.get({
+              userId: 'me',
+              messageId: msgRef.id!,
+              id: att.attachmentId,
+            });
+            const dataBase64Url = attachment.data.data;
+            if (dataBase64Url) {
+              const buffer = Buffer.from(dataBase64Url, 'base64');
+              const xmlContent = buffer.toString('utf-8');
+              const parsedData = await this.parseXMLInvoice(xmlContent);
+              if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                parsedData.messageId = msgRef.id;
+                parsedData.attachmentId = att.attachmentId;
+                parsedData.filename = att.filename;
+                parsedData.senderEmail = senderEmail;
+                if (!parsedData.claveAcceso) {
+                  parsedData.claveAcceso = msgRef.id;
+                }
+                messageInvoices.push(parsedData);
+                hasSuccessfulXml = true;
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to process direct XML attachment ${att.filename}:`, err);
+          }
+        }
+
+        // 2. Process ZIP files (extracting content, parsing XMLs inside them first)
+        const extractedZips: {
+          zipFilename: string;
+          attachmentId: string;
+          xmls: { entryName: string; buffer: Buffer }[];
+          pdfs: { entryName: string; buffer: Buffer }[];
+        }[] = [];
+
+        for (const att of zipAttachments) {
+          try {
+            const attachment = await gmail.users.messages.attachments.get({
+              userId: 'me',
+              messageId: msgRef.id!,
+              id: att.attachmentId,
+            });
+            const dataBase64Url = attachment.data.data;
+            if (dataBase64Url) {
+              const buffer = Buffer.from(dataBase64Url, 'base64');
+              const zip = new AdmZip(buffer);
+              const zipEntries = zip.getEntries();
+              
+              const xmls: { entryName: string; buffer: Buffer }[] = [];
+              const pdfs: { entryName: string; buffer: Buffer }[] = [];
+
+              for (const entry of zipEntries) {
+                if (entry.isDirectory) continue;
+                const zipFilename = entry.entryName.split('/').pop() || entry.entryName;
+                const zipExt = zipFilename.split('.').pop()?.toLowerCase();
+                if (zipExt === 'xml') {
+                  xmls.push({ entryName: entry.entryName, buffer: entry.getData() });
+                } else if (zipExt === 'pdf') {
+                  pdfs.push({ entryName: entry.entryName, buffer: entry.getData() });
+                }
+              }
+
+              extractedZips.push({ zipFilename: att.filename, attachmentId: att.attachmentId, xmls, pdfs });
+
+              // Parse XML files found in the ZIP
+              for (const xmlFile of xmls) {
+                const xmlContent = xmlFile.buffer.toString('utf-8');
+                const parsedData = await this.parseXMLInvoice(xmlContent);
+                if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                  parsedData.messageId = msgRef.id;
+                  parsedData.attachmentId = att.attachmentId;
+                  parsedData.filename = xmlFile.entryName.split('/').pop() || xmlFile.entryName;
+                  parsedData.senderEmail = senderEmail;
+                  if (!parsedData.claveAcceso) {
+                    parsedData.claveAcceso = msgRef.id;
+                  }
+                  messageInvoices.push(parsedData);
+                  hasSuccessfulXml = true;
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to process ZIP attachment ${att.filename}:`, err);
+          }
+        }
+
+        // 3. Process PDF files ONLY if no XML parsed successfully for this message
+        if (!hasSuccessfulXml) {
+          // Process PDFs inside ZIP files first
+          for (const extZip of extractedZips) {
+            for (const pdfFile of extZip.pdfs) {
+              if (req.geminiApiKey) {
+                const parsedData = await this.parsePDFInvoice(pdfFile.buffer, req.geminiApiKey);
+                if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                  parsedData.messageId = msgRef.id;
+                  parsedData.attachmentId = extZip.attachmentId;
+                  parsedData.filename = pdfFile.entryName.split('/').pop() || pdfFile.entryName;
+                  parsedData.senderEmail = senderEmail;
+                  if (!parsedData.claveAcceso) {
+                    parsedData.claveAcceso = msgRef.id;
+                  }
+                  messageInvoices.push(parsedData);
+                }
+              }
+            }
+          }
+
+          // Process direct PDF attachments
+          for (const att of pdfAttachments) {
+            try {
+              const attachment = await gmail.users.messages.attachments.get({
+                userId: 'me',
+                messageId: msgRef.id!,
+                id: att.attachmentId,
+              });
+              const dataBase64Url = attachment.data.data;
+              if (dataBase64Url) {
+                const buffer = Buffer.from(dataBase64Url, 'base64');
+                if (req.geminiApiKey) {
+                  const parsedData = await this.parsePDFInvoice(buffer, req.geminiApiKey);
+                  if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                    parsedData.messageId = msgRef.id;
+                    parsedData.attachmentId = att.attachmentId;
+                    parsedData.filename = att.filename;
+                    parsedData.senderEmail = senderEmail;
+                    if (!parsedData.claveAcceso) {
+                      parsedData.claveAcceso = msgRef.id;
+                    }
+                    messageInvoices.push(parsedData);
+                  }
+                }
+              }
+            } catch (err) {
+              console.error(`Failed to process direct PDF attachment ${att.filename}:`, err);
+            }
+          }
+        }
+
+        results.push(...messageInvoices);
       } catch (msgError) {
         console.error(`Failed to retrieve details for message ID ${msgRef.id}:`, msgError);
       }
     }
 
     return results;
+  }
+
+  /**
+   * Downloads a PDF invoice attachment from a message. If the attachment is a ZIP file,
+   * it will extract and return the PDF file from within the ZIP.
+   */
+  public async downloadInvoicePDF(params: {
+    gmailMessageId: string;
+    gmailAttachmentId: string;
+    accessToken: string;
+    clientId: string;
+    clientSecret: string;
+    targetPdfFilename?: string;
+  }): Promise<{ filename: string; mimeType: string; buffer: Buffer }> {
+    // Setup OAuth2 client
+    const oauth2Client = new google.auth.OAuth2(params.clientId, params.clientSecret);
+    oauth2Client.setCredentials({ access_token: params.accessToken });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    // 1. Fetch message details to find the attachment metadata (filename, mimeType)
+    const msg = await gmail.users.messages.get({
+      userId: 'me',
+      id: params.gmailMessageId,
+    });
+
+    // Find the part matching the attachmentId
+    let targetPart: any = null;
+    const cleanTargetId = decodeURIComponent(params.gmailAttachmentId).trim();
+
+    const findPart = (parts: any[]) => {
+      for (const part of parts) {
+        if (targetPart) return;
+        
+        const currentId = part.body?.attachmentId;
+        if (currentId) {
+          const cleanCurrentId = currentId.trim();
+          // Match exactly, or match by prefix if target ID was truncated (typically due to DB VARCHAR or copy-paste limits)
+          if (cleanCurrentId === cleanTargetId || 
+              (cleanTargetId.length >= 50 && cleanCurrentId.startsWith(cleanTargetId))) {
+            targetPart = part;
+            return;
+          }
+        }
+        
+        if (part.parts && part.parts.length > 0) {
+          findPart(part.parts);
+        }
+      }
+    };
+
+    if (msg.data.payload?.parts) {
+      findPart(msg.data.payload.parts);
+    } else if (msg.data.payload?.body?.attachmentId) {
+      const cleanCurrentId = msg.data.payload.body.attachmentId.trim();
+      if (cleanCurrentId === cleanTargetId || 
+          (cleanTargetId.length >= 50 && cleanCurrentId.startsWith(cleanTargetId))) {
+        targetPart = msg.data.payload;
+      }
+    }
+
+
+
+    if (!targetPart) {
+      // Diagnostic log to see available IDs in the message
+      const availableIds: string[] = [];
+      const collectIds = (parts: any[]) => {
+        for (const part of parts) {
+          if (part.body?.attachmentId) {
+            availableIds.push(part.body.attachmentId);
+          }
+          if (part.parts && part.parts.length > 0) {
+            collectIds(part.parts);
+          }
+        }
+      };
+      if (msg.data.payload?.parts) {
+        collectIds(msg.data.payload.parts);
+      } else if (msg.data.payload?.body?.attachmentId) {
+        availableIds.push(msg.data.payload.body.attachmentId);
+      }
+      
+      console.error(`Attachment matching "${params.gmailAttachmentId}" not found. Available IDs:`, availableIds);
+      throw new Error(`Attachment with ID ${params.gmailAttachmentId} not found in message ${params.gmailMessageId}`);
+    }
+
+    const filename = targetPart.filename || 'attachment';
+    const mimeType = targetPart.mimeType || 'application/octet-stream';
+    const ext = filename.split('.').pop()?.toLowerCase();
+
+    // 2. Fetch the attachment content using the FULL ID from targetPart
+    const attachment = await gmail.users.messages.attachments.get({
+      userId: 'me',
+      messageId: params.gmailMessageId,
+      id: targetPart.body.attachmentId,
+    });
+
+    const dataBase64Url = attachment.data.data;
+    if (!dataBase64Url) {
+      throw new Error(`No data found for attachment ${targetPart.body.attachmentId}`);
+    }
+
+    const attachmentBuffer = Buffer.from(dataBase64Url, 'base64');
+
+    // 3. Handle ZIP files
+    if (ext === 'zip') {
+      const zip = new AdmZip(attachmentBuffer);
+      const zipEntries = zip.getEntries();
+      
+      let pdfEntry: any = null;
+      if (params.targetPdfFilename) {
+        pdfEntry = zipEntries.find(entry => entry.entryName === params.targetPdfFilename || entry.entryName.endsWith('/' + params.targetPdfFilename));
+      } else {
+        // Find first PDF
+        pdfEntry = zipEntries.find(entry => entry.entryName.split('.').pop()?.toLowerCase() === 'pdf');
+      }
+
+      if (!pdfEntry) {
+        throw new Error(`No PDF file found inside the ZIP attachment`);
+      }
+
+      return {
+        filename: pdfEntry.entryName.split('/').pop() || pdfEntry.entryName,
+        mimeType: 'application/pdf',
+        buffer: pdfEntry.getData(),
+      };
+    }
+
+    // 4. Handle direct PDF files (or fallback if it's not a ZIP)
+    return {
+      filename,
+      mimeType,
+      buffer: attachmentBuffer,
+    };
+  }
+
+  private cleanParsedData(data: ParsedInvoiceData): ParsedInvoiceData {
+    return Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined && v !== null)
+    ) as ParsedInvoiceData;
   }
 }

@@ -15,11 +15,33 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// API Key authentication middleware
+const requireApiKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const serviceApiKey = process.env.SERVICE_API_KEY;
+  if (!serviceApiKey) {
+    console.warn('Warning: SERVICE_API_KEY is not configured in the environment.');
+    return next();
+  }
+
+  const apiKey = req.headers['x-api-key'] || req.query.apiKey;
+  if (!apiKey || apiKey !== serviceApiKey) {
+    res.status(401).json({
+      userMessage: 'No autorizado.',
+      technicalError: 'Invalid or missing API key (x-api-key header or apiKey query parameter)',
+    });
+    return;
+  }
+
+  next();
+};
+
 // Controller instantiation
 const scannerController = new ScannerController();
 
 // Routes
-app.post('/scan', scannerController.scan);
+app.post('/scan', requireApiKey, scannerController.scan);
+app.get('/download-pdf', requireApiKey, scannerController.downloadPDF);
+app.post('/download-pdf', requireApiKey, scannerController.downloadPDF);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

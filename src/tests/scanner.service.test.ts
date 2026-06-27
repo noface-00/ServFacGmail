@@ -1,4 +1,4 @@
-import { ScannerService, ScanRequest } from './scanner.service.js';
+import { ScannerService, ScanRequest } from '../scanner.service.js';
 import { google } from 'googleapis';
 import { GoogleGenAI } from '@google/genai';
 import AdmZip from 'adm-zip';
@@ -23,6 +23,7 @@ describe('ScannerService', () => {
     clientId: 'mock-client-id',
     clientSecret: 'mock-client-secret',
     supplierEmails: ['supplier@example.com'],
+    sinceDate: '2026-06-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
@@ -127,19 +128,25 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('dte.xml', 'text/xml', Buffer.from(xmlChile));
 
-      const result = await scannerService.scanInbox(defaultScanRequest);
+      const result = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].filename).toBe('dte.xml');
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
         supplierRuc: '76123456-7',
         supplierName: 'Distribuidora SpA',
         total: 119000,
+        moneda: 'CLP',
+        filename: 'dte.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Filtro de Aceite',
             cantidad: 5,
             precioUnitario: 20000,
+            total: 100000,
           },
         ],
       });
@@ -175,18 +182,24 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('ubl.xml', 'text/xml', Buffer.from(xmlUBL));
 
-      const result = await scannerService.scanInbox(defaultScanRequest);
+      const result = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
         supplierRuc: '20123456789',
         supplierName: 'UBL Supplier S.A.C.',
         total: 2500.5,
+        filename: 'ubl.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Servicio de Desarrollo',
             cantidad: 1,
             precioUnitario: 2500.5,
+            total: 2500.5,
           },
         ],
       });
@@ -194,7 +207,7 @@ describe('ScannerService', () => {
 
     test('should parse Mexico (CFDI) XML structure correctly', async () => {
       const xmlCFDI = `
-        <cfdi:Comprobante Total="1500.00" xmlns:cfdi="http://www.sat.gob.mx/cfd/4">
+        <cfdi:Comprobante Total="1500.00" SubTotal="1500.00" xmlns:cfdi="http://www.sat.gob.mx/cfd/4">
           <cfdi:Emisor Rfc="ABC123456T1" Nombre="CFDI Emisor SA de CV"/>
           <cfdi:Conceptos>
             <cfdi:Concepto Descripcion="Consultoria TI" Cantidad="2" ValorUnitario="750.00"/>
@@ -204,18 +217,25 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('cfdi.xml', 'text/xml', Buffer.from(xmlCFDI));
 
-      const result = await scannerService.scanInbox(defaultScanRequest);
+      const result = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
         supplierRuc: 'ABC123456T1',
         supplierName: 'CFDI Emisor SA de CV',
         total: 1500,
+        subtotal: 1500,
+        filename: 'cfdi.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Consultoria TI',
             cantidad: 2,
             precioUnitario: 750,
+            total: 1500,
           },
         ],
       });
@@ -243,18 +263,25 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('ecuador.xml', 'text/xml', Buffer.from(xmlEcuador));
 
-      const result = await scannerService.scanInbox(defaultScanRequest);
+      const result = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
         supplierRuc: '1791234567001',
         supplierName: 'Ecuadorian Supplier CIA. LTDA.',
         total: 450,
+        moneda: 'USD',
+        filename: 'ecuador.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Mantenimiento de Servidores',
             cantidad: 3,
             precioUnitario: 150,
+            total: 450,
           },
         ],
       });
@@ -289,19 +316,25 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('ecuador_envelope.xml', 'text/xml', Buffer.from(xmlEcuadorCDATA));
 
-      const result = await scannerService.scanInbox(defaultScanRequest);
+      const result = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].filename).toBe('ecuador_envelope.xml');
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
         supplierRuc: '1791234567001',
         supplierName: 'Ecuadorian Supplier CIA. LTDA.',
         total: 450,
+        moneda: 'USD',
+        filename: 'ecuador_envelope.xml',
+        senderEmail: 'supplier@example.com',
         items: [
           {
             nombre: 'Mantenimiento de Servidores',
             cantidad: 3,
             precioUnitario: 150,
+            total: 450,
           },
         ],
       });
@@ -318,20 +351,25 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('generic.xml', 'text/xml', Buffer.from(xmlGeneric));
 
-      const result = await scannerService.scanInbox(defaultScanRequest);
+      const result = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
         supplierRuc: '12345',
         supplierName: 'Generic Company',
         total: 999,
+        filename: 'generic.xml',
+        senderEmail: 'supplier@example.com',
         items: [],
       });
     });
   });
 
-  describe('ZIP Decompression', () => {
-    test('should extract and parse XML and PDF from ZIP attachment', async () => {
+  describe('ZIP Decompression & XML Prioritization', () => {
+    test('should extract and parse XML from ZIP attachment, skipping PDF when XML is successful', async () => {
       const xmlChile = `
         <DTE>
           <Documento>
@@ -355,7 +393,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('invoices.zip', 'application/zip', zipBuffer);
 
-      // We provide geminiApiKey to parse the nested PDF
+      // We mock Gemini, but it should NOT be called because the XML parses successfully
       mockInteractionsCreate.mockResolvedValue({
         status: 'completed',
         output_text: JSON.stringify({
@@ -363,7 +401,7 @@ describe('ScannerService', () => {
           supplierName: 'Gemini Zipped Vendor',
           total: 20000,
           items: [
-            { nombre: 'Zipped PDF Item', cantidad: 1, precioUnitario: 20000 }
+            { nombre: 'Zipped PDF Item', cantidad: 1, precioUnitario: 20000, total: 20000 }
           ]
         }),
       });
@@ -373,20 +411,24 @@ describe('ScannerService', () => {
         geminiApiKey: 'mock-gemini-key',
       };
 
-      const result = await scannerService.scanInbox(requestWithGemini);
+      const result = await scannerService.scan(requestWithGemini);
 
-      // Should find 2 attachments inside the zip: 1 xml and 1 pdf
-      expect(result).toHaveLength(2);
+      // XML is prioritized, so it should only find 1 parsed invoice and NOT run Gemini
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
+        supplierRuc: '76123456-7',
+        supplierName: 'Distribuidora SpA',
+        total: 1000,
+        moneda: 'CLP',
+        filename: 'nested-dte.xml',
+        senderEmail: 'supplier@example.com',
+        items: undefined,
+      });
 
-      const xmlResult = result.find(r => r.filename === 'nested-dte.xml');
-      const pdfResult = result.find(r => r.filename === 'nested-invoice.pdf');
-
-      expect(xmlResult).toBeDefined();
-      expect(xmlResult?.parsedData?.total).toBe(1000);
-
-      expect(pdfResult).toBeDefined();
-      expect(pdfResult?.parsedData?.total).toBe(20000);
-      expect(pdfResult?.parsedData?.supplierName).toBe('Gemini Zipped Vendor');
+      expect(mockInteractionsCreate).not.toHaveBeenCalled();
     });
   });
 
@@ -401,7 +443,7 @@ describe('ScannerService', () => {
           supplierName: 'PDF Vendor LLC',
           total: 10500.5,
           items: [
-            { nombre: 'Consulting', cantidad: 1, precioUnitario: 10500.5 }
+            { nombre: 'Consulting', cantidad: 1, precioUnitario: 10500.5, total: 10500.5 }
           ]
         }),
       });
@@ -411,15 +453,20 @@ describe('ScannerService', () => {
         geminiApiKey: 'valid-gemini-key',
       };
 
-      const result = await scannerService.scanInbox(requestWithGemini);
+      const result = await scannerService.scan(requestWithGemini);
 
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toEqual({
+      expect(result[0]).toEqual({
+        messageId: 'msg-123',
+        attachmentId: 'att-555',
+        claveAcceso: 'msg-123',
         supplierRuc: '77665544-3',
         supplierName: 'PDF Vendor LLC',
         total: 10500.5,
+        filename: 'invoice.pdf',
+        senderEmail: 'supplier@example.com',
         items: [
-          { nombre: 'Consulting', cantidad: 1, precioUnitario: 10500.5 }
+          { nombre: 'Consulting', cantidad: 1, precioUnitario: 10500.5, total: 10500.5 }
         ]
       });
 
@@ -435,13 +482,98 @@ describe('ScannerService', () => {
       expect(mockInteractionsCreate).toHaveBeenCalledTimes(1);
     });
 
-    test('should NOT parse PDF (parsedData undefined) when geminiApiKey is NOT provided', async () => {
+    test('should NOT parse PDF (returns empty list) when geminiApiKey is NOT provided', async () => {
       setupGmailAttachmentMock('invoice.pdf', 'application/pdf', Buffer.from('%PDF-1.4 dummy pdf', 'utf-8'));
 
-      const result = await scannerService.scanInbox(defaultScanRequest);
+      const result = await scannerService.scan(defaultScanRequest);
 
+      expect(result).toHaveLength(0);
+      expect(mockInteractionsCreate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('XML vs PDF Prioritization (Multiple Attachments)', () => {
+    test('should only parse XML and skip PDF when both are attached to the same message', async () => {
+      // Mock a message with two attachments: one XML and one PDF
+      mockList.mockResolvedValue({
+        data: {
+          messages: [{ id: 'msg-prioritize' }],
+        },
+      });
+
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-prioritize',
+          payload: {
+            headers: [
+              { name: 'Subject', value: 'Factura Doble' },
+              { name: 'Date', value: 'Fri, 26 Jun 2026 12:00:00 GMT' },
+              { name: 'From', value: 'Supplier <supplier@example.com>' },
+            ],
+            parts: [
+              {
+                filename: 'invoice.xml',
+                mimeType: 'text/xml',
+                body: { attachmentId: 'att-xml' },
+              },
+              {
+                filename: 'invoice.pdf',
+                mimeType: 'application/pdf',
+                body: { attachmentId: 'att-pdf' },
+              },
+            ],
+          },
+        },
+      });
+
+      // Mock XML attachment content
+      const xmlEcuador = `
+        <factura>
+          <infoTributaria>
+            <ruc>1791234567001</ruc>
+            <razonSocial>Ecuadorian Supplier CIA. LTDA.</razonSocial>
+          </infoTributaria>
+          <infoFactura>
+            <importeTotal>450.00</importeTotal>
+          </infoFactura>
+        </factura>
+      `;
+
+      // Mock get attachment for XML, should throw if pdf is downloaded
+      mockAttachmentsGet.mockImplementation((params) => {
+        if (params.id === 'att-xml') {
+          return Promise.resolve({
+            data: {
+              data: Buffer.from(xmlEcuador).toString('base64'),
+            },
+          });
+        }
+        return Promise.reject(new Error('Should not fetch PDF!'));
+      });
+
+      const requestWithGemini = {
+        ...defaultScanRequest,
+        geminiApiKey: 'valid-gemini-key',
+      };
+
+      const result = await scannerService.scan(requestWithGemini);
+
+      // Should only contain 1 parsed invoice (the XML one)
       expect(result).toHaveLength(1);
-      expect(result[0].parsedData).toBeUndefined();
+      expect(result[0]).toEqual({
+        messageId: 'msg-prioritize',
+        attachmentId: 'att-xml',
+        claveAcceso: 'msg-prioritize',
+        supplierRuc: '1791234567001',
+        supplierName: 'Ecuadorian Supplier CIA. LTDA.',
+        total: 450,
+        moneda: 'USD',
+        filename: 'invoice.xml',
+        senderEmail: 'supplier@example.com',
+        items: undefined,
+      });
+
+      // Verify Gemini was NEVER called for the PDF
       expect(mockInteractionsCreate).not.toHaveBeenCalled();
     });
   });
@@ -456,7 +588,7 @@ describe('ScannerService', () => {
         sinceDate: '2026-06-01T00:00:00.000Z',
       };
 
-      await scannerService.scanInbox(request);
+      await scannerService.scan(request);
 
       expect(mockList).toHaveBeenCalledWith(expect.objectContaining({
         userId: 'me',
@@ -470,6 +602,7 @@ describe('ScannerService', () => {
       const request: ScanRequest = {
         ...defaultScanRequest,
         supplierEmails: ['a@test.com'],
+        sinceDate: undefined,
       };
 
       const thirtyDaysAgo = new Date();
@@ -479,7 +612,7 @@ describe('ScannerService', () => {
       const dd = String(thirtyDaysAgo.getUTCDate()).padStart(2, '0');
       const expectedAfter = `after:${yyyy}/${mm}/${dd}`;
 
-      await scannerService.scanInbox(request);
+      await scannerService.scan(request);
 
       expect(mockList).toHaveBeenCalledWith(expect.objectContaining({
         q: expect.stringContaining(expectedAfter),
@@ -492,9 +625,110 @@ describe('ScannerService', () => {
         supplierEmails: [],
       };
 
-      const result = await scannerService.scanInbox(request);
+      const result = await scannerService.scan(request);
       expect(result).toEqual([]);
       expect(mockList).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('downloadInvoicePDF', () => {
+    test('should download a direct PDF attachment correctly', async () => {
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-123',
+          payload: {
+            filename: 'factura_123.pdf',
+            mimeType: 'application/pdf',
+            body: { attachmentId: 'att-555' },
+          },
+        },
+      });
+
+      mockAttachmentsGet.mockResolvedValue({
+        data: {
+          data: Buffer.from('pdf-binary-data').toString('base64'),
+        },
+      });
+
+      const result = await scannerService.downloadInvoicePDF({
+        gmailMessageId: 'msg-123',
+        gmailAttachmentId: 'att-555',
+        accessToken: 'token',
+        clientId: 'id',
+        clientSecret: 'secret',
+      });
+
+      expect(result.filename).toBe('factura_123.pdf');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.buffer.toString()).toBe('pdf-binary-data');
+
+      expect(mockGet).toHaveBeenCalledWith({
+        userId: 'me',
+        id: 'msg-123',
+      });
+      expect(mockAttachmentsGet).toHaveBeenCalledWith({
+        userId: 'me',
+        messageId: 'msg-123',
+        id: 'att-555',
+      });
+    });
+
+    test('should download and extract PDF from ZIP attachment correctly', async () => {
+      // Create a mock zip with a pdf inside
+      const zip = new AdmZip();
+      zip.addFile('factura_compresa.pdf', Buffer.from('inner-pdf-data'));
+      const zipBuffer = zip.toBuffer();
+
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-123',
+          payload: {
+            filename: 'invoice.zip',
+            mimeType: 'application/zip',
+            body: { attachmentId: 'att-zip' },
+          },
+        },
+      });
+
+      mockAttachmentsGet.mockResolvedValue({
+        data: {
+          data: zipBuffer.toString('base64'),
+        },
+      });
+
+      const result = await scannerService.downloadInvoicePDF({
+        gmailMessageId: 'msg-123',
+        gmailAttachmentId: 'att-zip',
+        accessToken: 'token',
+        clientId: 'id',
+        clientSecret: 'secret',
+      });
+
+      expect(result.filename).toBe('factura_compresa.pdf');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.buffer.toString()).toBe('inner-pdf-data');
+    });
+
+    test('should throw error if attachment not found in message parts', async () => {
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-123',
+          payload: {
+            filename: 'somefile.txt',
+            body: { attachmentId: 'att-different' },
+          },
+        },
+      });
+
+      await expect(
+        scannerService.downloadInvoicePDF({
+          gmailMessageId: 'msg-123',
+          gmailAttachmentId: 'att-missing',
+          accessToken: 'token',
+          clientId: 'id',
+          clientSecret: 'secret',
+        })
+      ).rejects.toThrow('Attachment with ID att-missing not found in message msg-123');
     });
   });
 });
