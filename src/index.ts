@@ -19,8 +19,12 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const requireApiKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const serviceApiKey = process.env.SERVICE_API_KEY;
   if (!serviceApiKey) {
-    console.warn('Warning: SERVICE_API_KEY is not configured in the environment.');
-    return next();
+    console.error('FATAL: SERVICE_API_KEY is not configured in the environment. Rejecting all requests.');
+    res.status(503).json({
+      userMessage: 'Servicio no disponible temporalmente debido a un error de configuración.',
+      technicalError: 'SERVICE_API_KEY is not configured in the environment',
+    });
+    return;
   }
 
   const apiKey = req.headers['x-api-key'] || req.query.apiKey;

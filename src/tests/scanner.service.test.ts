@@ -128,7 +128,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('dte.xml', 'text/xml', Buffer.from(xmlChile));
 
-      const result = await scannerService.scan(defaultScanRequest);
+      const { facturas: result } = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -182,7 +182,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('ubl.xml', 'text/xml', Buffer.from(xmlUBL));
 
-      const result = await scannerService.scan(defaultScanRequest);
+      const { facturas: result } = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -217,7 +217,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('cfdi.xml', 'text/xml', Buffer.from(xmlCFDI));
 
-      const result = await scannerService.scan(defaultScanRequest);
+      const { facturas: result } = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -263,7 +263,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('ecuador.xml', 'text/xml', Buffer.from(xmlEcuador));
 
-      const result = await scannerService.scan(defaultScanRequest);
+      const { facturas: result } = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -316,7 +316,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('ecuador_envelope.xml', 'text/xml', Buffer.from(xmlEcuadorCDATA));
 
-      const result = await scannerService.scan(defaultScanRequest);
+      const { facturas: result } = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -351,7 +351,7 @@ describe('ScannerService', () => {
 
       setupGmailAttachmentMock('generic.xml', 'text/xml', Buffer.from(xmlGeneric));
 
-      const result = await scannerService.scan(defaultScanRequest);
+      const { facturas: result } = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -411,7 +411,7 @@ describe('ScannerService', () => {
         geminiApiKey: 'mock-gemini-key',
       };
 
-      const result = await scannerService.scan(requestWithGemini);
+      const { facturas: result } = await scannerService.scan(requestWithGemini);
 
       // XML is prioritized, so it should only find 1 parsed invoice and NOT run Gemini
       expect(result).toHaveLength(1);
@@ -453,7 +453,7 @@ describe('ScannerService', () => {
         geminiApiKey: 'valid-gemini-key',
       };
 
-      const result = await scannerService.scan(requestWithGemini);
+      const { facturas: result } = await scannerService.scan(requestWithGemini);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -485,7 +485,7 @@ describe('ScannerService', () => {
     test('should NOT parse PDF (returns empty list) when geminiApiKey is NOT provided', async () => {
       setupGmailAttachmentMock('invoice.pdf', 'application/pdf', Buffer.from('%PDF-1.4 dummy pdf', 'utf-8'));
 
-      const result = await scannerService.scan(defaultScanRequest);
+      const { facturas: result } = await scannerService.scan(defaultScanRequest);
 
       expect(result).toHaveLength(0);
       expect(mockInteractionsCreate).not.toHaveBeenCalled();
@@ -556,7 +556,7 @@ describe('ScannerService', () => {
         geminiApiKey: 'valid-gemini-key',
       };
 
-      const result = await scannerService.scan(requestWithGemini);
+      const { facturas: result } = await scannerService.scan(requestWithGemini);
 
       // Should only contain 1 parsed invoice (the XML one)
       expect(result).toHaveLength(1);
@@ -592,7 +592,7 @@ describe('ScannerService', () => {
 
       expect(mockList).toHaveBeenCalledWith(expect.objectContaining({
         userId: 'me',
-        q: '(from:a@test.com OR from:b@test.com) has:attachment after:2026/06/01',
+        q: '(from:a@test.com OR from:b@test.com) has:attachment {filename:pdf filename:xml filename:zip} after:2026/06/01',
       }));
     });
 
@@ -626,8 +626,201 @@ describe('ScannerService', () => {
       };
 
       const result = await scannerService.scan(request);
-      expect(result).toEqual([]);
+      expect(result).toEqual({ facturas: [], fallidas: [], truncated: false });
       expect(mockList).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Gmail Pagination and Error Collection', () => {
+    test('should paginate through message list pages using nextPageToken', async () => {
+      // Mock two pages of message list
+      mockList
+        .mockResolvedValueOnce({
+          data: {
+            messages: [{ id: 'msg-page1' }],
+            nextPageToken: 'token-page-2',
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            messages: [{ id: 'msg-page2' }],
+          },
+        });
+
+      // Mock message details for both messages
+      mockGet.mockImplementation((params) => {
+        const id = params.id;
+        return Promise.resolve({
+          data: {
+            id,
+            payload: {
+              headers: [
+                { name: 'Subject', value: `Invoice ${id}` },
+                { name: 'Date', value: 'Fri, 26 Jun 2026 12:00:00 GMT' },
+                { name: 'From', value: 'Supplier <supplier@example.com>' },
+              ],
+              parts: [
+                {
+                  filename: `${id}.xml`,
+                  mimeType: 'text/xml',
+                  body: { attachmentId: `att-${id}` },
+                },
+              ],
+            },
+          },
+        });
+      });
+
+      // Mock DTE xml content
+      const xmlChile = `
+        <DTE version="1.0">
+          <Documento ID="F123">
+            <Encabezado>
+              <Emisor>
+                <RUTEmisor>76123456-7</RUTEmisor>
+                <RznSoc>Distribuidora SpA</RznSoc>
+              </Emisor>
+              <Totales>
+                <MntTotal>1000</MntTotal>
+              </Totales>
+            </Encabezado>
+          </Documento>
+        </DTE>
+      `;
+
+      mockAttachmentsGet.mockResolvedValue({
+        data: {
+          data: Buffer.from(xmlChile).toString('base64'),
+        },
+      });
+
+      const { facturas, fallidas, truncated } = await scannerService.scan(defaultScanRequest);
+
+      expect(mockList).toHaveBeenCalledTimes(2);
+      expect(mockList).toHaveBeenNthCalledWith(1, expect.objectContaining({ pageToken: undefined }));
+      expect(mockList).toHaveBeenNthCalledWith(2, expect.objectContaining({ pageToken: 'token-page-2' }));
+
+      expect(facturas).toHaveLength(2);
+      expect(facturas[0].messageId).toBe('msg-page1');
+      expect(facturas[1].messageId).toBe('msg-page2');
+      expect(fallidas).toHaveLength(0);
+      expect(truncated).toBe(false);
+    });
+
+    test('should set truncated to true and stop paginating when messages exceed safety cap', async () => {
+      const dummyMessages = Array.from({ length: 500 }, (_, i) => ({ id: `msg-${i}` }));
+      mockList.mockResolvedValueOnce({
+        data: {
+          messages: dummyMessages,
+          nextPageToken: 'token-page-2',
+        },
+      });
+
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'dummy',
+          payload: {},
+        },
+      });
+
+      const { facturas, fallidas, truncated } = await scannerService.scan(defaultScanRequest);
+
+      expect(mockList).toHaveBeenCalledTimes(1);
+      expect(truncated).toBe(true);
+    });
+
+    test('should accumulate detailed failures when processing errors occur', async () => {
+      // Mock list with three messages
+      mockList.mockResolvedValue({
+        data: {
+          messages: [
+            { id: 'msg-fail-detail' },
+            { id: 'msg-fail-xml' },
+            { id: 'msg-fail-pdf' },
+          ],
+        },
+      });
+
+      // Mock message details: msg-fail-detail fails to get details, others succeed but have bad data
+      mockGet.mockImplementation((params) => {
+        const id = params.id;
+        if (id === 'msg-fail-detail') {
+          return Promise.reject(new Error('Network error getting message details'));
+        }
+        
+        const filename = id === 'msg-fail-xml' ? 'bad.xml' : 'bad.pdf';
+        const mimeType = id === 'msg-fail-xml' ? 'text/xml' : 'application/pdf';
+        
+        return Promise.resolve({
+          data: {
+            id,
+            payload: {
+              headers: [
+                { name: 'Subject', value: `Invoice ${id}` },
+                { name: 'Date', value: 'Fri, 26 Jun 2026 12:00:00 GMT' },
+                { name: 'From', value: 'Supplier <supplier@example.com>' },
+              ],
+              parts: [
+                {
+                  filename,
+                  mimeType,
+                  body: { attachmentId: `att-${id}` },
+                },
+              ],
+            },
+          },
+        });
+      });
+
+      // Mock xml fetch return bad XML, and mock pdf fetch
+      mockAttachmentsGet.mockImplementation((params) => {
+        if (params.messageId === 'msg-fail-xml') {
+          return Promise.resolve({
+            data: {
+              data: Buffer.from('<invalid-xml>...').toString('base64'),
+            },
+          });
+        }
+        // msg-fail-pdf
+        return Promise.resolve({
+          data: {
+            data: Buffer.from('%PDF-1.4 dummy').toString('base64'),
+          },
+        });
+      });
+
+      // Mock Gemini error
+      mockInteractionsCreate.mockRejectedValue(new Error('Gemini API quota exceeded'));
+
+      const requestWithGemini = {
+        ...defaultScanRequest,
+        geminiApiKey: 'mock-gemini-key',
+      };
+
+      const { facturas, fallidas } = await scannerService.scan(requestWithGemini);
+
+      expect(facturas).toHaveLength(0);
+      expect(fallidas).toHaveLength(3);
+
+      // Verify fail getting details
+      expect(fallidas).toContainEqual(expect.objectContaining({
+        messageId: 'msg-fail-detail',
+        error: expect.stringContaining('Failed to retrieve details: Network error'),
+      }));
+
+      // Verify XML parsing failure
+      expect(fallidas).toContainEqual(expect.objectContaining({
+        messageId: 'msg-fail-xml',
+        filename: 'bad.xml',
+        error: expect.stringContaining('XML data is missing RUC, name or total'),
+      }));
+
+      // Verify PDF parsing failure
+      expect(fallidas).toContainEqual(expect.objectContaining({
+        messageId: 'msg-fail-pdf',
+        filename: 'bad.pdf',
+        error: expect.stringContaining('Direct PDF is missing RUC, name or total in Gemini extraction'),
+      }));
     });
   });
 

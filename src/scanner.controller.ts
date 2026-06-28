@@ -80,12 +80,14 @@ export class ScannerController {
       };
 
       console.log(`Starting scan${q ? ` with query "${q}"` : ` for ${supplierEmails?.length || 0} suppliers`}...`);
-      const results = await this.scannerService.scan(scanRequest);
-      console.log(`Scan completed. Found ${results.length} valid invoice attachments.`);
+      const { facturas, fallidas, truncated } = await this.scannerService.scan(scanRequest);
+      console.log(`Scan completed. Found ${facturas.length} valid invoice attachments, ${fallidas.length} failures.`);
 
       res.status(200).json({
-        facturas: results,
-        count: results.length,
+        facturas,
+        count: facturas.length,
+        fallidas,
+        truncated,
       });
     } catch (error: any) {
       console.error('Scan execution error:', error);

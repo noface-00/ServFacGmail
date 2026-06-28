@@ -171,7 +171,9 @@ Busca correos de proveedores autorizados en Gmail, descarga los archivos adjunto
         ]
       }
     ],
-    "count": 1
+    "count": 1,
+    "fallidas": [],
+    "truncated": false
   }
   ```
 
