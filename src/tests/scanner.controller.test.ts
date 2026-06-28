@@ -60,6 +60,19 @@ describe('ScannerController Integration Tests', () => {
       expect(mockScan).not.toHaveBeenCalled();
     });
 
+    test('should return 503 Service Unavailable if SERVICE_API_KEY is not configured', async () => {
+      delete process.env.SERVICE_API_KEY;
+      const response = await request(app)
+        .post('/scan')
+        .send({
+          accessToken: 'mock-token',
+        });
+
+      expect(response.status).toBe(503);
+      expect(response.body.userMessage).toContain('Servicio no disponible temporalmente');
+      expect(response.body.technicalError).toContain('SERVICE_API_KEY is not configured');
+    });
+
     test('should return 400 Bad Request if accessToken is missing', async () => {
       const response = await request(app)
         .post('/scan')
@@ -93,7 +106,7 @@ describe('ScannerController Integration Tests', () => {
     });
 
     test('should accept accessToken from Authorization Header', async () => {
-      mockScan.mockResolvedValue([]);
+      mockScan.mockResolvedValue({ facturas: [], fallidas: [], truncated: false });
       const response = await request(app)
         .post('/scan')
         .set('x-api-key', 'test-api-key')
@@ -150,7 +163,7 @@ describe('ScannerController Integration Tests', () => {
     });
 
     test('should fallback to default env supplierEmails split when omitted in body', async () => {
-      mockScan.mockResolvedValue([]);
+      mockScan.mockResolvedValue({ facturas: [], fallidas: [], truncated: false });
       const response = await request(app)
         .post('/scan')
         .set('x-api-key', 'test-api-key')
@@ -177,7 +190,7 @@ describe('ScannerController Integration Tests', () => {
         },
       ];
 
-      mockScan.mockResolvedValue(mockResult);
+      mockScan.mockResolvedValue({ facturas: mockResult, fallidas: [], truncated: false });
 
       const response = await request(app)
         .post('/scan')
@@ -195,6 +208,8 @@ describe('ScannerController Integration Tests', () => {
       expect(response.body).toEqual({
         facturas: mockResult,
         count: mockResult.length,
+        fallidas: [],
+        truncated: false,
       });
       expect(mockScan).toHaveBeenCalledWith({
         accessToken: 'mock-token',
