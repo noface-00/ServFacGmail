@@ -923,5 +923,200 @@ describe('ScannerService', () => {
         })
       ).rejects.toThrow('Attachment with ID att-missing not found in message msg-123');
     });
+
+    test('should fall back to direct fetch if requested ID is long and not in message parts', async () => {
+      const longOldId = 'ANGjdJ_long_old_id_with_more_than_fifty_characters_abcdefghij';
+      
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-123',
+          payload: {
+            parts: [
+              {
+                filename: 'factura1.pdf',
+                mimeType: 'application/pdf',
+                body: { attachmentId: 'some-other-id-1' },
+              },
+              {
+                filename: 'factura2.pdf',
+                mimeType: 'application/pdf',
+                body: { attachmentId: 'some-other-id-2' },
+              }
+            ]
+          },
+        },
+      });
+
+      mockAttachmentsGet.mockResolvedValue({
+        data: {
+          data: Buffer.from('%PDF-1.4 mock binary pdf data').toString('base64'),
+        },
+      });
+
+      const result = await scannerService.downloadInvoicePDF({
+        gmailMessageId: 'msg-123',
+        gmailAttachmentId: longOldId,
+        accessToken: 'token',
+        clientId: 'id',
+        clientSecret: 'secret',
+      });
+
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.buffer.toString()).toBe('%PDF-1.4 mock binary pdf data');
+      expect(mockAttachmentsGet).toHaveBeenCalledWith({
+        userId: 'me',
+        messageId: 'msg-123',
+        id: longOldId,
+      });
+    });
+
+    test('should fall back to single attachment if exact ID is not found and length >= 50', async () => {
+      const longOldId = 'ANGjdJ_long_old_id_with_more_than_fifty_characters_abcdefghij';
+      const longNewId = 'ANGjdJ_long_new_id_with_more_than_fifty_characters_klmnopqrst';
+      
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-123',
+          payload: {
+            filename: 'single_invoice.pdf',
+            mimeType: 'application/pdf',
+            body: { attachmentId: longNewId },
+          },
+        },
+      });
+
+      mockAttachmentsGet.mockResolvedValue({
+        data: {
+          data: Buffer.from('pdf-data-single').toString('base64'),
+        },
+      });
+
+      const result = await scannerService.downloadInvoicePDF({
+        gmailMessageId: 'msg-123',
+        gmailAttachmentId: longOldId,
+        accessToken: 'token',
+        clientId: 'id',
+        clientSecret: 'secret',
+      });
+
+      expect(result.filename).toBe('single_invoice.pdf');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.buffer.toString()).toBe('pdf-data-single');
+      expect(mockAttachmentsGet).toHaveBeenCalledWith({
+        userId: 'me',
+        messageId: 'msg-123',
+        id: longNewId, // Uses the new ID from single attachment fallback
+      });
+    });
+
+    test('should swap XML attachment to PDF attachment if both exist and downloadPDF is called', async () => {
+      const xmlId = 'ANGjdJ_xml_id_with_more_than_fifty_characters_abcdefghij';
+      const pdfId = 'ANGjdJ_pdf_id_with_more_than_fifty_characters_klmnopqrst';
+      
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-123',
+          payload: {
+            parts: [
+              {
+                filename: 'invoice.xml',
+                mimeType: 'application/xml',
+                body: { attachmentId: xmlId },
+              },
+              {
+                filename: 'invoice.pdf',
+                mimeType: 'application/pdf',
+                body: { attachmentId: pdfId },
+              }
+            ]
+          },
+        },
+      });
+
+      mockAttachmentsGet.mockResolvedValue({
+        data: {
+          data: Buffer.from('pdf-data-swapped').toString('base64'),
+        },
+      });
+
+      const result = await scannerService.downloadInvoicePDF({
+        gmailMessageId: 'msg-123',
+        gmailAttachmentId: xmlId, // Calling with XML's ID
+        accessToken: 'token',
+        clientId: 'id',
+        clientSecret: 'secret',
+      });
+
+      expect(result.filename).toBe('invoice.pdf');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.buffer.toString()).toBe('pdf-data-swapped');
+      expect(mockAttachmentsGet).toHaveBeenCalledWith({
+        userId: 'me',
+        messageId: 'msg-123',
+        id: pdfId, // Successfully swapped to PDF attachment ID
+      });
+    });
+
+    test('should swap XML attachment to PDF attachment if direct fetch returns XML and PDF exists', async () => {
+      const longOldXmlId = 'ANGjdJ_long_old_xml_id_with_more_than_fifty_characters_abcdefg';
+      const pdfId = 'ANGjdJ_pdf_id_with_more_than_fifty_characters_klmnopqrst';
+      
+      mockGet.mockResolvedValue({
+        data: {
+          id: 'msg-123',
+          payload: {
+            parts: [
+              {
+                filename: 'invoice1.pdf',
+                mimeType: 'application/pdf',
+                body: { attachmentId: pdfId },
+              },
+              {
+                filename: 'invoice2.pdf',
+                mimeType: 'application/pdf',
+                body: { attachmentId: 'ANGjdJ_some_pdf_2' },
+              }
+            ]
+          },
+        },
+      });
+
+      // Mock first call returning XML, second call returning PDF
+      mockAttachmentsGet
+        .mockResolvedValueOnce({
+          data: {
+            data: Buffer.from('<xml>invoice data</xml>').toString('base64'),
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            data: Buffer.from('pdf-data-swapped-direct').toString('base64'),
+          },
+        });
+
+      const result = await scannerService.downloadInvoicePDF({
+        gmailMessageId: 'msg-123',
+        gmailAttachmentId: longOldXmlId, // requested ID not in message parts
+        accessToken: 'token',
+        clientId: 'id',
+        clientSecret: 'secret',
+      });
+
+      expect(result.filename).toBe('invoice1.pdf');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.buffer.toString()).toBe('pdf-data-swapped-direct');
+      
+      // Verify both attachments.get calls were made
+      expect(mockAttachmentsGet).toHaveBeenNthCalledWith(1, {
+        userId: 'me',
+        messageId: 'msg-123',
+        id: longOldXmlId,
+      });
+      expect(mockAttachmentsGet).toHaveBeenNthCalledWith(2, {
+        userId: 'me',
+        messageId: 'msg-123',
+        id: pdfId,
+      });
+    });
   });
 });
