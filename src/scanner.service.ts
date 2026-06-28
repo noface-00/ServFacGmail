@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import * as fs from 'fs';
 import AdmZip from 'adm-zip';
 import * as xml2js from 'xml2js';
 import { GoogleGenAI } from '@google/genai';
@@ -876,6 +877,8 @@ export class ScannerService {
       id: params.gmailMessageId,
     });
 
+
+
     // Find the part matching the attachmentId
     let targetPart: any = null;
     const cleanTargetId = decodeURIComponent(params.gmailAttachmentId).trim();
@@ -911,48 +914,179 @@ export class ScannerService {
       }
     }
 
+    // Collect all attachment parts for fallbacks
+    const allAttachmentParts: any[] = [];
+    const collectAttachmentParts = (parts: any[]) => {
+      for (const part of parts) {
+        if (part.body?.attachmentId) {
+          allAttachmentParts.push(part);
+        }
+        if (part.parts && part.parts.length > 0) {
+          collectAttachmentParts(part.parts);
+        }
+      }
+    };
+    if (msg.data.payload?.parts) {
+      collectAttachmentParts(msg.data.payload.parts);
+    } else if (msg.data.payload?.body?.attachmentId) {
+      allAttachmentParts.push(msg.data.payload);
+    }
 
-
-    if (!targetPart) {
-      // Diagnostic log to see available IDs in the message
-      const availableIds: string[] = [];
-      const collectIds = (parts: any[]) => {
-        for (const part of parts) {
-          if (part.body?.attachmentId) {
-            availableIds.push(part.body.attachmentId);
-          }
-          if (part.parts && part.parts.length > 0) {
-            collectIds(part.parts);
+    // Swap logic to prioritize PDF over ZIP or XML
+    if (targetPart && cleanTargetId.length >= 50) {
+      const ext = targetPart.filename?.split('.').pop()?.toLowerCase();
+      if (ext !== 'pdf') {
+        // 1. Prioritize direct PDF
+        const directPdf = allAttachmentParts.find(p => {
+          const pExt = p.filename?.split('.').pop()?.toLowerCase();
+          return pExt === 'pdf';
+        });
+        if (directPdf) {
+          console.log(`Matched part ${targetPart.filename} is not a PDF, but found direct PDF attachment ${directPdf.filename}. Swapping.`);
+          targetPart = directPdf;
+        } else if (ext === 'xml') {
+          // 2. Fallback to ZIP if current is XML and ZIP exists
+          const zipPart = allAttachmentParts.find(p => {
+            const pExt = p.filename?.split('.').pop()?.toLowerCase();
+            return pExt === 'zip';
+          });
+          if (zipPart) {
+            console.log(`Matched part ${targetPart.filename} is XML, but found ZIP attachment ${zipPart.filename}. Swapping.`);
+            targetPart = zipPart;
           }
         }
-      };
-      if (msg.data.payload?.parts) {
-        collectIds(msg.data.payload.parts);
-      } else if (msg.data.payload?.body?.attachmentId) {
-        availableIds.push(msg.data.payload.body.attachmentId);
       }
-      
-      console.error(`Attachment matching "${params.gmailAttachmentId}" not found. Available IDs:`, availableIds);
-      throw new Error(`Attachment with ID ${params.gmailAttachmentId} not found in message ${params.gmailMessageId}`);
     }
 
-    const filename = targetPart.filename || 'attachment';
-    const mimeType = targetPart.mimeType || 'application/octet-stream';
+    // Fallback logic if targetPart is not found
+    if (!targetPart && cleanTargetId.length >= 50) {
+      // Fallback 1: If there is exactly one attachment in the message, use it
+      if (allAttachmentParts.length === 1) {
+        targetPart = allAttachmentParts[0];
+        console.log(`Fallback: exact match not found for attachmentId, but message has exactly one attachment. Using: ${targetPart.filename}`);
+      } else if (allAttachmentParts.length > 1) {
+        // Fallback 2: Look for a PDF/ZIP attachment
+        const pdfOrZipParts = allAttachmentParts.filter(p => {
+          const ext = p.filename?.split('.').pop()?.toLowerCase();
+          return ext === 'pdf' || ext === 'zip';
+        });
+        if (pdfOrZipParts.length === 1) {
+          targetPart = pdfOrZipParts[0];
+          console.log(`Fallback: exact match not found for attachmentId, but found exactly one PDF/ZIP. Using: ${targetPart.filename}`);
+        } else if (params.targetPdfFilename) {
+          const nameMatch = allAttachmentParts.find(p => p.filename === params.targetPdfFilename);
+          if (nameMatch) {
+            targetPart = nameMatch;
+            console.log(`Fallback: exact match not found for attachmentId, but found filename match. Using: ${targetPart.filename}`);
+          }
+        }
+      }
+    }
+
+    let attachmentBuffer: Buffer;
+    let filename = params.targetPdfFilename || 'attachment';
+    let mimeType = 'application/octet-stream';
+
+    if (targetPart) {
+      filename = targetPart.filename || filename;
+      mimeType = targetPart.mimeType || mimeType;
+
+      const attachment = await gmail.users.messages.attachments.get({
+        userId: 'me',
+        messageId: params.gmailMessageId,
+        id: targetPart.body.attachmentId,
+      });
+
+      const dataBase64Url = attachment?.data?.data;
+      if (!dataBase64Url) {
+        throw new Error(`No data found for attachment ${targetPart.body.attachmentId}`);
+      }
+      attachmentBuffer = Buffer.from(dataBase64Url, 'base64');
+    } else {
+      // Fallback 3: Try fetching directly using the provided attachmentId
+      try {
+        console.log(`Fallback: targetPart not found in message payload. Trying direct get for ID: ${params.gmailAttachmentId}`);
+        const attachment = await gmail.users.messages.attachments.get({
+          userId: 'me',
+          messageId: params.gmailMessageId,
+          id: params.gmailAttachmentId,
+        });
+
+        const dataBase64Url = attachment?.data?.data;
+        if (!dataBase64Url) {
+          throw new Error(`No data found for attachment ${params.gmailAttachmentId}`);
+        }
+        attachmentBuffer = Buffer.from(dataBase64Url, 'base64');
+
+        // Detect type from buffer signature
+        let isXml = false;
+        const signature = attachmentBuffer.slice(0, 4).toString('hex');
+        if (signature === '504b0304') { // PK\x03\x04
+          mimeType = 'application/zip';
+          filename = filename.endsWith('.zip') ? filename : `${filename}.zip`;
+        } else if (attachmentBuffer.slice(0, 4).toString('utf-8') === '%PDF') {
+          mimeType = 'application/pdf';
+          filename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+        } else if (attachmentBuffer.slice(0, 10).toString('utf-8').trim().startsWith('<')) {
+          isXml = true;
+          mimeType = 'application/xml';
+          filename = filename.endsWith('.xml') ? filename : `${filename}.xml`;
+        }
+
+        // If it is not a PDF, check if we should swap it to a direct PDF/ZIP from message parts
+        if (mimeType !== 'application/pdf') {
+          // 1. Prioritize direct PDF
+          const directPdf = allAttachmentParts.find(p => {
+            const pExt = p.filename?.split('.').pop()?.toLowerCase();
+            return pExt === 'pdf';
+          });
+          if (directPdf) {
+            console.log(`Fallback direct fetch retrieved non-PDF, but found direct PDF attachment ${directPdf.filename} in message. Swapping.`);
+            const pdfAttachment = await gmail.users.messages.attachments.get({
+              userId: 'me',
+              messageId: params.gmailMessageId,
+              id: directPdf.body.attachmentId,
+            });
+            const pdfDataBase64Url = pdfAttachment?.data?.data;
+            if (pdfDataBase64Url) {
+              attachmentBuffer = Buffer.from(pdfDataBase64Url, 'base64');
+              filename = directPdf.filename;
+              mimeType = directPdf.mimeType || 'application/pdf';
+            }
+          } else if (mimeType === 'application/xml') {
+            // 2. Swap XML to ZIP
+            const zipPart = allAttachmentParts.find(p => {
+              const pExt = p.filename?.split('.').pop()?.toLowerCase();
+              return pExt === 'zip';
+            });
+            if (zipPart) {
+              console.log(`Fallback direct fetch retrieved XML, but found ZIP attachment ${zipPart.filename} in message. Swapping.`);
+              const zipAttachment = await gmail.users.messages.attachments.get({
+                userId: 'me',
+                messageId: params.gmailMessageId,
+                id: zipPart.body.attachmentId,
+              });
+              const zipDataBase64Url = zipAttachment?.data?.data;
+              if (zipDataBase64Url) {
+                attachmentBuffer = Buffer.from(zipDataBase64Url, 'base64');
+                filename = zipPart.filename;
+                mimeType = zipPart.mimeType || 'application/zip';
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        const availableIds = allAttachmentParts.map(p => p.body?.attachmentId).filter(Boolean);
+        console.error(`Attachment matching "${params.gmailAttachmentId}" not found. Available IDs:`, availableIds);
+        throw new Error(`Attachment with ID ${params.gmailAttachmentId} not found in message ${params.gmailMessageId}`);
+      }
+    }
+
     const ext = filename.split('.').pop()?.toLowerCase();
 
-    // 2. Fetch the attachment content using the FULL ID from targetPart
-    const attachment = await gmail.users.messages.attachments.get({
-      userId: 'me',
-      messageId: params.gmailMessageId,
-      id: targetPart.body.attachmentId,
-    });
-
-    const dataBase64Url = attachment.data.data;
-    if (!dataBase64Url) {
-      throw new Error(`No data found for attachment ${targetPart.body.attachmentId}`);
+    if (ext !== 'pdf' && ext !== 'zip') {
+      throw new Error(`No PDF or ZIP attachment found in message ${params.gmailMessageId}`);
     }
-
-    const attachmentBuffer = Buffer.from(dataBase64Url, 'base64');
 
     // 3. Handle ZIP files
     if (ext === 'zip') {
