@@ -217,3 +217,35 @@ Descarga el archivo PDF binario correspondiente a un adjunto de factura en Gmail
   Retorna el archivo binario del PDF listo para su descarga, configurando automáticamente las cabeceras correspondientes:
   * `Content-Type: application/pdf`
   * `Content-Disposition: attachment; filename="nombre_de_archivo.pdf"`
+
+---
+
+## Despliegue en Dokploy
+
+Este servicio está totalmente preparado para ser desplegado en **Dokploy** (una plataforma autohospedada basada en Docker) mediante el uso del `Dockerfile` multi-stage incluido.
+
+### Pasos para el Despliegue:
+
+1. **Crear la aplicación en Dokploy**:
+   - En tu panel de Dokploy, ve a **Projects**, selecciona tu proyecto (o crea uno nuevo) y crea una nueva **Application**.
+   - Conecta tu cuenta de GitHub/GitLab y selecciona el repositorio `ServFacGmail` y la rama de despliegue (por ejemplo, `main`).
+
+2. **Configurar el tipo de Build**:
+   - En la sección **Build Configuration** de la aplicación, selecciona **Dockerfile** como el método de compilación.
+   - Asegúrate de dejar la ruta del Dockerfile como `./Dockerfile` (la raíz del proyecto).
+
+3. **Configurar Variables de Entorno**:
+   - Ve a la pestaña **Environment** en la configuración de la aplicación de Dokploy.
+   - Registra las siguientes variables de entorno requeridas:
+     * `PORT`: `3005` (o el puerto en el que prefieras que escuche el contenedor).
+     * `SERVICE_API_KEY`: Tu clave secreta generada para proteger el acceso a los endpoints del servicio.
+     * `GOOGLE_CLIENT_ID`: Tu ID de cliente OAuth de Google.
+     * `GOOGLE_CLIENT_SECRET`: Tu secreto de cliente OAuth de Google.
+     * `GEMINI_API_KEY`: Tu API Key de Google Gemini (para extracción inteligente de PDFs).
+     * `SUPPLIER_EMAILS`: (Opcional) Emails de proveedores autorizados por defecto.
+
+4. **Configurar Puertos y Redirección**:
+   - En la sección de **Ports**, asegúrate de exponer el puerto configurado (ej. `3005`). Dokploy redirigirá automáticamente el tráfico HTTPS de tu dominio asignado al puerto `3005` del contenedor.
+
+5. **Desplegar**:
+   - Haz clic en **Deploy**. Dokploy clonará el repositorio, ejecutará el build multi-stage definido en el `Dockerfile` (compilando el TypeScript y descartando las dependencias de desarrollo para mantener la imagen ligera), y arrancará el servicio.
