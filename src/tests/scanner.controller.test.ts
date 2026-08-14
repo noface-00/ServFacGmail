@@ -1,8 +1,10 @@
 import request from 'supertest';
 import app from '../index.js';
+import { AccountNotFoundError } from '../accounts.service.js';
 
 const mockScan = jest.fn();
 const mockDownloadInvoicePDF = jest.fn();
+const mockGetAuthorizedClient = jest.fn();
 
 jest.mock('../scanner.service.js', () => {
   return {
@@ -15,12 +17,25 @@ jest.mock('../scanner.service.js', () => {
   };
 });
 
+jest.mock('../accounts.service.js', () => {
+  const actual = jest.requireActual('../accounts.service.js');
+  return {
+    ...actual,
+    AccountsService: jest.fn().mockImplementation(() => ({
+      getAuthorizedClient: (...args: any[]) => mockGetAuthorizedClient(...args),
+    })),
+  };
+});
+
 describe('ScannerController Integration Tests', () => {
   const originalEnv = process.env;
+  const fakeAuthClient = { fake: 'oauth2-client' };
 
   beforeEach(() => {
     mockScan.mockReset();
     mockDownloadInvoicePDF.mockReset();
+    mockGetAuthorizedClient.mockReset();
+    mockGetAuthorizedClient.mockResolvedValue(fakeAuthClient);
     // Setup environmental variables including test API Key
     process.env = {
       ...originalEnv,
@@ -51,9 +66,7 @@ describe('ScannerController Integration Tests', () => {
     test('should return 401 Unauthorized if API Key is missing or invalid', async () => {
       const response = await request(app)
         .post('/scan')
-        .send({
-          accessToken: 'mock-token',
-        });
+        .send({ accountEmail: 'compras@empresa.com' });
 
       expect(response.status).toBe(401);
       expect(response.body.userMessage).toContain('No autorizado');
@@ -64,28 +77,22 @@ describe('ScannerController Integration Tests', () => {
       delete process.env.SERVICE_API_KEY;
       const response = await request(app)
         .post('/scan')
-        .send({
-          accessToken: 'mock-token',
-        });
+        .send({ accountEmail: 'compras@empresa.com' });
 
       expect(response.status).toBe(503);
       expect(response.body.userMessage).toContain('Servicio no disponible temporalmente');
       expect(response.body.technicalError).toContain('SERVICE_API_KEY is not configured');
     });
 
-    test('should return 400 Bad Request if accessToken is missing', async () => {
+    test('should return 400 Bad Request if accountEmail is missing', async () => {
       const response = await request(app)
         .post('/scan')
         .set('x-api-key', 'test-api-key')
-        .send({
-          clientId: 'mock-id',
-          clientSecret: 'mock-secret',
-          sinceDate: '2026-06-01T00:00:00.000Z',
-        });
+        .send({ sinceDate: '2026-06-01T00:00:00.000Z' });
 
       expect(response.status).toBe(400);
-      expect(response.body.userMessage).toContain('Token de acceso no proporcionado.');
-      expect(response.body.technicalError).toContain('Missing required parameter: accessToken');
+      expect(response.body.userMessage).toContain('Cuenta de Gmail no especificada.');
+      expect(response.body.technicalError).toContain('Missing required parameter: accountEmail');
       expect(mockScan).not.toHaveBeenCalled();
     });
 
@@ -93,11 +100,7 @@ describe('ScannerController Integration Tests', () => {
       const response = await request(app)
         .post('/scan')
         .set('x-api-key', 'test-api-key')
-        .send({
-          accessToken: 'mock-token',
-          clientId: 'mock-id',
-          clientSecret: 'mock-secret',
-        });
+        .send({ accountEmail: 'compras@empresa.com' });
 
       expect(response.status).toBe(400);
       expect(response.body.userMessage).toContain('Fecha de inicio (sinceDate) no proporcionada.');
@@ -105,42 +108,16 @@ describe('ScannerController Integration Tests', () => {
       expect(mockScan).not.toHaveBeenCalled();
     });
 
-    test('should accept accessToken from Authorization Header', async () => {
-      mockScan.mockResolvedValue({ facturas: [], fallidas: [], truncated: false });
-      const response = await request(app)
-        .post('/scan')
-        .set('x-api-key', 'test-api-key')
-        .set('Authorization', 'Bearer header-token')
-        .send({
-          clientId: 'mock-id',
-          clientSecret: 'mock-secret',
-          sinceDate: '2026-06-01T00:00:00.000Z',
-        });
-
-      expect(response.status).toBe(200);
-      expect(mockScan).toHaveBeenCalledWith(expect.objectContaining({
-        accessToken: 'header-token',
-        sinceDate: '2026-06-01T00:00:00.000Z',
-      }));
-    });
-
-    test('should return 400 Bad Request if clientId is missing in both body and environment', async () => {
-      // Temporarily remove environment credentials
-      delete process.env.GOOGLE_CLIENT_ID;
-      delete process.env.GOOGLE_CLIENT_SECRET;
+    test('should return 404 if the requested Gmail account is not connected', async () => {
+      mockGetAuthorizedClient.mockRejectedValue(new AccountNotFoundError('compras@empresa.com'));
 
       const response = await request(app)
         .post('/scan')
         .set('x-api-key', 'test-api-key')
-        .send({
-          accessToken: 'mock-token',
-          clientSecret: 'mock-secret',
-          sinceDate: '2026-06-01T00:00:00.000Z',
-        });
+        .send({ accountEmail: 'compras@empresa.com', sinceDate: '2026-06-01T00:00:00.000Z' });
 
-      expect(response.status).toBe(400);
-      expect(response.body.userMessage).toContain('Credenciales del cliente OAuth');
-      expect(response.body.technicalError).toContain('Missing required parameters: clientId or clientSecret');
+      expect(response.status).toBe(404);
+      expect(response.body.userMessage).toContain('/auth/google/login');
       expect(mockScan).not.toHaveBeenCalled();
     });
 
@@ -149,9 +126,7 @@ describe('ScannerController Integration Tests', () => {
         .post('/scan')
         .set('x-api-key', 'test-api-key')
         .send({
-          accessToken: 'mock-token',
-          clientId: 'mock-id',
-          clientSecret: 'mock-secret',
+          accountEmail: 'compras@empresa.com',
           sinceDate: '2026-06-01T00:00:00.000Z',
           supplierEmails: 'not-an-array',
         });
@@ -167,12 +142,7 @@ describe('ScannerController Integration Tests', () => {
       const response = await request(app)
         .post('/scan')
         .set('x-api-key', 'test-api-key')
-        .send({
-          accessToken: 'mock-token',
-          clientId: 'mock-id',
-          clientSecret: 'mock-secret',
-          sinceDate: '2026-06-01T00:00:00.000Z',
-        });
+        .send({ accountEmail: 'compras@empresa.com', sinceDate: '2026-06-01T00:00:00.000Z' });
 
       expect(response.status).toBe(200);
       expect(mockScan).toHaveBeenCalledWith(expect.objectContaining({
@@ -180,7 +150,7 @@ describe('ScannerController Integration Tests', () => {
       }));
     });
 
-    test('should call ScannerService.scan and return 200 with { facturas, count }', async () => {
+    test('should call ScannerService.scan with the authorized client and return 200 with { facturas, count }', async () => {
       const mockResult = [
         {
           supplierRuc: '12345678-9',
@@ -196,9 +166,7 @@ describe('ScannerController Integration Tests', () => {
         .post('/scan')
         .set('x-api-key', 'test-api-key')
         .send({
-          accessToken: 'mock-token',
-          clientId: 'mock-id',
-          clientSecret: 'mock-secret',
+          accountEmail: 'compras@empresa.com',
           supplierEmails: ['supplier@test.com'],
           sinceDate: '2026-06-01T00:00:00.000Z',
           geminiApiKey: 'mock-gemini-key',
@@ -211,14 +179,13 @@ describe('ScannerController Integration Tests', () => {
         fallidas: [],
         truncated: false,
       });
+      expect(mockGetAuthorizedClient).toHaveBeenCalledWith('compras@empresa.com');
       expect(mockScan).toHaveBeenCalledWith({
-        accessToken: 'mock-token',
-        clientId: 'mock-id',
-        clientSecret: 'mock-secret',
+        authClient: fakeAuthClient,
         supplierEmails: ['supplier@test.com'],
         sinceDate: '2026-06-01T00:00:00.000Z',
         geminiApiKey: 'mock-gemini-key',
-        refreshToken: undefined,
+        q: undefined,
       });
     });
 
@@ -229,9 +196,7 @@ describe('ScannerController Integration Tests', () => {
         .post('/scan')
         .set('x-api-key', 'test-api-key')
         .send({
-          accessToken: 'mock-token',
-          clientId: 'mock-id',
-          clientSecret: 'mock-secret',
+          accountEmail: 'compras@empresa.com',
           supplierEmails: ['supplier@test.com'],
           sinceDate: '2026-06-01T00:00:00.000Z',
         });
@@ -248,10 +213,7 @@ describe('ScannerController Integration Tests', () => {
     test('should return 401 Unauthorized if API Key is missing or invalid', async () => {
       const response = await request(app)
         .get('/download-pdf')
-        .query({
-          messageId: 'msg-123',
-          attachmentId: 'att-555',
-        });
+        .query({ messageId: 'msg-123', attachmentId: 'att-555' });
 
       expect(response.status).toBe(401);
       expect(mockDownloadInvoicePDF).not.toHaveBeenCalled();
@@ -261,12 +223,33 @@ describe('ScannerController Integration Tests', () => {
       const response = await request(app)
         .get('/download-pdf')
         .set('x-api-key', 'test-api-key')
-        .query({
-          accessToken: 'mock-token',
-        });
+        .query({ accountEmail: 'compras@empresa.com' });
 
       expect(response.status).toBe(400);
       expect(response.body.userMessage).toContain('Parámetros messageId o attachmentId no proporcionados');
+      expect(mockDownloadInvoicePDF).not.toHaveBeenCalled();
+    });
+
+    test('should return 400 Bad Request if accountEmail is missing', async () => {
+      const response = await request(app)
+        .get('/download-pdf')
+        .set('x-api-key', 'test-api-key')
+        .query({ messageId: 'msg-123', attachmentId: 'att-555' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.userMessage).toContain('Cuenta de Gmail no especificada.');
+      expect(mockDownloadInvoicePDF).not.toHaveBeenCalled();
+    });
+
+    test('should return 404 if the requested Gmail account is not connected', async () => {
+      mockGetAuthorizedClient.mockRejectedValue(new AccountNotFoundError('compras@empresa.com'));
+
+      const response = await request(app)
+        .get('/download-pdf')
+        .set('x-api-key', 'test-api-key')
+        .query({ messageId: 'msg-123', attachmentId: 'att-555', accountEmail: 'compras@empresa.com' });
+
+      expect(response.status).toBe(404);
       expect(mockDownloadInvoicePDF).not.toHaveBeenCalled();
     });
 
@@ -283,21 +266,18 @@ describe('ScannerController Integration Tests', () => {
         .query({
           messageId: 'msg-123',
           attachmentId: 'att-555',
-          accessToken: 'mock-token',
-          clientId: 'mock-client',
-          clientSecret: 'mock-secret',
+          accountEmail: 'compras@empresa.com',
         });
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('application/pdf');
       expect(response.headers['content-disposition']).toBe('attachment; filename="factura.pdf"');
       expect(response.body).toEqual(Buffer.from('pdf-data'));
+      expect(mockGetAuthorizedClient).toHaveBeenCalledWith('compras@empresa.com');
       expect(mockDownloadInvoicePDF).toHaveBeenCalledWith({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: 'att-555',
-        accessToken: 'mock-token',
-        clientId: 'mock-client',
-        clientSecret: 'mock-secret',
+        authClient: fakeAuthClient,
         targetPdfFilename: undefined,
       });
     });
@@ -315,9 +295,7 @@ describe('ScannerController Integration Tests', () => {
         .send({
           messageId: 'msg-123',
           attachmentId: 'att-555',
-          accessToken: 'mock-token',
-          clientId: 'mock-client',
-          clientSecret: 'mock-secret',
+          accountEmail: 'compras@empresa.com',
           filename: 'custom.pdf',
         });
 
@@ -328,35 +306,9 @@ describe('ScannerController Integration Tests', () => {
       expect(mockDownloadInvoicePDF).toHaveBeenCalledWith({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: 'att-555',
-        accessToken: 'mock-token',
-        clientId: 'mock-client',
-        clientSecret: 'mock-secret',
+        authClient: fakeAuthClient,
         targetPdfFilename: 'custom.pdf',
       });
-    });
-
-    test('should handle authorization header correctly', async () => {
-      mockDownloadInvoicePDF.mockResolvedValue({
-        filename: 'factura.pdf',
-        mimeType: 'application/pdf',
-        buffer: Buffer.from('data'),
-      });
-
-      const response = await request(app)
-        .get('/download-pdf')
-        .set('x-api-key', 'test-api-key')
-        .set('Authorization', 'Bearer header-token')
-        .query({
-          messageId: 'msg-123',
-          attachmentId: 'att-555',
-          clientId: 'mock-client',
-          clientSecret: 'mock-secret',
-        });
-
-      expect(response.status).toBe(200);
-      expect(mockDownloadInvoicePDF).toHaveBeenCalledWith(expect.objectContaining({
-        accessToken: 'header-token',
-      }));
     });
   });
 });
