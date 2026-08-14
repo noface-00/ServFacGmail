@@ -19,9 +19,7 @@ describe('ScannerService', () => {
   let mockInteractionsCreate: jest.Mock;
 
   const defaultScanRequest: ScanRequest = {
-    accessToken: 'mock-access-token',
-    clientId: 'mock-client-id',
-    clientSecret: 'mock-client-secret',
+    authClient: {} as any,
     supplierEmails: ['supplier@example.com'],
     sinceDate: '2026-06-01T00:00:00.000Z',
   };
@@ -50,9 +48,6 @@ describe('ScannerService', () => {
     };
 
     (google.gmail as jest.Mock).mockReturnValue(mockGmailInstance);
-    (google.auth.OAuth2 as unknown as jest.Mock).mockImplementation(() => ({
-      setCredentials: jest.fn(),
-    }));
 
     // Setup Gemini API mocks
     mockInteractionsCreate = jest.fn();
@@ -592,7 +587,7 @@ describe('ScannerService', () => {
 
       expect(mockList).toHaveBeenCalledWith(expect.objectContaining({
         userId: 'me',
-        q: '(from:a@test.com OR from:b@test.com) has:attachment {filename:pdf filename:xml filename:zip} after:2026/06/01',
+        q: '((from:a@test.com OR from:b@test.com) OR (to:a@test.com OR to:b@test.com)) has:attachment {filename:pdf filename:xml filename:zip} after:2026/06/01',
       }));
     });
 
@@ -846,9 +841,7 @@ describe('ScannerService', () => {
       const result = await scannerService.downloadInvoicePDF({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: 'att-555',
-        accessToken: 'token',
-        clientId: 'id',
-        clientSecret: 'secret',
+        authClient: {} as any,
       });
 
       expect(result.filename).toBe('factura_123.pdf');
@@ -892,9 +885,7 @@ describe('ScannerService', () => {
       const result = await scannerService.downloadInvoicePDF({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: 'att-zip',
-        accessToken: 'token',
-        clientId: 'id',
-        clientSecret: 'secret',
+        authClient: {} as any,
       });
 
       expect(result.filename).toBe('factura_compresa.pdf');
@@ -917,9 +908,7 @@ describe('ScannerService', () => {
         scannerService.downloadInvoicePDF({
           gmailMessageId: 'msg-123',
           gmailAttachmentId: 'att-missing',
-          accessToken: 'token',
-          clientId: 'id',
-          clientSecret: 'secret',
+          authClient: {} as any,
         })
       ).rejects.toThrow('Attachment with ID att-missing not found in message msg-123');
     });
@@ -956,9 +945,7 @@ describe('ScannerService', () => {
       const result = await scannerService.downloadInvoicePDF({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: longOldId,
-        accessToken: 'token',
-        clientId: 'id',
-        clientSecret: 'secret',
+        authClient: {} as any,
       });
 
       expect(result.mimeType).toBe('application/pdf');
@@ -994,9 +981,7 @@ describe('ScannerService', () => {
       const result = await scannerService.downloadInvoicePDF({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: longOldId,
-        accessToken: 'token',
-        clientId: 'id',
-        clientSecret: 'secret',
+        authClient: {} as any,
       });
 
       expect(result.filename).toBe('single_invoice.pdf');
@@ -1042,9 +1027,7 @@ describe('ScannerService', () => {
       const result = await scannerService.downloadInvoicePDF({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: xmlId, // Calling with XML's ID
-        accessToken: 'token',
-        clientId: 'id',
-        clientSecret: 'secret',
+        authClient: {} as any,
       });
 
       expect(result.filename).toBe('invoice.pdf');
@@ -1097,9 +1080,7 @@ describe('ScannerService', () => {
       const result = await scannerService.downloadInvoicePDF({
         gmailMessageId: 'msg-123',
         gmailAttachmentId: longOldXmlId, // requested ID not in message parts
-        accessToken: 'token',
-        clientId: 'id',
-        clientSecret: 'secret',
+        authClient: {} as any,
       });
 
       expect(result.filename).toBe('invoice1.pdf');

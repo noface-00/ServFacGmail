@@ -1,40 +1,26 @@
 import { Request, Response } from 'express';
 import { ScannerService, ScanRequest } from './scanner.service.js';
+import { AccountsService, AccountNotFoundError } from './accounts.service.js';
 
 export class ScannerController {
   private scannerService: ScannerService;
+  private accountsService: AccountsService;
 
   constructor() {
     this.scannerService = new ScannerService();
+    this.accountsService = new AccountsService();
   }
 
   public scan = async (req: Request, res: Response): Promise<void> => {
     try {
-      let { accessToken, refreshToken, supplierEmails, sinceDate, q } = req.body;
-      const clientId = req.body.clientId || process.env.GOOGLE_CLIENT_ID;
-      const clientSecret = req.body.clientSecret || process.env.GOOGLE_CLIENT_SECRET;
+      let { accountEmail, supplierEmails, sinceDate, q } = req.body;
       const geminiApiKey = req.body.geminiApiKey || process.env.GEMINI_API_KEY;
 
-      // Fallback to Authorization Header for accessToken
-      if (!accessToken && req.headers.authorization) {
-        const parts = req.headers.authorization.split(' ');
-        if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
-          accessToken = parts[1];
-        }
-      }
-
       // Basic validation
-      if (!accessToken) {
+      if (!accountEmail) {
         res.status(400).json({
-          userMessage: 'Token de acceso no proporcionado.',
-          technicalError: 'Missing required parameter: accessToken (must be provided in the body or in the Authorization Bearer header)',
-        });
-        return;
-      }
-      if (!clientId || !clientSecret) {
-        res.status(400).json({
-          userMessage: 'Credenciales del cliente OAuth (Client ID o Client Secret) no proporcionadas.',
-          technicalError: 'Missing required parameters: clientId or clientSecret (must be provided in the body or configured as environment variables)',
+          userMessage: 'Cuenta de Gmail no especificada.',
+          technicalError: 'Missing required parameter: accountEmail',
         });
         return;
       }
@@ -68,11 +54,10 @@ export class ScannerController {
         }
       }
 
+      const authClient = await this.accountsService.getAuthorizedClient(accountEmail);
+
       const scanRequest: ScanRequest = {
-        accessToken,
-        refreshToken,
-        clientId,
-        clientSecret,
+        authClient,
         supplierEmails,
         sinceDate,
         geminiApiKey,
@@ -90,6 +75,13 @@ export class ScannerController {
         truncated,
       });
     } catch (error: any) {
+      if (error instanceof AccountNotFoundError) {
+        res.status(404).json({
+          userMessage: 'La cuenta de Gmail solicitada no está conectada. Conéctela primero mediante /auth/google/login.',
+          technicalError: error.message,
+        });
+        return;
+      }
       console.error('Scan execution error:', error);
       res.status(500).json({
         userMessage: 'Ocurrió un error al escanear la bandeja de entrada. Por favor, intente de nuevo más tarde.',
@@ -101,18 +93,7 @@ export class ScannerController {
   public downloadPDF = async (req: Request, res: Response): Promise<void> => {
     try {
       const queryOrBody = { ...req.query, ...req.body };
-      let { messageId, attachmentId, accessToken, filename } = queryOrBody as any;
-      
-      const clientId = queryOrBody.clientId || process.env.GOOGLE_CLIENT_ID;
-      const clientSecret = queryOrBody.clientSecret || process.env.GOOGLE_CLIENT_SECRET;
-
-      // Fallback to Authorization Header for accessToken
-      if (!accessToken && req.headers.authorization) {
-        const parts = req.headers.authorization.split(' ');
-        if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
-          accessToken = parts[1];
-        }
-      }
+      const { messageId, attachmentId, accountEmail, filename } = queryOrBody as any;
 
       // Basic validation
       if (!messageId || !attachmentId) {
@@ -122,28 +103,21 @@ export class ScannerController {
         });
         return;
       }
-      if (!accessToken) {
+      if (!accountEmail) {
         res.status(400).json({
-          userMessage: 'Token de acceso no proporcionado.',
-          technicalError: 'Missing required parameter: accessToken (must be provided in query/body or in the Authorization Bearer header)',
+          userMessage: 'Cuenta de Gmail no especificada.',
+          technicalError: 'Missing required parameter: accountEmail',
         });
         return;
       }
-      if (!clientId || !clientSecret) {
-        res.status(400).json({
-          userMessage: 'Credenciales del cliente OAuth (Client ID o Client Secret) no proporcionadas.',
-          technicalError: 'Missing required parameters: clientId or clientSecret (must be provided in query/body or configured as environment variables)',
-        });
-        return;
-      }
+
+      const authClient = await this.accountsService.getAuthorizedClient(accountEmail);
 
       console.log(`Downloading PDF for messageId: ${messageId}, attachmentId: ${attachmentId}...`);
       const result = await this.scannerService.downloadInvoicePDF({
         gmailMessageId: messageId,
         gmailAttachmentId: attachmentId,
-        accessToken,
-        clientId,
-        clientSecret,
+        authClient,
         targetPdfFilename: filename,
       });
 
@@ -153,6 +127,13 @@ export class ScannerController {
       res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
       res.status(200).send(result.buffer);
     } catch (error: any) {
+      if (error instanceof AccountNotFoundError) {
+        res.status(404).json({
+          userMessage: 'La cuenta de Gmail solicitada no está conectada. Conéctela primero mediante /auth/google/login.',
+          technicalError: error.message,
+        });
+        return;
+      }
       console.error('Download PDF execution error:', error);
       res.status(500).json({
         userMessage: 'Ocurrió un error al intentar descargar el archivo PDF.',

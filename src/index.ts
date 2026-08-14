@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { ScannerController } from './scanner.controller.js';
+import { AccountsController } from './accounts.controller.js';
 
 // Load environment variables
 dotenv.config();
@@ -41,11 +42,20 @@ const requireApiKey = (req: express.Request, res: express.Response, next: expres
 
 // Controller instantiation
 const scannerController = new ScannerController();
+const accountsController = new AccountsController();
 
 // Routes
 app.post('/scan', requireApiKey, scannerController.scan);
 app.get('/download-pdf', requireApiKey, scannerController.downloadPDF);
 app.post('/download-pdf', requireApiKey, scannerController.downloadPDF);
+
+// Google OAuth account connection routes.
+// /auth/google/callback has no x-api-key: it's hit by the end user's browser after
+// Google's redirect, so it's protected by the signed `state` param instead (see oauth-state.ts).
+app.get('/auth/google/login', requireApiKey, accountsController.login);
+app.get('/auth/google/callback', accountsController.callback);
+app.get('/accounts', requireApiKey, accountsController.list);
+app.delete('/accounts/:email', requireApiKey, accountsController.remove);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

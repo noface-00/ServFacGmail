@@ -1,14 +1,11 @@
-import { google } from 'googleapis';
+import { google, Auth } from 'googleapis';
 import * as fs from 'fs';
 import AdmZip from 'adm-zip';
 import * as xml2js from 'xml2js';
 import { GoogleGenAI } from '@google/genai';
 
 export interface ScanRequest {
-  accessToken: string;
-  refreshToken?: string;
-  clientId: string;
-  clientSecret: string;
+  authClient: Auth.OAuth2Client;
   supplierEmails?: string[];
   sinceDate?: string; // ISO date string
   geminiApiKey?: string;
@@ -475,14 +472,7 @@ export class ScannerService {
       return { facturas: [], fallidas: [], truncated: false };
     }
 
-    // Setup OAuth2 client
-    const oauth2Client = new google.auth.OAuth2(req.clientId, req.clientSecret);
-    oauth2Client.setCredentials({
-      access_token: req.accessToken,
-      refresh_token: req.refreshToken,
-    });
-
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const gmail = google.gmail({ version: 'v1', auth: req.authClient });
     const results: ParsedInvoiceData[] = [];
     const fallidas: FailedInvoice[] = [];
 
@@ -507,9 +497,10 @@ export class ScannerService {
         afterQuery = ` after:${yyyy}/${mm}/${dd}`;
       }
 
-      // Build the query: from:(email1 OR email2 OR ...) has:attachment {filename:pdf filename:xml filename:zip} after:YYYY/MM/DD
+      // Build the query: ((from:email1 OR from:email2 ...) OR (to:email1 OR to:email2 ...)) has:attachment {filename:pdf filename:xml filename:zip} after:YYYY/MM/DD
       const fromList = req.supplierEmails!.map((email) => `from:${email}`).join(' OR ');
-      query = `(${fromList}) has:attachment {filename:pdf filename:xml filename:zip}${afterQuery}`;
+      const toList = req.supplierEmails!.map((email) => `to:${email}`).join(' OR ');
+      query = `((${fromList}) OR (${toList})) has:attachment {filename:pdf filename:xml filename:zip}${afterQuery}`;
     }
     
     console.log(`Searching Gmail with query: "${query}"`);
@@ -861,15 +852,10 @@ export class ScannerService {
   public async downloadInvoicePDF(params: {
     gmailMessageId: string;
     gmailAttachmentId: string;
-    accessToken: string;
-    clientId: string;
-    clientSecret: string;
+    authClient: Auth.OAuth2Client;
     targetPdfFilename?: string;
   }): Promise<{ filename: string; mimeType: string; buffer: Buffer }> {
-    // Setup OAuth2 client
-    const oauth2Client = new google.auth.OAuth2(params.clientId, params.clientSecret);
-    oauth2Client.setCredentials({ access_token: params.accessToken });
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const gmail = google.gmail({ version: 'v1', auth: params.authClient });
 
     // 1. Fetch message details to find the attachment metadata (filename, mimeType)
     const msg = await gmail.users.messages.get({
