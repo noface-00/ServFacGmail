@@ -198,7 +198,47 @@ Busca correos de proveedores y clientes autorizados en Gmail (tanto recibidos co
 
 ---
 
-### 3. `GET /download-pdf` y `POST /download-pdf`
+### 3. `POST /scan-sent`
+Busca en los correos **enviados** (carpeta Enviados) desde la cuenta de Gmail conectada, para detectar **facturas emitidas** a clientes. Descarga los archivos adjuntos (XML/ZIP/PDF) y extrae la información estructurada, igual que `/scan`, pero filtrando por destinatario (`to:`) en vez de remitente. La cuenta de Gmail a usar debe estar previamente conectada (ver [Conexión de cuentas de Gmail (OAuth)](#conexión-de-cuentas-de-gmail-oauth)).
+
+* **Request Body (JSON):**
+  ```json
+  {
+    "accountEmail": "ventas@empresa.com", // Requerido: email de una cuenta de Gmail ya conectada
+    "geminiApiKey": "gemini-api-key... (Opcional si está en .env)",
+    "clientEmails": ["cliente1@mail.com", "cliente2@mail.com"], // Opcional (direcciones de correo destinatarias a filtrar con 'to:'; por defecto toma de CLIENT_EMAILS en .env)
+    "sinceDate": "2026-06-01T00:00:00.000Z" // Requerido (ISO string o fecha para búsqueda)
+  }
+  ```
+  *Si `accountEmail` no corresponde a una cuenta conectada, responde `404` indicando que debe conectarse primero mediante `/auth/google/login`.*
+
+* **Response Body (`200 OK`):**
+  Mismo shape que `/scan`, pero cada factura incluye `recipientEmail` (el cliente al que se envió) en vez de un `senderEmail` de proveedor:
+  ```json
+  {
+    "facturas": [
+      {
+        "messageId": "18f5043bf7e997a3",
+        "attachmentId": "ANGjdJ84...",
+        "claveAcceso": "0926202601...",
+        "supplierName": "Mi Empresa SpA",
+        "numeroFactura": "001-002-000123456",
+        "fechaEmision": "2026-06-20",
+        "total": 119000,
+        "moneda": "USD",
+        "recipientEmail": "cliente1@mail.com",
+        "items": []
+      }
+    ],
+    "count": 1,
+    "fallidas": [],
+    "truncated": false
+  }
+  ```
+
+---
+
+### 4. `GET /download-pdf` y `POST /download-pdf`
 Descarga el archivo PDF binario correspondiente a un adjunto de factura en Gmail. Si el adjunto está comprimido dentro de un archivo `.zip`, el endpoint lo descomprimirá automáticamente en memoria y extraerá el PDF.
 
 * **Parámetros (enviados como Query Params en `GET` o en el cuerpo JSON en `POST`):**
@@ -239,16 +279,16 @@ Descarga el archivo PDF binario correspondiente a un adjunto de factura en Gmail
 
 ## Conexión de cuentas de Gmail (OAuth)
 
-Antes de poder usar `/scan` o `/download-pdf` con un `accountEmail`, esa cuenta de Gmail debe conectarse una vez mediante el flujo OAuth expuesto por el propio servicio.
+Antes de poder usar `/scan`, `/scan-sent` o `/download-pdf` con un `accountEmail`, esa cuenta de Gmail debe conectarse una vez mediante el flujo OAuth expuesto por el propio servicio.
 
 ### Flujo completo
 
 1. **Manager/CarMora inicia la conexión**: llama a `GET /auth/google/login` con `x-api-key`, y recibe la URL de consentimiento de Google.
 2. **El usuario final autoriza el acceso**: Manager abre esa URL en el navegador del usuario dueño de la cuenta de Gmail a conectar; el usuario acepta los permisos solicitados (solo lectura del correo, `gmail.readonly`).
 3. **Google redirige al callback**: `GET /auth/google/callback` recibe el `code` y el `state`, intercambia el código por tokens, obtiene el email de la cuenta y persiste sus tokens cifrados en la base de datos.
-4. **La cuenta queda disponible**: a partir de ese momento, `POST /scan` y `/download-pdf` pueden usar esa cuenta indicando su email en `accountEmail`.
+4. **La cuenta queda disponible**: a partir de ese momento, `POST /scan`, `/scan-sent` y `/download-pdf` pueden usar esa cuenta indicando su email en `accountEmail`.
 
-### 4. `GET /auth/google/login`
+### 5. `GET /auth/google/login`
 Genera la URL de autorización de Google. Requiere `x-api-key`.
 
 * **Respuesta (`200 OK`):**
@@ -256,10 +296,10 @@ Genera la URL de autorización de Google. Requiere `x-api-key`.
   { "authUrl": "https://accounts.google.com/o/oauth2/v2/auth?..." }
   ```
 
-### 5. `GET /auth/google/callback`
+### 6. `GET /auth/google/callback`
 Endpoint al que Google redirige tras el consentimiento del usuario. No requiere `x-api-key`; se protege mediante el parámetro `state`. Responde una página HTML simple indicando el resultado (éxito, cancelación, enlace expirado o error).
 
-### 6. `GET /accounts`
+### 7. `GET /accounts`
 Lista las cuentas de Gmail conectadas (nunca expone tokens). Requiere `x-api-key`.
 
 * **Respuesta (`200 OK`):**
@@ -272,7 +312,7 @@ Lista las cuentas de Gmail conectadas (nunca expone tokens). Requiere `x-api-key
   }
   ```
 
-### 7. `DELETE /accounts/:email`
+### 8. `DELETE /accounts/:email`
 Desconecta una cuenta de Gmail (elimina sus tokens de la base de datos). Requiere `x-api-key`.
 
 * **Respuesta (`200 OK`):**
@@ -308,7 +348,8 @@ Este servicio está totalmente preparado para ser desplegado en **Dokploy** (una
      * `DATABASE_URL`: Cadena de conexión a la instancia de PostgreSQL donde se persisten las cuentas conectadas.
      * `TOKEN_ENCRYPTION_KEY`: Clave de 32 bytes en hex (`openssl rand -hex 32`) para cifrar los tokens en la base de datos.
      * `GEMINI_API_KEY`: Tu API Key de Google Gemini (para extracción inteligente de PDFs).
-     * `SUPPLIER_EMAILS`: (Opcional) Emails de proveedores autorizados por defecto.
+     * `SUPPLIER_EMAILS`: (Opcional) Emails de proveedores autorizados por defecto (usado por `/scan`).
+     * `CLIENT_EMAILS`: (Opcional) Emails de clientes autorizados por defecto (usado por `/scan-sent`).
 
    Al arrancar, el contenedor aplica automáticamente las migraciones pendientes de Prisma (`prisma migrate deploy`) antes de iniciar el servidor.
 

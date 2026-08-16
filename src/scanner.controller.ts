@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ScannerService, ScanRequest } from './scanner.service.js';
+import { ScannerService, ScanRequest, ScanSentRequest } from './scanner.service.js';
 import { AccountsService, AccountNotFoundError } from './accounts.service.js';
 
 export class ScannerController {
@@ -85,6 +85,86 @@ export class ScannerController {
       console.error('Scan execution error:', error);
       res.status(500).json({
         userMessage: 'Ocurrió un error al escanear la bandeja de entrada. Por favor, intente de nuevo más tarde.',
+        technicalError: error.message || String(error),
+      });
+    }
+  };
+
+  public scanSent = async (req: Request, res: Response): Promise<void> => {
+    try {
+      let { accountEmail, clientEmails, sinceDate, q } = req.body;
+      const geminiApiKey = req.body.geminiApiKey || process.env.GEMINI_API_KEY;
+
+      // Basic validation
+      if (!accountEmail) {
+        res.status(400).json({
+          userMessage: 'Cuenta de Gmail no especificada.',
+          technicalError: 'Missing required parameter: accountEmail',
+        });
+        return;
+      }
+
+      if (!q) {
+        if (!sinceDate) {
+          res.status(400).json({
+            userMessage: 'Fecha de inicio (sinceDate) no proporcionada.',
+            technicalError: 'Missing required parameter: sinceDate is mandatory',
+          });
+          return;
+        }
+
+        if (!clientEmails) {
+          const envEmails = process.env.CLIENT_EMAILS;
+          if (envEmails) {
+            clientEmails = envEmails.split(',').map(email => email.trim());
+          } else {
+            res.status(400).json({
+              userMessage: 'Lista de correos de clientes no proporcionada.',
+              technicalError: 'Missing parameter: clientEmails must be provided in the body or configured in the environment variable CLIENT_EMAILS',
+            });
+            return;
+          }
+        } else if (!Array.isArray(clientEmails)) {
+          res.status(400).json({
+            userMessage: 'Lista de correos de clientes no válida.',
+            technicalError: 'Invalid parameter: clientEmails must be an array of strings',
+          });
+          return;
+        }
+      }
+
+      const authClient = await this.accountsService.getAuthorizedClient(accountEmail);
+
+      const scanSentRequest: ScanSentRequest = {
+        authClient,
+        clientEmails,
+        sinceDate,
+        geminiApiKey,
+        q,
+        accountEmail,
+      };
+
+      console.log(`Starting sent scan${q ? ` with query "${q}"` : ` for ${clientEmails?.length || 0} clients`}...`);
+      const { facturas, fallidas, truncated } = await this.scannerService.scanSent(scanSentRequest);
+      console.log(`Sent scan completed. Found ${facturas.length} valid invoice attachments, ${fallidas.length} failures.`);
+
+      res.status(200).json({
+        facturas,
+        count: facturas.length,
+        fallidas,
+        truncated,
+      });
+    } catch (error: any) {
+      if (error instanceof AccountNotFoundError) {
+        res.status(404).json({
+          userMessage: 'La cuenta de Gmail solicitada no está conectada. Conéctela primero mediante /auth/google/login.',
+          technicalError: error.message,
+        });
+        return;
+      }
+      console.error('Scan sent execution error:', error);
+      res.status(500).json({
+        userMessage: 'Ocurrió un error al escanear los correos enviados. Por favor, intente de nuevo más tarde.',
         technicalError: error.message || String(error),
       });
     }
