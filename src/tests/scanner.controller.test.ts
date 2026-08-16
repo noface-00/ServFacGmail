@@ -3,6 +3,7 @@ import app from '../index.js';
 import { AccountNotFoundError } from '../accounts.service.js';
 
 const mockScan = jest.fn();
+const mockScanSent = jest.fn();
 const mockDownloadInvoicePDF = jest.fn();
 const mockGetAuthorizedClient = jest.fn();
 
@@ -11,6 +12,7 @@ jest.mock('../scanner.service.js', () => {
     ScannerService: jest.fn().mockImplementation(() => {
       return {
         scan: (...args: any[]) => mockScan(...args),
+        scanSent: (...args: any[]) => mockScanSent(...args),
         downloadInvoicePDF: (...args: any[]) => mockDownloadInvoicePDF(...args),
       };
     }),
@@ -33,6 +35,7 @@ describe('ScannerController Integration Tests', () => {
 
   beforeEach(() => {
     mockScan.mockReset();
+    mockScanSent.mockReset();
     mockDownloadInvoicePDF.mockReset();
     mockGetAuthorizedClient.mockReset();
     mockGetAuthorizedClient.mockResolvedValue(fakeAuthClient);
@@ -44,6 +47,7 @@ describe('ScannerController Integration Tests', () => {
       GOOGLE_CLIENT_SECRET: 'env-client-secret',
       GEMINI_API_KEY: 'env-gemini-key',
       SUPPLIER_EMAILS: 'default1@test.com,default2@test.com',
+      CLIENT_EMAILS: 'clientdefault1@test.com,clientdefault2@test.com',
     };
   });
 
@@ -204,6 +208,162 @@ describe('ScannerController Integration Tests', () => {
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         userMessage: 'Ocurrió un error al escanear la bandeja de entrada. Por favor, intente de nuevo más tarde.',
+        technicalError: 'Gmail API Limit Exceeded',
+      });
+    });
+  });
+
+  describe('POST /scan-sent', () => {
+    test('should return 401 Unauthorized if API Key is missing or invalid', async () => {
+      const response = await request(app)
+        .post('/scan-sent')
+        .send({ accountEmail: 'compras@empresa.com' });
+
+      expect(response.status).toBe(401);
+      expect(response.body.userMessage).toContain('No autorizado');
+      expect(mockScanSent).not.toHaveBeenCalled();
+    });
+
+    test('should return 503 Service Unavailable if SERVICE_API_KEY is not configured', async () => {
+      delete process.env.SERVICE_API_KEY;
+      const response = await request(app)
+        .post('/scan-sent')
+        .send({ accountEmail: 'compras@empresa.com' });
+
+      expect(response.status).toBe(503);
+      expect(response.body.userMessage).toContain('Servicio no disponible temporalmente');
+    });
+
+    test('should return 400 Bad Request if accountEmail is missing', async () => {
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({ sinceDate: '2026-06-01T00:00:00.000Z' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.userMessage).toContain('Cuenta de Gmail no especificada.');
+      expect(mockScanSent).not.toHaveBeenCalled();
+    });
+
+    test('should return 400 Bad Request if sinceDate is missing', async () => {
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({ accountEmail: 'ventas@empresa.com' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.userMessage).toContain('Fecha de inicio (sinceDate) no proporcionada.');
+      expect(mockScanSent).not.toHaveBeenCalled();
+    });
+
+    test('should return 400 Bad Request if clientEmails is present but not an array', async () => {
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({
+          accountEmail: 'ventas@empresa.com',
+          sinceDate: '2026-06-01T00:00:00.000Z',
+          clientEmails: 'not-an-array',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.userMessage).toContain('Lista de correos de clientes no válida.');
+      expect(mockScanSent).not.toHaveBeenCalled();
+    });
+
+    test('should return 400 Bad Request if clientEmails is missing and CLIENT_EMAILS env is not set', async () => {
+      delete process.env.CLIENT_EMAILS;
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({ accountEmail: 'ventas@empresa.com', sinceDate: '2026-06-01T00:00:00.000Z' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.userMessage).toContain('Lista de correos de clientes no proporcionada.');
+      expect(mockScanSent).not.toHaveBeenCalled();
+    });
+
+    test('should fallback to default env clientEmails split when omitted in body', async () => {
+      mockScanSent.mockResolvedValue({ facturas: [], fallidas: [], truncated: false });
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({ accountEmail: 'ventas@empresa.com', sinceDate: '2026-06-01T00:00:00.000Z' });
+
+      expect(response.status).toBe(200);
+      expect(mockScanSent).toHaveBeenCalledWith(expect.objectContaining({
+        clientEmails: ['clientdefault1@test.com', 'clientdefault2@test.com'],
+      }));
+    });
+
+    test('should return 404 if the requested Gmail account is not connected', async () => {
+      mockGetAuthorizedClient.mockRejectedValue(new AccountNotFoundError('ventas@empresa.com'));
+
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({ accountEmail: 'ventas@empresa.com', sinceDate: '2026-06-01T00:00:00.000Z' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.userMessage).toContain('/auth/google/login');
+      expect(mockScanSent).not.toHaveBeenCalled();
+    });
+
+    test('should call ScannerService.scanSent with the authorized client and return 200 with { facturas, count }', async () => {
+      const mockResult = [
+        {
+          supplierName: 'Mi Empresa',
+          recipientEmail: 'cliente@test.com',
+          total: 100,
+          items: [],
+        },
+      ];
+
+      mockScanSent.mockResolvedValue({ facturas: mockResult, fallidas: [], truncated: false });
+
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({
+          accountEmail: 'ventas@empresa.com',
+          clientEmails: ['cliente@test.com'],
+          sinceDate: '2026-06-01T00:00:00.000Z',
+          geminiApiKey: 'mock-gemini-key',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        facturas: mockResult,
+        count: mockResult.length,
+        fallidas: [],
+        truncated: false,
+      });
+      expect(mockGetAuthorizedClient).toHaveBeenCalledWith('ventas@empresa.com');
+      expect(mockScanSent).toHaveBeenCalledWith({
+        authClient: fakeAuthClient,
+        clientEmails: ['cliente@test.com'],
+        sinceDate: '2026-06-01T00:00:00.000Z',
+        geminiApiKey: 'mock-gemini-key',
+        q: undefined,
+        accountEmail: 'ventas@empresa.com',
+      });
+    });
+
+    test('should return 500 Internal Server Error if ScannerService throws an error', async () => {
+      mockScanSent.mockRejectedValue(new Error('Gmail API Limit Exceeded'));
+
+      const response = await request(app)
+        .post('/scan-sent')
+        .set('x-api-key', 'test-api-key')
+        .send({
+          accountEmail: 'ventas@empresa.com',
+          clientEmails: ['cliente@test.com'],
+          sinceDate: '2026-06-01T00:00:00.000Z',
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        userMessage: 'Ocurrió un error al escanear los correos enviados. Por favor, intente de nuevo más tarde.',
         technicalError: 'Gmail API Limit Exceeded',
       });
     });

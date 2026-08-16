@@ -1,4 +1,4 @@
-import { ScannerService, ScanRequest } from '../scanner.service.js';
+import { ScannerService, ScanRequest, ScanSentRequest } from '../scanner.service.js';
 import { google } from 'googleapis';
 import { GoogleGenAI } from '@google/genai';
 import AdmZip from 'adm-zip';
@@ -1097,6 +1097,283 @@ describe('ScannerService', () => {
         userId: 'me',
         messageId: 'msg-123',
         id: pdfId,
+      });
+    });
+  });
+
+  describe('scanSent', () => {
+    const defaultScanSentRequest: ScanSentRequest = {
+      authClient: {} as any,
+      clientEmails: ['client@example.com'],
+      sinceDate: '2026-06-01T00:00:00.000Z',
+      accountEmail: 'me@myaccount.com',
+    };
+
+    describe('Gmail Query construction (sent)', () => {
+      test('should construct in:sent query with sinceDate and correct client emails', async () => {
+        mockList.mockResolvedValue({ data: { messages: [] } });
+
+        const request: ScanSentRequest = {
+          ...defaultScanSentRequest,
+          clientEmails: ['a@test.com', 'b@test.com'],
+          sinceDate: '2026-06-01T00:00:00.000Z',
+        };
+
+        await scannerService.scanSent(request);
+
+        expect(mockList).toHaveBeenCalledWith(expect.objectContaining({
+          userId: 'me',
+          q: 'in:sent (to:a@test.com OR to:b@test.com) has:attachment {filename:pdf filename:xml filename:zip} after:2026/06/01',
+        }));
+      });
+
+      test('should default query to 30 days ago when sinceDate is omitted', async () => {
+        mockList.mockResolvedValue({ data: { messages: [] } });
+
+        const request: ScanSentRequest = {
+          ...defaultScanSentRequest,
+          clientEmails: ['a@test.com'],
+          sinceDate: undefined,
+        };
+
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
+        const yyyy = thirtyDaysAgo.getUTCFullYear();
+        const mm = String(thirtyDaysAgo.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(thirtyDaysAgo.getUTCDate()).padStart(2, '0');
+        const expectedAfter = `after:${yyyy}/${mm}/${dd}`;
+
+        await scannerService.scanSent(request);
+
+        expect(mockList).toHaveBeenCalledWith(expect.objectContaining({
+          q: expect.stringContaining(expectedAfter),
+        }));
+      });
+
+      test('should return empty list if clientEmails is empty', async () => {
+        const request: ScanSentRequest = {
+          ...defaultScanSentRequest,
+          clientEmails: [],
+        };
+
+        const result = await scannerService.scanSent(request);
+        expect(result).toEqual({ facturas: [], fallidas: [], truncated: false });
+        expect(mockList).not.toHaveBeenCalled();
+      });
+
+      test('should use req.q as-is without injecting in:sent automatically', async () => {
+        mockList.mockResolvedValue({ data: { messages: [] } });
+
+        const request: ScanSentRequest = {
+          ...defaultScanSentRequest,
+          q: 'custom raw query',
+        };
+
+        await scannerService.scanSent(request);
+
+        expect(mockList).toHaveBeenCalledWith(expect.objectContaining({
+          q: 'custom raw query',
+        }));
+      });
+    });
+
+    describe('Gmail Pagination and Error Collection (sent)', () => {
+      test('should paginate through message list pages using nextPageToken', async () => {
+        mockList
+          .mockResolvedValueOnce({
+            data: {
+              messages: [{ id: 'msg-page1' }],
+              nextPageToken: 'token-page-2',
+            },
+          })
+          .mockResolvedValueOnce({
+            data: {
+              messages: [{ id: 'msg-page2' }],
+            },
+          });
+
+        mockGet.mockImplementation((params) => {
+          const id = params.id;
+          return Promise.resolve({
+            data: {
+              id,
+              payload: {
+                headers: [
+                  { name: 'Subject', value: `Invoice ${id}` },
+                  { name: 'Date', value: 'Fri, 26 Jun 2026 12:00:00 GMT' },
+                  { name: 'To', value: 'Client <client@example.com>' },
+                ],
+                parts: [
+                  {
+                    filename: `${id}.xml`,
+                    mimeType: 'text/xml',
+                    body: { attachmentId: `att-${id}` },
+                  },
+                ],
+              },
+            },
+          });
+        });
+
+        const xmlChile = `
+          <DTE version="1.0">
+            <Documento ID="F123">
+              <Encabezado>
+                <Emisor>
+                  <RUTEmisor>76123456-7</RUTEmisor>
+                  <RznSoc>Distribuidora SpA</RznSoc>
+                </Emisor>
+                <Totales>
+                  <MntTotal>1000</MntTotal>
+                </Totales>
+              </Encabezado>
+            </Documento>
+          </DTE>
+        `;
+
+        mockAttachmentsGet.mockResolvedValue({
+          data: {
+            data: Buffer.from(xmlChile).toString('base64'),
+          },
+        });
+
+        const { facturas, fallidas, truncated } = await scannerService.scanSent(defaultScanSentRequest);
+
+        expect(mockList).toHaveBeenCalledTimes(2);
+        expect(facturas).toHaveLength(2);
+        expect(fallidas).toHaveLength(0);
+        expect(truncated).toBe(false);
+      });
+
+      test('should set truncated to true and stop paginating when messages exceed safety cap', async () => {
+        const dummyMessages = Array.from({ length: 500 }, (_, i) => ({ id: `msg-${i}` }));
+        mockList.mockResolvedValueOnce({
+          data: {
+            messages: dummyMessages,
+            nextPageToken: 'token-page-2',
+          },
+        });
+
+        mockGet.mockResolvedValue({
+          data: {
+            id: 'dummy',
+            payload: {},
+          },
+        });
+
+        const { truncated } = await scannerService.scanSent(defaultScanSentRequest);
+
+        expect(mockList).toHaveBeenCalledTimes(1);
+        expect(truncated).toBe(true);
+      });
+    });
+
+    describe('Recipient extraction', () => {
+      test('should populate recipientEmail from To header and senderEmail from accountEmail', async () => {
+        mockList.mockResolvedValue({
+          data: { messages: [{ id: 'msg-sent-1' }] },
+        });
+
+        mockGet.mockResolvedValue({
+          data: {
+            id: 'msg-sent-1',
+            payload: {
+              headers: [
+                { name: 'Subject', value: 'Factura Emitida' },
+                { name: 'Date', value: 'Fri, 26 Jun 2026 12:00:00 GMT' },
+                { name: 'To', value: 'Cliente <cliente@test.com>' },
+              ],
+              parts: [
+                {
+                  filename: 'dte.xml',
+                  mimeType: 'text/xml',
+                  body: { attachmentId: 'att-999' },
+                },
+              ],
+            },
+          },
+        });
+
+        const xmlChile = `
+          <DTE>
+            <Documento>
+              <Encabezado>
+                <Emisor>
+                  <RUTEmisor>76123456-7</RUTEmisor>
+                  <RznSoc>Distribuidora SpA</RznSoc>
+                </Emisor>
+                <Totales>
+                  <MntTotal>1000</MntTotal>
+                </Totales>
+              </Encabezado>
+            </Documento>
+          </DTE>
+        `;
+
+        mockAttachmentsGet.mockResolvedValue({
+          data: {
+            data: Buffer.from(xmlChile).toString('base64'),
+          },
+        });
+
+        const { facturas } = await scannerService.scanSent(defaultScanSentRequest);
+
+        expect(facturas).toHaveLength(1);
+        expect(facturas[0].recipientEmail).toBe('cliente@test.com');
+        expect(facturas[0].senderEmail).toBe('me@myaccount.com');
+      });
+
+      test('should fall back to raw To header value when it has no <email> format', async () => {
+        mockList.mockResolvedValue({
+          data: { messages: [{ id: 'msg-sent-2' }] },
+        });
+
+        mockGet.mockResolvedValue({
+          data: {
+            id: 'msg-sent-2',
+            payload: {
+              headers: [
+                { name: 'Subject', value: 'Factura Emitida' },
+                { name: 'Date', value: 'Fri, 26 Jun 2026 12:00:00 GMT' },
+                { name: 'To', value: 'Cliente@Test.com' },
+              ],
+              parts: [
+                {
+                  filename: 'dte.xml',
+                  mimeType: 'text/xml',
+                  body: { attachmentId: 'att-998' },
+                },
+              ],
+            },
+          },
+        });
+
+        const xmlChile = `
+          <DTE>
+            <Documento>
+              <Encabezado>
+                <Emisor>
+                  <RUTEmisor>76123456-7</RUTEmisor>
+                  <RznSoc>Distribuidora SpA</RznSoc>
+                </Emisor>
+                <Totales>
+                  <MntTotal>1000</MntTotal>
+                </Totales>
+              </Encabezado>
+            </Documento>
+          </DTE>
+        `;
+
+        mockAttachmentsGet.mockResolvedValue({
+          data: {
+            data: Buffer.from(xmlChile).toString('base64'),
+          },
+        });
+
+        const { facturas } = await scannerService.scanSent(defaultScanSentRequest);
+
+        expect(facturas).toHaveLength(1);
+        expect(facturas[0].recipientEmail).toBe('cliente@test.com');
       });
     });
   });

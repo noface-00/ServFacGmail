@@ -46,6 +46,7 @@ const accountsController = new AccountsController();
 
 // Routes
 app.post('/scan', requireApiKey, scannerController.scan);
+app.post('/scan-sent', requireApiKey, scannerController.scanSent);
 app.get('/download-pdf', requireApiKey, scannerController.downloadPDF);
 app.post('/download-pdf', requireApiKey, scannerController.downloadPDF);
 

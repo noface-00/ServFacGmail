@@ -12,6 +12,15 @@ export interface ScanRequest {
   q?: string;
 }
 
+export interface ScanSentRequest {
+  authClient: Auth.OAuth2Client;
+  clientEmails?: string[];
+  sinceDate?: string; // ISO date string
+  geminiApiKey?: string;
+  q?: string;
+  accountEmail?: string;
+}
+
 export interface ParsedItem {
   nombre: string;
   cantidad: number;
@@ -34,6 +43,7 @@ export interface ParsedInvoiceData {
   items?: ParsedItem[];
   filename?: string;
   senderEmail?: string;
+  recipientEmail?: string;
 }
 
 export interface FailedInvoice {
@@ -467,6 +477,8 @@ export class ScannerService {
     }
   }
 
+  // NOTA: el bloque de procesamiento de adjuntos (paginación, XML/ZIP/PDF) está duplicado
+  // intencionalmente en scanSent() — replicar ahí cualquier cambio a esta lógica.
   public async scan(req: ScanRequest): Promise<{ facturas: ParsedInvoiceData[]; fallidas: FailedInvoice[]; truncated: boolean }> {
     if (!req.q && (!req.supplierEmails || req.supplierEmails.length === 0)) {
       return { facturas: [], fallidas: [], truncated: false };
@@ -789,6 +801,390 @@ export class ScannerService {
                       parsedData.attachmentId = att.attachmentId;
                       parsedData.filename = att.filename;
                       parsedData.senderEmail = senderEmail;
+                      if (!parsedData.claveAcceso) {
+                        parsedData.claveAcceso = msgRef.id;
+                      }
+                      messageInvoices.push(parsedData);
+                    } else {
+                      fallidas.push({
+                        messageId: msgRef.id!,
+                        filename: att.filename,
+                        error: 'Direct PDF is missing RUC, name or total in Gemini extraction',
+                      });
+                    }
+                  } catch (pdfErr: any) {
+                    fallidas.push({
+                      messageId: msgRef.id!,
+                      filename: att.filename,
+                      error: `Failed to parse direct PDF using Gemini: ${pdfErr.message || String(pdfErr)}`,
+                    });
+                  }
+                } else {
+                  fallidas.push({
+                    messageId: msgRef.id!,
+                    filename: att.filename,
+                    error: 'Gemini API key is not configured to parse direct PDF',
+                  });
+                }
+              } else {
+                fallidas.push({
+                  messageId: msgRef.id!,
+                  filename: att.filename,
+                  error: 'Direct PDF attachment data is empty',
+                });
+              }
+            } catch (err: any) {
+              console.error(`Failed to process direct PDF attachment ${att.filename}:`, err);
+              fallidas.push({
+                messageId: msgRef.id!,
+                filename: att.filename,
+                error: err.message || String(err),
+              });
+            }
+          }
+        }
+
+        results.push(...messageInvoices);
+      } catch (msgError: any) {
+        console.error(`Failed to retrieve details for message ID ${msgRef.id}:`, msgError);
+        fallidas.push({
+          messageId: msgRef.id,
+          error: `Failed to retrieve details: ${msgError.message || String(msgError)}`,
+        });
+      }
+    }
+
+    return { facturas: results, fallidas, truncated };
+  }
+
+  // NOTA: el bloque de procesamiento de adjuntos (paginación, XML/ZIP/PDF) está duplicado
+  // intencionalmente de scan() — replicar ahí cualquier cambio a esta lógica.
+  public async scanSent(req: ScanSentRequest): Promise<{ facturas: ParsedInvoiceData[]; fallidas: FailedInvoice[]; truncated: boolean }> {
+    if (!req.q && (!req.clientEmails || req.clientEmails.length === 0)) {
+      return { facturas: [], fallidas: [], truncated: false };
+    }
+
+    const gmail = google.gmail({ version: 'v1', auth: req.authClient });
+    const results: ParsedInvoiceData[] = [];
+    const fallidas: FailedInvoice[] = [];
+
+    let query = '';
+    if (req.q) {
+      query = req.q;
+    } else {
+      // Formulate search date (default to 30 days ago if not provided)
+      let afterQuery = '';
+      if (req.sinceDate) {
+        const date = new Date(req.sinceDate);
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+      } else {
+        const date = new Date();
+        date.setUTCDate(date.getUTCDate() - 30); // 30 days ago
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        afterQuery = ` after:${yyyy}/${mm}/${dd}`;
+      }
+
+      // Build the query: in:sent (to:email1 OR to:email2 ...) has:attachment {filename:pdf filename:xml filename:zip} after:YYYY/MM/DD
+      const toList = req.clientEmails!.map((email) => `to:${email}`).join(' OR ');
+      query = `in:sent (${toList}) has:attachment {filename:pdf filename:xml filename:zip}${afterQuery}`;
+    }
+
+    console.log(`Searching Gmail (sent) with query: "${query}"`);
+
+    // Fetch messages list with pagination
+    let allMessages: any[] = [];
+    let pageToken: string | undefined = undefined;
+    let truncated = false;
+    const MAX_MESSAGES_PER_SCAN = 500;
+
+    try {
+      do {
+        const response: any = await gmail.users.messages.list({
+          userId: 'me',
+          q: query,
+          maxResults: 500,
+          pageToken,
+        });
+        if (response.data.messages) {
+          allMessages.push(...response.data.messages);
+        }
+        pageToken = response.data.nextPageToken || undefined;
+
+        if (allMessages.length >= MAX_MESSAGES_PER_SCAN) {
+          truncated = true;
+          break;
+        }
+      } while (pageToken);
+      console.log(`Encontrados ${allMessages.length} mensajes enviados${truncated ? ' (truncado, hay más)' : ''}`);
+    } catch (listError: any) {
+      console.error('Failed to list Gmail sent messages:', listError);
+      throw listError;
+    }
+
+    if (allMessages.length === 0) {
+      console.log('No sent messages found matching search criteria.');
+      return { facturas: [], fallidas: [], truncated: false };
+    }
+
+    // For each message, fetch details and download attachments
+    for (const msgRef of allMessages) {
+      if (!msgRef.id) continue;
+
+      try {
+        const msg = await gmail.users.messages.get({
+          userId: 'me',
+          id: msgRef.id,
+        });
+
+        // Extract recipient email from To header (first recipient if multiple)
+        const headers = msg.data.payload?.headers || [];
+        const toHeader = headers.find(h => h.name?.toLowerCase() === 'to')?.value || '';
+        const emailMatch = toHeader.match(/<([^>]+)>/);
+        const recipientEmail = emailMatch ? emailMatch[1].trim().toLowerCase() : toHeader.trim().toLowerCase();
+        const senderEmail = req.accountEmail;
+
+        // Collect all potential attachments of interest from payload
+        const attachments: { filename: string; attachmentId: string; mimeType: string }[] = [];
+        const collectAttachments = (parts: any[]) => {
+          for (const part of parts) {
+            const filename = part.filename;
+            const attachmentId = part.body?.attachmentId;
+            if (part.parts && part.parts.length > 0) {
+              collectAttachments(part.parts);
+            }
+            if (filename && attachmentId) {
+              const ext = filename.split('.').pop()?.toLowerCase();
+              const allowedExtensions = ['pdf', 'xml', 'zip'];
+              if (ext && allowedExtensions.includes(ext)) {
+                attachments.push({ filename, attachmentId, mimeType: part.mimeType || '' });
+              }
+            }
+          }
+        };
+
+        if (msg.data.payload?.parts) {
+          collectAttachments(msg.data.payload.parts);
+        } else if (msg.data.payload?.body?.attachmentId) {
+          collectAttachments([msg.data.payload]);
+        }
+
+        if (attachments.length === 0) continue;
+
+        const messageInvoices: ParsedInvoiceData[] = [];
+        let hasSuccessfulXml = false;
+
+        const xmlAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'xml');
+        const zipAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'zip');
+        const pdfAttachments = attachments.filter(a => a.filename.split('.').pop()?.toLowerCase() === 'pdf');
+
+        // 1. Process direct XML files first
+        for (const att of xmlAttachments) {
+          try {
+            const attachment = await gmail.users.messages.attachments.get({
+              userId: 'me',
+              messageId: msgRef.id!,
+              id: att.attachmentId,
+            });
+            const dataBase64Url = attachment.data.data;
+            if (dataBase64Url) {
+              const buffer = Buffer.from(dataBase64Url, 'base64');
+              const xmlContent = buffer.toString('utf-8');
+              const parsedData = await this.parseXMLInvoice(xmlContent);
+              if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                parsedData.messageId = msgRef.id;
+                parsedData.attachmentId = att.attachmentId;
+                parsedData.filename = att.filename;
+                parsedData.senderEmail = senderEmail;
+                parsedData.recipientEmail = recipientEmail;
+                if (!parsedData.claveAcceso) {
+                  parsedData.claveAcceso = msgRef.id;
+                }
+                messageInvoices.push(parsedData);
+                hasSuccessfulXml = true;
+              } else {
+                fallidas.push({
+                  messageId: msgRef.id!,
+                  filename: att.filename,
+                  error: 'XML data is missing RUC, name or total',
+                });
+              }
+            } else {
+              fallidas.push({
+                messageId: msgRef.id!,
+                filename: att.filename,
+                error: 'Attachment data is empty',
+              });
+            }
+          } catch (err: any) {
+            console.error(`Failed to process direct XML attachment ${att.filename}:`, err);
+            fallidas.push({
+              messageId: msgRef.id!,
+              filename: att.filename,
+              error: err.message || String(err),
+            });
+          }
+        }
+
+        // 2. Process ZIP files (extracting content, parsing XMLs inside them first)
+        const extractedZips: {
+          zipFilename: string;
+          attachmentId: string;
+          xmls: { entryName: string; buffer: Buffer }[];
+          pdfs: { entryName: string; buffer: Buffer }[];
+        }[] = [];
+
+        for (const att of zipAttachments) {
+          try {
+            const attachment = await gmail.users.messages.attachments.get({
+              userId: 'me',
+              messageId: msgRef.id!,
+              id: att.attachmentId,
+            });
+            const dataBase64Url = attachment.data.data;
+            if (dataBase64Url) {
+              const buffer = Buffer.from(dataBase64Url, 'base64');
+              const zip = new AdmZip(buffer);
+              const zipEntries = zip.getEntries();
+
+              const xmls: { entryName: string; buffer: Buffer }[] = [];
+              const pdfs: { entryName: string; buffer: Buffer }[] = [];
+
+              for (const entry of zipEntries) {
+                if (entry.isDirectory) continue;
+                const zipFilename = entry.entryName.split('/').pop() || entry.entryName;
+                const zipExt = zipFilename.split('.').pop()?.toLowerCase();
+                if (zipExt === 'xml') {
+                  xmls.push({ entryName: entry.entryName, buffer: entry.getData() });
+                } else if (zipExt === 'pdf') {
+                  pdfs.push({ entryName: entry.entryName, buffer: entry.getData() });
+                }
+              }
+
+              extractedZips.push({ zipFilename: att.filename, attachmentId: att.attachmentId, xmls, pdfs });
+
+              if (xmls.length === 0 && pdfs.length === 0) {
+                fallidas.push({
+                  messageId: msgRef.id!,
+                  filename: att.filename,
+                  error: 'ZIP file contains no XML or PDF files',
+                });
+              }
+
+              // Parse XML files found in the ZIP
+              for (const xmlFile of xmls) {
+                try {
+                  const xmlContent = xmlFile.buffer.toString('utf-8');
+                  const parsedData = await this.parseXMLInvoice(xmlContent);
+                  if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                    parsedData.messageId = msgRef.id;
+                    parsedData.attachmentId = att.attachmentId;
+                    parsedData.filename = xmlFile.entryName.split('/').pop() || xmlFile.entryName;
+                    parsedData.senderEmail = senderEmail;
+                    parsedData.recipientEmail = recipientEmail;
+                    if (!parsedData.claveAcceso) {
+                      parsedData.claveAcceso = msgRef.id;
+                    }
+                    messageInvoices.push(parsedData);
+                    hasSuccessfulXml = true;
+                  } else {
+                    fallidas.push({
+                      messageId: msgRef.id!,
+                      filename: `${att.filename}/${xmlFile.entryName}`,
+                      error: 'XML inside ZIP is missing RUC, name or total',
+                    });
+                  }
+                } catch (xmlErr: any) {
+                  fallidas.push({
+                    messageId: msgRef.id!,
+                    filename: `${att.filename}/${xmlFile.entryName}`,
+                    error: `Failed to parse XML inside ZIP: ${xmlErr.message || String(xmlErr)}`,
+                  });
+                }
+              }
+            } else {
+              fallidas.push({
+                messageId: msgRef.id!,
+                filename: att.filename,
+                error: 'ZIP attachment data is empty',
+              });
+            }
+          } catch (err: any) {
+            console.error(`Failed to process ZIP attachment ${att.filename}:`, err);
+            fallidas.push({
+              messageId: msgRef.id!,
+              filename: att.filename,
+              error: err.message || String(err),
+            });
+          }
+        }
+
+        // 3. Process PDF files ONLY if no XML parsed successfully for this message
+        if (!hasSuccessfulXml) {
+          // Process PDFs inside ZIP files first
+          for (const extZip of extractedZips) {
+            for (const pdfFile of extZip.pdfs) {
+              if (req.geminiApiKey) {
+                try {
+                  const parsedData = await this.parsePDFInvoice(pdfFile.buffer, req.geminiApiKey);
+                  if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                    parsedData.messageId = msgRef.id;
+                    parsedData.attachmentId = extZip.attachmentId;
+                    parsedData.filename = pdfFile.entryName.split('/').pop() || pdfFile.entryName;
+                    parsedData.senderEmail = senderEmail;
+                    parsedData.recipientEmail = recipientEmail;
+                    if (!parsedData.claveAcceso) {
+                      parsedData.claveAcceso = msgRef.id;
+                    }
+                    messageInvoices.push(parsedData);
+                  } else {
+                    fallidas.push({
+                      messageId: msgRef.id!,
+                      filename: `${extZip.zipFilename}/${pdfFile.entryName}`,
+                      error: 'PDF inside ZIP is missing RUC, name or total in Gemini extraction',
+                    });
+                  }
+                } catch (pdfErr: any) {
+                  fallidas.push({
+                    messageId: msgRef.id!,
+                    filename: `${extZip.zipFilename}/${pdfFile.entryName}`,
+                    error: `Failed to parse PDF inside ZIP using Gemini: ${pdfErr.message || String(pdfErr)}`,
+                  });
+                }
+              } else {
+                fallidas.push({
+                  messageId: msgRef.id!,
+                  filename: `${extZip.zipFilename}/${pdfFile.entryName}`,
+                  error: 'Gemini API key is not configured to parse PDF inside ZIP',
+                });
+              }
+            }
+          }
+
+          // Process direct PDF attachments
+          for (const att of pdfAttachments) {
+            try {
+              const attachment = await gmail.users.messages.attachments.get({
+                userId: 'me',
+                messageId: msgRef.id!,
+                id: att.attachmentId,
+              });
+              const dataBase64Url = attachment.data.data;
+              if (dataBase64Url) {
+                const buffer = Buffer.from(dataBase64Url, 'base64');
+                if (req.geminiApiKey) {
+                  try {
+                    const parsedData = await this.parsePDFInvoice(buffer, req.geminiApiKey);
+                    if (parsedData && (parsedData.supplierRuc || parsedData.supplierName || parsedData.total)) {
+                      parsedData.messageId = msgRef.id;
+                      parsedData.attachmentId = att.attachmentId;
+                      parsedData.filename = att.filename;
+                      parsedData.senderEmail = senderEmail;
+                      parsedData.recipientEmail = recipientEmail;
                       if (!parsedData.claveAcceso) {
                         parsedData.claveAcceso = msgRef.id;
                       }
