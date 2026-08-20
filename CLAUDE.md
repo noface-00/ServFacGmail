@@ -9,16 +9,16 @@ Gmail Invoice Scanner Service — a Node/TypeScript/Express microservice. It sea
 ## Commands
 
 ```bash
-npm run dev     # ts-node-dev with watch, runs src/index.ts directly (no build step)
-npm run build   # tsc -> dist/
-npm start        # node dist/index.js (requires build first)
-npm test         # jest (all tests)
+pnpm run dev     # ts-node-dev with watch, runs src/index.ts directly (no build step)
+pnpm run build   # tsc -> dist/
+pnpm start        # node dist/index.js (requires build first)
+pnpm test         # jest (all tests)
 ```
 
 Run a single test file or test case:
 ```bash
-npx jest src/tests/scanner.service.test.ts
-npx jest -t "should parse Chile (DTE) XML structure correctly"
+pnpm exec jest src/tests/scanner.service.test.ts
+pnpm exec jest -t "should parse Chile (DTE) XML structure correctly"
 ```
 
 Local manual testing utilities (bypass the HTTP layer, read credentials from `.env`):
@@ -29,8 +29,8 @@ node scratch/test_real_scanner.js                    # test the full scan() flow
 
 Prisma / database:
 ```bash
-npx prisma migrate dev --name <name>   # create + apply a migration in development (needs DATABASE_URL)
-npx prisma generate                     # regenerate the Prisma Client after schema changes (also runs on npm install via postinstall)
+pnpm exec prisma migrate dev --name <name>   # create + apply a migration in development (needs DATABASE_URL)
+pnpm exec prisma generate                     # regenerate the Prisma Client after schema changes (also runs on pnpm install via postinstall)
 ```
 
 ## Architecture
@@ -58,7 +58,7 @@ This project is on Prisma 7, which changed several defaults from Prisma 5/6:
 - `datasource.url` in `prisma/schema.prisma` is no longer allowed — the connection string lives in `prisma.config.ts` (`datasource.url: process.env.DATABASE_URL`), used by the CLI (`migrate dev`/`migrate deploy`/`generate`).
 - `PrismaClient` no longer reads `DATABASE_URL` implicitly; it must be constructed with an explicit driver `adapter` (`src/prisma.ts` uses `@prisma/adapter-pg`).
 - The generator is pinned to `provider = "prisma-client-js"` (not the newer `"prisma-client"`), so the client still generates into `node_modules/@prisma/client` and imports as `from '@prisma/client'` — this avoids the new generator's TS-source output, which would violate `tsconfig.json`'s `rootDir: "./src"`.
-- The query engine is WASM-based (bundled in the generated client), so no `binaryTargets` are needed in the schema for the app to run cross-platform; only the CLI's native schema-engine binary (used by `migrate deploy`) is platform-specific, and it's downloaded automatically for whatever platform runs `npm install`.
+- The query engine is WASM-based (bundled in the generated client), so no `binaryTargets` are needed in the schema for the app to run cross-platform; only the CLI's native schema-engine binary (used by `migrate deploy`) is platform-specific, and it's downloaded automatically for whatever platform runs `pnpm install`.
 
 ### Attachment parsing priority
 
@@ -76,7 +76,7 @@ Tests mock `googleapis` (`google.gmail`, `google.auth.OAuth2`) and `@google/gena
 
 ## Deployment
 
-Deployed via a multi-stage `Dockerfile` (builder compiles TypeScript, runner installs only production deps) to Dokploy. Both stages copy `prisma.config.ts` and `prisma/` and run `npm install` *before* anything else, because `postinstall: prisma generate` needs the schema present. The container's `CMD` runs `npx prisma migrate deploy` before `npm start`, since `DATABASE_URL` is a Dokploy runtime env var, not available at build time. See the "Despliegue en Dokploy" section of `README.md` for the full list of required environment variables (`SERVICE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `DATABASE_URL`, `TOKEN_ENCRYPTION_KEY`, `GEMINI_API_KEY`, `SUPPLIER_EMAILS`).
+Deployed via a multi-stage `Dockerfile` (builder compiles TypeScript, runner installs only production deps) to Dokploy. Both stages copy `prisma.config.ts` and `prisma/` and run `pnpm install --frozen-lockfile` *before* anything else, because `postinstall: prisma generate` needs the schema present. The container's `CMD` runs `pnpm exec prisma migrate deploy` before `pnpm start`, since `DATABASE_URL` is a Dokploy runtime env var, not available at build time. See the "Despliegue en Dokploy" section of `README.md` for the full list of required environment variables (`SERVICE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `DATABASE_URL`, `TOKEN_ENCRYPTION_KEY`, `GEMINI_API_KEY`, `SUPPLIER_EMAILS`).
 
 ## Roadmap / known gaps
 

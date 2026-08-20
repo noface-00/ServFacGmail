@@ -42,7 +42,7 @@ Este es un microservicio diseñado para buscar correos de proveedores en Gmail, 
 
 ### 1. Clonar e Instalar Dependencias
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Configuración de Variables de Entorno
@@ -72,14 +72,14 @@ npx prisma migrate dev
 ### 4. Ejecutar en Modo Desarrollo
 Inicia el servidor con recarga automática ante cambios:
 ```bash
-npm run dev
+pnpm run dev
 ```
 El servidor estará listo en `http://localhost:3005`.
 
 ### 5. Compilar para Producción
 ```bash
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 Al iniciar en producción (ver `Dockerfile`), las migraciones pendientes se aplican automáticamente con `prisma migrate deploy` antes de arrancar el servidor.
 
@@ -114,7 +114,7 @@ Para realizar pruebas completas de escaneo de bandeja de entrada de Gmail y pars
    ```
 3. Asegúrate de compilar el proyecto TypeScript:
    ```bash
-   npm run build
+   pnpm run build
    ```
 4. Ejecuta el script de prueba real:
    ```bash
