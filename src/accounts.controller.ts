@@ -1,13 +1,23 @@
 import { Request, Response } from 'express';
 import { AccountsService, AccountNotFoundError, InvalidOAuthStateError } from './accounts.service.js';
+import { isAccountAllowed } from './auth.middleware.js';
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function htmlPage(title: string, message: string): string {
   return `<!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><title>${title}</title></head>
+<head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head>
 <body style="font-family: sans-serif; text-align: center; padding-top: 4rem;">
-  <h1>${title}</h1>
-  <p>${message}</p>
+  <h1>${escapeHtml(title)}</h1>
+  <p>${escapeHtml(message)}</p>
 </body>
 </html>`;
 }
@@ -66,7 +76,9 @@ export class AccountsController {
 
   public list = async (req: Request, res: Response): Promise<void> => {
     try {
-      const accounts = await this.accountsService.listAccounts();
+      const all = await this.accountsService.listAccounts();
+      // Keys restricted to specific accounts only see those accounts.
+      const accounts = all.filter((account) => isAccountAllowed(req.auth, account.email));
       res.status(200).json({ accounts, count: accounts.length });
     } catch (error: any) {
       console.error('Failed to list connected accounts:', error);

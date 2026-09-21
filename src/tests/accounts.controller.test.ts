@@ -22,10 +22,27 @@ jest.mock('../accounts.service.js', () => {
   };
 });
 
+const mockVerifyKey = jest.fn();
+jest.mock('../api-keys.service.js', () => {
+  const actual = jest.requireActual('../api-keys.service.js');
+  return {
+    ...actual,
+    ApiKeysService: jest.fn().mockImplementation(() => ({
+      verifyKey: (...args: any[]) => mockVerifyKey(...args),
+    })),
+  };
+});
+
+jest.mock('../prisma.js', () => ({
+  prisma: { auditLog: { create: jest.fn().mockResolvedValue({}) } },
+}));
+
 describe('AccountsController Integration Tests', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
+    mockVerifyKey.mockReset();
+    mockVerifyKey.mockResolvedValue(null);
     mockGetAuthUrl.mockReset();
     mockHandleCallback.mockReset();
     mockListAccounts.mockReset();
