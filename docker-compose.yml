@@ -1,0 +1,33 @@
+# Caddy (HTTPS) + servicio. La base de datos es externa: define DATABASE_URL en el .env.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: "3005"
+      # Un único proxy (Caddy) delante de la app: necesario para que el rate limiting vea la IP real.
+      TRUST_PROXY: "1"
+    # Sin `ports`: la app solo es accesible a través de Caddy, dentro de la red de compose.
+    expose:
+      - "3005"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Define DOMAIN en el .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
