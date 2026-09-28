@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Microservice to scan Gmail inboxes and parse PDF/XML/ZIP invoices, managing its own Gmail OAuth accounts",
   "main": "dist/index.js",
+  "packageManager": "pnpm@11.7.0",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -18,10 +19,13 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.7.0",
     "googleapis": "^140.0.0",
+    "helmet": "^8.3.0",
     "pg": "^8.23.0",
     "prisma": "^7.9.1",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",

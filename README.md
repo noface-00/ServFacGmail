@@ -42,7 +42,7 @@ Este es un microservicio diseñado para buscar correos de proveedores en Gmail, 
 
 ### 1. Clonar e Instalar Dependencias
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Configuración de Variables de Entorno
@@ -72,14 +72,14 @@ npx prisma migrate dev
 ### 4. Ejecutar en Modo Desarrollo
 Inicia el servidor con recarga automática ante cambios:
 ```bash
-npm run dev
+pnpm run dev
 ```
 El servidor estará listo en `http://localhost:3005`.
 
 ### 5. Compilar para Producción
 ```bash
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 Al iniciar en producción (ver `Dockerfile`), las migraciones pendientes se aplican automáticamente con `prisma migrate deploy` antes de arrancar el servidor.
 
@@ -114,7 +114,7 @@ Para realizar pruebas completas de escaneo de bandeja de entrada de Gmail y pars
    ```
 3. Asegúrate de compilar el proyecto TypeScript:
    ```bash
-   npm run build
+   pnpm run build
    ```
 4. Ejecuta el script de prueba real:
    ```bash
@@ -126,9 +126,36 @@ Para realizar pruebas completas de escaneo de bandeja de entrada de Gmail y pars
 ## Especificación del API
 
 ### Seguridad y Autenticación
-Todos los endpoints, salvo `GET /health` y `GET /auth/google/callback`, requieren autenticación. Debe enviarse la clave de API configurada en la variable de entorno `SERVICE_API_KEY` mediante:
-* El encabezado HTTP `x-api-key: <clave_api>` (Recomendado).
-* El parámetro en query string `apiKey=<clave_api>`.
+Todos los endpoints, salvo `GET /health` y `GET /auth/google/callback`, requieren autenticación mediante el encabezado HTTP `x-api-key: <clave_api>`. **Ya no se acepta la clave en la query string** (`?apiKey=`), porque las URLs quedan registradas en logs y proxies.
+
+Existen dos tipos de clave:
+
+| Clave | Origen | Permisos |
+|---|---|---|
+| **Maestra** | Variable de entorno `SERVICE_API_KEY` | Todo: gestionar API keys, conectar/desconectar cuentas (`/auth/google/login`, `DELETE /accounts/:email`) y acceder a todas las cuentas |
+| **Por cliente** | Se crea con `POST /admin/api-keys` (se guarda solo su hash SHA-256) | `/scan`, `/scan-sent`, `/download-pdf` y `GET /accounts`. Puede limitarse a ciertas cuentas con `allowedAccounts` |
+
+Gestión de claves por cliente (requiere la clave maestra):
+
+```bash
+# Crear (la clave en claro se muestra una única vez)
+curl -X POST https://tu-dominio.com/admin/api-keys \
+  -H "x-api-key: $SERVICE_API_KEY" -H "Content-Type: application/json" \
+  -d '{"name": "cliente-a", "allowedAccounts": ["compras@empresa.com"]}'
+
+# Listar (sin hashes) y revocar
+curl https://tu-dominio.com/admin/api-keys -H "x-api-key: $SERVICE_API_KEY"
+curl -X DELETE https://tu-dominio.com/admin/api-keys/<id> -H "x-api-key: $SERVICE_API_KEY"
+```
+
+Si `allowedAccounts` está vacío o se omite, la clave puede usar cualquier cuenta conectada. Si tiene cuentas, usar otra `accountEmail` responde `403`.
+
+Medidas adicionales:
+* **Helmet**: encabezados de seguridad HTTP.
+* **CORS**: cerrado por defecto; se habilitan orígenes con `CORS_ORIGINS`.
+* **Rate limiting**: por IP a nivel global (`RATE_LIMIT_GLOBAL`) y por API key en `/scan`, `/scan-sent` y `/download-pdf` (`RATE_LIMIT_SCAN`). Responde `429`. Requiere `TRUST_PROXY` correcto detrás de un proxy.
+* **Validación de entrada** (zod): emails, fechas y `q` malformados responden `400`.
+* **Auditoría**: cada petición autenticada se registra en la tabla `AuditLog` (clave, ruta, cuenta, estado e IP). Nunca se guardan cuerpos, tokens ni claves.
 
 `GET /auth/google/callback` es la excepción: lo invoca el navegador del usuario final tras redirigir desde Google, por lo que se protege mediante el parámetro `state` firmado por el propio servicio en vez de la API key.
 
@@ -323,6 +350,21 @@ Desconecta una cuenta de Gmail (elimina sus tokens de la base de datos). Requier
 
 ---
 
+## Despliegue con Caddy (HTTPS)
+
+Alternativa a Dokploy: `docker-compose.yml` levanta el servicio junto con [Caddy](https://caddyserver.com), que actúa como reverse proxy y obtiene certificados TLS automáticamente. La app no publica puertos: solo es accesible a través de Caddy.
+
+1. Copia `.env.example` a `.env` y completa las variables (incluyendo `DOMAIN`, p. ej. `facturas.tu-dominio.com`, y `DATABASE_URL` de una base de datos accesible desde el servidor).
+2. Apunta el DNS del dominio al servidor y abre los puertos `80` y `443` (TCP) y `443` (UDP, HTTP/3).
+3. Ajusta `GOOGLE_REDIRECT_URI` a `https://<DOMAIN>/auth/google/callback` y regístrala en Google Cloud Console.
+4. Inicia:
+   ```bash
+   docker compose up -d --build
+   ```
+5. Comprueba `https://<DOMAIN>/health`.
+
+`TRUST_PROXY=1` ya está fijado en el compose (un único proxy delante). Si añades otro proxy o CDN delante de Caddy, súbelo en consecuencia; si no, el rate limiting vería la IP del proxy en lugar de la del cliente. Los certificados se guardan en el volumen `caddy_data`: no lo borres o se volverán a solicitar.
+
 ## Despliegue en Dokploy
 
 Este servicio está totalmente preparado para ser desplegado en **Dokploy** (una plataforma autohospedada basada en Docker) mediante el uso del `Dockerfile` multi-stage incluido.
@@ -341,7 +383,8 @@ Este servicio está totalmente preparado para ser desplegado en **Dokploy** (una
    - Ve a la pestaña **Environment** en la configuración de la aplicación de Dokploy.
    - Registra las siguientes variables de entorno requeridas:
      * `PORT`: `3005` (o el puerto en el que prefieras que escuche el contenedor).
-     * `SERVICE_API_KEY`: Tu clave secreta generada para proteger el acceso a los endpoints del servicio.
+     * `SERVICE_API_KEY`: Clave maestra (admin). Úsala para crear las API keys por cliente (`POST /admin/api-keys`).
+     * `CORS_ORIGINS`, `TRUST_PROXY`, `RATE_LIMIT_GLOBAL`, `RATE_LIMIT_SCAN`: (Opcionales) ver "Seguridad y Autenticación". En Dokploy `TRUST_PROXY=1` (valor por defecto).
      * `GOOGLE_CLIENT_ID`: Tu ID de cliente OAuth de Google.
      * `GOOGLE_CLIENT_SECRET`: Tu secreto de cliente OAuth de Google.
      * `GOOGLE_REDIRECT_URI`: URL pública y exacta de `/auth/google/callback` (ej. `https://tu-dominio.com/auth/google/callback`), registrada también en Google Cloud Console.

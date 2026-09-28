@@ -15,3 +15,29 @@ model GmailAccount {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 }
+
+model ApiKey {
+  id              String     @id @default(cuid())
+  name            String
+  keyHash         String     @unique
+  keyPrefix       String
+  allowedAccounts String[]
+  createdAt       DateTime   @default(now())
+  lastUsedAt      DateTime?
+  revokedAt       DateTime?
+  auditLogs       AuditLog[]
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  apiKeyId     String?
+  action       String
+  accountEmail String?
+  statusCode   Int
+  ip           String?
+  createdAt    DateTime @default(now())
+  apiKey       ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([apiKeyId, createdAt])
+}

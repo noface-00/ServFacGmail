@@ -1,0 +1,15 @@
+# Reverse proxy con HTTPS automático (Let's Encrypt) delante del servicio.
+# DOMAIN se define en el .env (ej. facturas.tu-dominio.com); el DNS debe apuntar a este servidor
+# y los puertos 80/443 deben estar abiertos para que Caddy obtenga el certificado.
+{$DOMAIN} {
+	encode zstd gzip
+
+	reverse_proxy app:3005 {
+		health_uri /health
+		health_interval 30s
+	}
+
+	# Caddy añade X-Forwarded-For/Proto/Host; la app confía en un único proxy (TRUST_PROXY=1).
+	# No expone el header Server.
+	header -Server
+}
