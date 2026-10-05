@@ -1,9 +1,12 @@
-# Caddy (HTTPS) + servicio. La base de datos es externa: define DATABASE_URL en el .env.
+# Caddy (HTTPS) + servicio. La base de datos es externa: define DATABASE_URL en apps/api/.env.
+# DOMAIN se interpola desde el .env de la raíz (o usa `docker compose --env-file apps/api/.env up`).
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     restart: unless-stopped
-    env_file: .env
+    env_file: apps/api/.env
     environment:
       PORT: "3005"
       # Un único proxy (Caddy) delante de la app: necesario para que el rate limiting vea la IP real.

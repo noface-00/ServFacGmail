@@ -1,34 +1,38 @@
+# Build context: the monorepo root (e.g. `docker build -f apps/api/Dockerfile .`), since the
+# pnpm lockfile and workspace config live there.
+
 # ==========================================
 # Stage 1: Build Stage
 # ==========================================
 FROM node:22-alpine AS builder
 
-WORKDIR /app
+WORKDIR /repo
 
 RUN corepack enable
 
-# Copy package configuration and Prisma schema first so `postinstall` (prisma generate) has
+# Copy workspace manifests and the Prisma schema first so `postinstall` (prisma generate) has
 # something to generate against.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY prisma.config.ts ./
-COPY prisma ./prisma
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/prisma.config.ts ./apps/api/
+COPY apps/api/prisma ./apps/api/prisma
 
-# Install all dependencies (including devDependencies)
-RUN pnpm install --frozen-lockfile
+# Install all dependencies (including devDependencies) for the API package only
+RUN pnpm install --frozen-lockfile --filter @servfac/api
 
 # Copy source code and TypeScript config
-COPY tsconfig.json ./
-COPY src/ ./src/
+COPY apps/api/tsconfig.json ./apps/api/
+COPY apps/api/src/ ./apps/api/src/
 
 # Compile TypeScript to JavaScript
-RUN pnpm run build
+RUN pnpm --filter @servfac/api run build
 
 # ==========================================
 # Stage 2: Production Runner Stage
 # ==========================================
 FROM node:22-alpine AS runner
 
-WORKDIR /app
+WORKDIR /repo
 
 ENV NODE_ENV=production
 
@@ -37,17 +41,20 @@ RUN corepack enable
 # openssl is required by Prisma's schema engine (used by `prisma migrate deploy`) on Alpine
 RUN apk add --no-cache openssl
 
-# Copy package files and Prisma schema first so `postinstall` (prisma generate) has
+# Copy workspace manifests and the Prisma schema first so `postinstall` (prisma generate) has
 # something to generate against.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY prisma.config.ts ./
-COPY prisma ./prisma
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/prisma.config.ts ./apps/api/
+COPY apps/api/prisma ./apps/api/prisma
 
-# Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+# Install only production dependencies for the API package
+RUN pnpm install --frozen-lockfile --prod --filter @servfac/api
 
 # Copy compiled code from builder
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /repo/apps/api/dist ./apps/api/dist
+
+WORKDIR /repo/apps/api
 
 # Expose port (default is 3005)
 EXPOSE 3005
