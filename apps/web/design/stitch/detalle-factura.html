@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-surface":"#151c29","secondary-fixed":"#e7deff","primary-fixed-dim":"#84d5c8","surface-container-lowest":"#ffffff","tertiary-fixed":"#d5e3ff","surface-variant":"#dce2f6","on-tertiary-fixed-variant":"#004787","inverse-primary":"#84d5c8","surface-container":"#e8eeff","on-tertiary-container":"#cfe0ff","inverse-on-surface":"#ecf0ff","surface-container-high":"#e1e8fb","surface":"#f9f9ff","surface-bright":"#f9f9ff","tertiary-container":"#2363ac","surface-tint":"#046a60","on-primary-fixed":"#00201c","error":"#ba1a1a","inverse-surface":"#29303f","on-background":"#151c29","error-container":"#ffdad6","surface-dim":"#d3daed","on-secondary-fixed-variant":"#4b28b3","tertiary-fixed-dim":"#a6c8ff","surface-container-highest":"#dce2f6","on-primary-container":"#9cede0","on-error":"#ffffff","on-tertiary":"#ffffff","on-secondary-container":"#fffbff","secondary-container":"#7a5de4","on-tertiary-fixed":"#001c3b","on-secondary":"#ffffff","on-primary-fixed-variant":"#005048","primary":"#00544c","on-secondary-fixed":"#1e0061","secondary":"#6042ca","primary-fixed":"#a0f1e4","surface-container-low":"#f1f3ff","on-primary":"#ffffff","primary-container":"#0e6e64","outline-variant":"#bec9c6","on-surface-variant":"#3e4947","secondary-fixed-dim":"#cbbeff","background":"#f9f9ff","outline":"#6e7977","on-error-container":"#93000a","tertiary":"#004b8d"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter":"1rem","margin":"1rem","space-xl":"1.5rem","space-md":"0.75rem","space-xs":"0.25rem","space-lg":"1rem","gutter-desktop":"1.5rem","margin-desktop":"2rem","space-sm":"0.5rem"},"fontFamily":{"headline-lg":["IBM Plex Sans"],"display-kpi":["IBM Plex Mono"],"table-header":["IBM Plex Sans"],"table-cell-mono":["IBM Plex Mono"],"label-sm":["IBM Plex Sans"],"headline-sm":["IBM Plex Sans"],"headline-md":["IBM Plex Sans"],"table-cell":["IBM Plex Sans"],"label-xs-mono":["IBM Plex Mono"],"body-base":["IBM Plex Sans"],"body-base-semibold":["IBM Plex Sans"]},"fontSize":{"headline-lg":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"display-kpi":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"600"}],"table-header":["12px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"600"}],"table-cell-mono":["13px",{"lineHeight":"18px","letterSpacing":"-0.01em","fontWeight":"500"}],"label-sm":["12px",{"lineHeight":"16px","fontWeight":"500"}],"headline-sm":["14px",{"lineHeight":"20px","fontWeight":"600"}],"headline-md":["16px",{"lineHeight":"24px","fontWeight":"600"}],"table-cell":["13px",{"lineHeight":"18px","fontWeight":"400"}],"label-xs-mono":["11px",{"lineHeight":"14px","fontWeight":"500"}],"body-base":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-base-semibold":["14px",{"lineHeight":"20px","fontWeight":"600"}]}}}};</script></head><body class="bg-background font-body-base text-body-base text-on-surface antialiased"><header class="fixed top-0 left-0 w-full h-14 bg-surface-container-lowest z-40 border-b border-[#E2E5EA] flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md min-w-[216px]"><img alt="ServFacGmail Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UtH4fffTQ-aGkuUkfP2pKdC7XgVPuQtzVMRQDwflFF_4y8AUqpnOhUtfo_u3sObHmbUN9Gee2jbEPAQOel-TfrPra16MGBbbHwieHtO1Pi7nwT5tCMRQdN3UDiQZVDrh1JR8Ig1lQgSnkrgA276kGMMecdOIlYnLWbDxUec3Fc0kl7XGbGPlLM8Uas7_ewKMUHXu71X9_G3RpH_Q9rJb4gkGnSn-Ey8jVJP6UafKpBD9J3HQKMUArR4Ak"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">ServFacGmail</span></div><div class="flex items-center justify-center flex-1"><div class="flex items-center justify-between gap-space-sm h-9 px-space-md bg-surface-container-lowest border border-[#C9CED6] rounded cursor-pointer hover:bg-surface-container-low transition-colors"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-on-surface-variant">mail</span><span class="font-table-cell-mono text-table-cell-mono text-on-surface">contabilidad@empresa.com</span></div><span class="material-symbols-outlined text-[18px] text-on-surface-variant">keyboard_arrow_down</span></div></div><div class="flex items-center gap-space-lg justify-end"><div class="flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low rounded border border-[#E2E5EA]"><span class="inline-block w-2 h-2 rounded-full bg-[#1F7A3A]"></span><span class="font-label-xs-mono text-label-xs-mono text-on-surface-variant">API en línea</span></div><button aria-label="Notificaciones" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors rounded" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span></button><div class="flex items-center gap-space-xs pl-space-xs cursor-pointer"><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[#E2E5EA]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUHL2plAeMaxqNzaEdhwLYD5nEWA9Jsr1PHOInWq0DD2FD81HyjUyTVoAfxzXbUF5mrAzbrxMkHCRYYzOtUDNaqRV7VLHj3H2z0dTFRIbTbHKovsvVCLZGk9zzuS1aCFU5ZB84UE-hcorqxKBzNcZFcnRgXaJIjGjSqJAe98Z3fQ3K-TqGWHmdftNbAaEYXtQFZWkR2ufRLjFIKNexRh8oviTseAKUf_v1VX4dOsI18-P-iNCzKCpUrg"/><span class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-[232px] bg-surface-container-lowest border-r border-[#E2E5EA] z-30 flex flex-col justify-between py-space-md"><div class="flex flex-col gap-space-md"><div class="px-space-md"><div class="font-table-header text-table-header uppercase text-outline mb-space-xs tracking-wider">Escanear</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container-high text-on-surface border-l-2 border-primary-container font-body-base-semibold"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 rounded transition-colors bg-surface-container-high text-on-surface border-l-2 border-primary-container font-body-base-semibold" data-path="recibidas" href="#"><span class="material-symbols-outlined text-[20px]">inbox</span><span>Recibidas</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="emitidas" href="#"><span class="material-symbols-outlined text-[20px]">send</span><span>Emitidas</span></a></nav></div><div class="px-space-md"><div class="font-table-header text-table-header uppercase text-outline mb-space-xs tracking-wider">Cuentas</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container-high text-on-surface border-l-2 border-primary-container font-body-base-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="cuentas-empresa" href="#"><span class="material-symbols-outlined text-[20px]">apartment</span><span>Cuentas</span></a></nav></div><div class="px-space-md pt-space-xs"><div class="flex items-center justify-between mb-space-xs"><span class="font-table-header text-table-header uppercase text-outline tracking-wider">Administración</span><span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-secondary-fixed text-on-secondary-fixed-variant">Admin</span></div><nav class="flex flex-col gap-1 pl-1 border-l-2 border-secondary-fixed" data-active-classes="bg-secondary-fixed text-on-secondary-fixed-variant border-l-2 border-secondary font-body-base-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="cuentas-de-gmail" href="#"><span class="material-symbols-outlined text-[20px]">mail_lock</span><span>Cuentas de Gmail</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="claves-de-api" href="#"><span class="material-symbols-outlined text-[20px]">key</span><span>Claves de API</span></a></nav></div></div><div class="px-space-md pt-space-md border-t border-[#E2E5EA]"><div class="flex items-center justify-between text-outline text-label-xs-mono font-label-xs-mono"><span>Versión 2.4.1</span><span class="text-[#1F7A3A]">Sincronizado</span></div></div></aside><div class="pl-[232px]"><main class="pt-14 min-h-screen bg-[#F7F8FA]"><div class="max-w-[1280px] mx-auto p-6"><div class="flex flex-col w-full relative">
+<!-- Operational Breadcrumbs & Live Summary Metric Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm text-outline">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Facturas</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Recibidas</span>
+<span class="font-label-xs-mono text-label-xs-mono px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-medium">Lote #2026-09-A</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs px-space-md py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span class="font-label-xs-mono text-label-xs-mono text-on-surface-variant">148 Validadas</span>
+</div>
+<div class="flex items-center gap-space-xs px-space-md py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">rule</span>
+<span class="font-label-xs-mono text-label-xs-mono text-on-surface-variant">4 En Revisión</span>
+</div>
+<button class="flex items-center gap-space-xs h-9 px-space-md rounded-lg bg-primary-container text-on-primary font-headline-sm text-headline-sm hover:opacity-95 transition-opacity shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+<span>Sincronizar Gmail</span>
+</button>
+</div>
+</div>
+<!-- Operational Filter & Search Utility Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-md p-space-md mb-space-md bg-surface-container-lowest rounded-xl shadow-sm">
+<div class="flex items-center gap-space-sm flex-1 min-w-[280px]">
+<div class="relative w-full max-w-sm">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-outline">search</span>
+<input class="w-full h-9 pl-9 pr-space-md rounded-lg bg-surface-container-low font-body-base text-body-base text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary-container transition-all" placeholder="Buscar por RUC, emisor o número..." type="text" value="Distribuidora Andina"/>
+</div>
+<button class="h-9 px-space-md rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+<span>Filtros (1)</span>
+</button>
+<span class="px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-label-xs-mono text-label-xs-mono">Septiembre 2026</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="font-label-xs-mono text-label-xs-mono text-outline mr-2">152 comprobantes</span>
+<button class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface"><span class="material-symbols-outlined text-[18px]">view_agenda</span></button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-low flex items-center justify-center text-outline"><span class="material-symbols-outlined text-[18px]">table_rows</span></button>
+</div>
+</div>
+<!-- Main Background Master Table Surface -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden relative">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container h-9 text-on-surface-variant">
+<th class="w-10 px-3 py-2 text-center font-table-header text-table-header uppercase">#</th>
+<th class="px-4 py-2 font-table-header text-table-header uppercase">Emisor / RUC</th>
+<th class="px-4 py-2 font-table-header text-table-header uppercase">Número Factura</th>
+<th class="px-4 py-2 font-table-header text-table-header uppercase">Fecha Emisión</th>
+<th class="px-4 py-2 font-table-header text-table-header uppercase text-center">Estado</th>
+<th class="px-4 py-2 font-table-header text-table-header uppercase text-center">Origen</th>
+<th class="px-4 py-2 font-table-header text-table-header uppercase text-right">Subtotal</th>
+<th class="px-4 py-2 font-table-header text-table-header uppercase text-right">Total (USD)</th>
+<th class="w-12 px-3 py-2 text-center font-table-header text-table-header uppercase">Acción</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low font-body-base text-body-base">
+<!-- Active Highlighted Row (Target of Drawer) -->
+<tr class="bg-primary-fixed/20 hover:bg-primary-fixed/30 cursor-pointer transition-colors">
+<td class="px-3 py-3 text-center font-table-cell-mono text-table-cell-mono text-primary font-semibold">1</td>
+<td class="px-4 py-3">
+<div class="font-headline-sm text-headline-sm text-on-surface">Distribuidora Andina S.A.</div>
+<div class="font-table-cell-mono text-table-cell-mono text-outline">1791234567001</div>
+</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono font-semibold text-primary-container">
+              001-002-000012345
+            </td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface-variant">12 sep 2026</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FDF3E1] text-[#9A5B00]">Revisión</span>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FDECEA] text-[#B42318]">PDF · IA</span>
+</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono text-on-surface-variant">1.146,88</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono font-semibold text-on-surface">1.284,50</td>
+<td class="px-3 py-3 text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors">
+<td class="px-3 py-3 text-center font-table-cell-mono text-table-cell-mono text-outline">2</td>
+<td class="px-4 py-3">
+<div class="font-body-base-semibold text-body-base-semibold text-on-surface">Corporación Logística del Valle Cía.</div>
+<div class="font-table-cell-mono text-table-cell-mono text-outline">1790089452001</div>
+</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface">002-010-000459201</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface-variant">12 sep 2026</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E6F4EA] text-[#1F7A3A]">Validado</span>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#EFEBFB] text-[#5B3CC4]">XML SRI</span>
+</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono text-on-surface-variant">420,00</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono font-semibold text-on-surface">470,40</td>
+<td class="px-3 py-3 text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors">
+<td class="px-3 py-3 text-center font-table-cell-mono text-table-cell-mono text-outline">3</td>
+<td class="px-4 py-3">
+<div class="font-body-base-semibold text-body-base-semibold text-on-surface">Telecomunicaciones y Redes Ópticas S.A.</div>
+<div class="font-table-cell-mono text-table-cell-mono text-outline">0992384756001</div>
+</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface">104-001-000008432</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface-variant">11 sep 2026</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E6F4EA] text-[#1F7A3A]">Validado</span>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#EFEBFB] text-[#5B3CC4]">XML SRI</span>
+</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono text-on-surface-variant">89,20</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono font-semibold text-on-surface">99,90</td>
+<td class="px-3 py-3 text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors">
+<td class="px-3 py-3 text-center font-table-cell-mono text-table-cell-mono text-outline">4</td>
+<td class="px-4 py-3">
+<div class="font-body-base-semibold text-body-base-semibold text-on-surface">Soluciones Integrales de Oficina PapelOffice</div>
+<div class="font-table-cell-mono text-table-cell-mono text-outline">1793448821001</div>
+</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface">001-005-000087411</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface-variant">10 sep 2026</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E6F4EA] text-[#1F7A3A]">Validado</span>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#EFEBFB] text-[#5B3CC4]">XML SRI</span>
+</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono text-on-surface-variant">312,50</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono font-semibold text-on-surface">350,00</td>
+<td class="px-3 py-3 text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors">
+<td class="px-3 py-3 text-center font-table-cell-mono text-table-cell-mono text-outline">5</td>
+<td class="px-4 py-3">
+<div class="font-body-base-semibold text-body-base-semibold text-on-surface">Servicios Tecnológicos de la Nube CloudCloud</div>
+<div class="font-table-cell-mono text-table-cell-mono text-outline">1798839201001</div>
+</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface">003-001-000001099</td>
+<td class="px-4 py-3 font-table-cell-mono text-table-cell-mono text-on-surface-variant">09 sep 2026</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E6F4EA] text-[#1F7A3A]">Validado</span>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#EFEBFB] text-[#5B3CC4]">XML SRI</span>
+</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono text-on-surface-variant">850,00</td>
+<td class="px-4 py-3 text-right font-table-cell-mono text-table-cell-mono font-semibold text-on-surface">952,00</td>
+<td class="px-3 py-3 text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Status -->
+<div class="flex items-center justify-between px-space-md py-3 bg-surface-container-lowest">
+<span class="font-label-xs-mono text-label-xs-mono text-outline">Mostrando 1 - 5 de 152 comprobantes</span>
+<div class="flex items-center gap-space-xs">
+<button class="px-2.5 py-1 rounded bg-surface-container-low text-outline font-label-xs-mono text-label-xs-mono" disabled="">Anterior</button>
+<button class="px-2.5 py-1 rounded bg-primary-container text-on-primary font-label-xs-mono text-label-xs-mono">1</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-xs-mono text-label-xs-mono">2</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-xs-mono text-label-xs-mono">3</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-xs-mono text-label-xs-mono">Siguiente</button>
+</div>
+</div>
+</div>
+<!-- DIMMED OVERLAY LAYER FOR MODAL DRAWER -->
+<div class="fixed inset-0 top-14 bg-on-surface/40 backdrop-blur-[1px] z-50 transition-opacity duration-300" id="drawerOverlay">
+<!-- Clickable dismiss backdrop container -->
+<div class="w-full h-full flex justify-end">
+<!-- SLIDE-OVER DRAWER (480px) -->
+<section aria-label="Detalle de factura Distribuidora Andina S.A." aria-modal="true" class="w-full max-w-[480px] h-full bg-surface-container-lowest flex flex-col shadow-2xl relative z-10 transition-transform duration-300" id="invoiceDrawer" role="dialog">
+<!-- DRAWER HEADER (Sticky) -->
+<header class="p-space-lg bg-surface-container-lowest flex flex-col gap-space-sm shadow-subtle shrink-0">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex flex-col min-w-0">
+<span class="font-headline-lg text-headline-lg text-on-surface truncate">Distribuidora Andina S.A.</span>
+<span class="font-table-cell-mono text-table-cell-mono text-outline font-medium tracking-tight mt-0.5">
+                001-002-000012345
+              </span>
+</div>
+<button aria-label="Cerrar panel de detalle" class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" id="closeDrawerBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Total Amount & AI Badging -->
+<div class="flex items-baseline justify-between pt-1">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Total Factura</span>
+<span class="font-display-kpi text-[24px] leading-8 font-semibold text-on-surface">USD 1.284,50</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FDF3E1] text-[#9A5B00]">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+<span class="font-label-xs-mono text-label-xs-mono font-semibold">PDF · IA</span>
+</div>
+</div>
+<!-- AI Extraction Informational Note -->
+<div class="flex items-start gap-space-xs p-2.5 rounded-lg bg-surface-container text-tertiary">
+<span class="material-symbols-outlined text-[18px] text-tertiary shrink-0 mt-0.5">info</span>
+<p class="font-label-sm text-label-sm leading-4 text-on-surface-variant">
+              Datos extraídos automáticamente del PDF. Revise los montos antes de usarlos.
+            </p>
+</div>
+</header>
+<!-- DRAWER SCROLLABLE BODY -->
+<div class="flex-1 overflow-y-auto px-space-lg py-space-md flex flex-col gap-space-lg">
+<!-- SECTION 1: EMISOR -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-table-header text-table-header uppercase text-outline tracking-wider">Emisor</span>
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Razón Social</span>
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface">Distribuidora Andina S.A.</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">RUC</span>
+<span class="font-table-cell-mono text-table-cell-mono font-semibold text-on-surface">1791234567001</span>
+</div>
+<button class="px-2 py-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-label-xs-mono text-label-xs-mono flex items-center gap-1 transition-colors" onclick="navigator.clipboard.writeText('1791234567001'); this.innerText='¡Copiado!'" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+<span>Copiar RUC</span>
+</button>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Dirección</span>
+<span class="font-body-base text-body-base text-on-surface">Av. Amazonas y República, Quito</span>
+</div>
+</div>
+</div>
+<!-- SECTION 2: DOCUMENTO -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-table-header text-table-header uppercase text-outline tracking-wider">Documento</span>
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Fecha de emisión</span>
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface">12 sep 2026</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-outline">Tipo de Comprobante</span>
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface">Factura Electrónica (01)</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline">Clave de acceso</span>
+<button class="text-outline hover:text-on-surface flex items-center gap-1 font-label-xs-mono text-label-xs-mono transition-colors" onclick="navigator.clipboard.writeText('1209202601179123456700120010020000123451234567819');" title="Copiar Clave de Acceso" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+<span>Copiar</span>
+</button>
+</div>
+<!-- 49-digit formatted string with middle truncation aesthetic -->
+<div class="p-2 rounded bg-surface-container font-label-xs-mono text-label-xs-mono text-on-surface tracking-tight break-all font-mono select-all">
+                  1209202601179123456700120010020000123451234567819
+                </div>
+</div>
+</div>
+</div>
+<!-- SECTION 3: CORREO -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-table-header text-table-header uppercase text-outline tracking-wider">Correo</span>
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Asunto</span>
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface">Factura electrónica 001-002-000012345</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Remitente</span>
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface truncate">facturacion@andina.ec</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Recibido</span>
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface">12 sep 2026, 10:42</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[#B42318] text-[20px]">picture_as_pdf</span>
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface font-medium">factura_12345.pdf</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">(184 KB)</span>
+</div>
+<button class="text-primary hover:text-primary-container text-label-sm font-label-sm flex items-center gap-0.5" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Ver</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SECTION 4: ÍTEMS -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-table-header text-table-header uppercase text-outline tracking-wider">Ítems</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">4 líneas extraídas</span>
+</div>
+<!-- Compact Lines Table -->
+<div class="rounded-lg bg-surface-container-low overflow-hidden">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container font-table-header text-[11px] leading-4 text-on-surface-variant">
+<th class="px-2.5 py-1.5 font-semibold">Descripción</th>
+<th class="px-2 py-1.5 font-semibold text-right">Cant.</th>
+<th class="px-2 py-1.5 font-semibold text-right">P. unitario</th>
+<th class="px-2.5 py-1.5 font-semibold text-right">Total</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest/60 font-body-base text-[12px] leading-4">
+<tr>
+<td class="px-2.5 py-2 text-on-surface font-medium">Papel Bond A4 75g (Caja 5 millares)</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">10</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">32,50</td>
+<td class="px-2.5 py-2 text-right font-table-cell-mono text-table-cell-mono font-medium text-on-surface">325,00</td>
+</tr>
+<tr>
+<td class="px-2.5 py-2 text-on-surface font-medium">Tóner Láser HP Enterprise Black</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">2</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">145,00</td>
+<td class="px-2.5 py-2 text-right font-table-cell-mono text-table-cell-mono font-medium text-on-surface">290,00</td>
+</tr>
+<tr>
+<td class="px-2.5 py-2 text-on-surface font-medium">Archivadores Palanca Doble Oficio</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">50</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">4,10</td>
+<td class="px-2.5 py-2 text-right font-table-cell-mono text-table-cell-mono font-medium text-on-surface">205,00</td>
+</tr>
+<tr>
+<td class="px-2.5 py-2 text-on-surface font-medium">Kit Suministros Limpieza Impresora</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">4</td>
+<td class="px-2 py-2 text-right font-table-cell-mono text-table-cell-mono">75,00</td>
+<td class="px-2.5 py-2 text-right font-table-cell-mono text-table-cell-mono font-medium text-on-surface">300,00</td>
+</tr>
+</tbody>
+<tfoot>
+<tr class="bg-surface-container font-table-cell-mono text-table-cell-mono">
+<td class="px-2.5 py-2 font-semibold text-on-surface-variant text-right" colspan="3">Suma de ítems:</td>
+<td class="px-2.5 py-2 font-semibold text-right text-on-surface">USD 1.120,00</td>
+</tr>
+</tfoot>
+</table>
+</div>
+<!-- Discrepancy Warning Callout -->
+<div class="flex items-start gap-space-xs p-2.5 rounded-lg bg-[#FDF3E1] text-[#9A5B00] mt-1">
+<span class="material-symbols-outlined text-[18px] shrink-0 mt-0.5">warning</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold">Discrepancia detectada en desglose</span>
+<span class="font-label-xs-mono text-label-xs-mono leading-4">
+                  Los ítems no cuadran con el subtotal (USD 1.146,88). Diferencia de USD 26,88 no atribuida.
+                </span>
+</div>
+</div>
+</div>
+<!-- SECTION 5: VISTA PREVIA DEL PDF -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-table-header text-table-header uppercase text-outline tracking-wider">Vista previa</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">Pág. 1 de 1</span>
+</div>
+<!-- PDF Container Mockup -->
+<div class="relative w-full rounded-lg bg-surface-container-high p-3 flex flex-col items-center justify-center overflow-hidden group">
+<!-- Simulated PDF Sheet Paper Surface -->
+<div class="w-full max-w-[380px] bg-surface-container-lowest rounded shadow-md p-4 flex flex-col gap-3 min-h-[220px] transition-transform duration-200 group-hover:scale-[1.01]">
+<!-- Mini PDF Header -->
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-1 w-2/3">
+<div class="h-2 w-28 bg-on-surface/80 rounded-sm"></div>
+<div class="h-1.5 w-40 bg-outline/40 rounded-sm"></div>
+<div class="h-1.5 w-32 bg-outline/40 rounded-sm"></div>
+</div>
+<div class="w-16 h-12 rounded bg-surface-container flex flex-col items-center justify-center p-1">
+<span class="font-label-xs-mono text-[8px] font-bold text-outline">R.U.C.</span>
+<span class="font-label-xs-mono text-[7px] text-on-surface">1791234567001</span>
+</div>
+</div>
+<!-- Mini Barcode placeholder -->
+<div class="w-full h-4 bg-outline/20 rounded flex items-center justify-center">
+<div class="w-11/12 h-2.5 flex justify-between">
+<div class="w-0.5 h-full bg-outline"></div><div class="w-1 h-full bg-outline"></div><div class="w-0.5 h-full bg-outline"></div>
+<div class="w-1 h-full bg-outline"></div><div class="w-0.5 h-full bg-outline"></div><div class="w-1.5 h-full bg-outline"></div>
+<div class="w-0.5 h-full bg-outline"></div><div class="w-1 h-full bg-outline"></div><div class="w-0.5 h-full bg-outline"></div>
+<div class="w-1.5 h-full bg-outline"></div><div class="w-0.5 h-full bg-outline"></div><div class="w-1 h-full bg-outline"></div>
+</div>
+</div>
+<!-- Mini Table Structure -->
+<div class="w-full flex flex-col gap-1 pt-1">
+<div class="h-2 w-full bg-surface-container rounded-sm"></div>
+<div class="h-1.5 w-full bg-surface-container-low rounded-sm"></div>
+<div class="h-1.5 w-full bg-surface-container-low rounded-sm"></div>
+<div class="h-1.5 w-full bg-surface-container-low rounded-sm"></div>
+</div>
+<!-- Mini Totals -->
+<div class="flex justify-end pt-1">
+<div class="w-24 flex flex-col gap-1">
+<div class="flex justify-between items-center"><div class="h-1 w-8 bg-outline/40"></div><div class="h-1 w-6 bg-outline"></div></div>
+<div class="flex justify-between items-center"><div class="h-1 w-8 bg-outline/40"></div><div class="h-1 w-6 bg-outline"></div></div>
+<div class="flex justify-between items-center"><div class="h-1.5 w-10 bg-on-surface"></div><div class="h-1.5 w-8 bg-primary"></div></div>
+</div>
+</div>
+</div>
+<!-- Quick action hover overlay inside PDF thumbnail -->
+<div class="absolute inset-0 bg-on-surface/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
+<button class="h-8 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-headline-sm text-headline-sm flex items-center gap-1.5 shadow-md" type="button">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span>
+<span>Expandir visor</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- STICKY FOOTER ACTIONS -->
+<footer class="p-space-md bg-surface-container-lowest flex items-center justify-between gap-space-sm shadow-flyout shrink-0">
+<button class="h-9 px-space-lg rounded-lg bg-surface-container text-on-surface font-headline-sm text-headline-sm hover:bg-surface-container-high transition-colors" id="closeDrawerFooterBtn" type="button">
+            Cerrar
+          </button>
+<div class="flex items-center gap-space-xs">
+<button class="h-9 px-space-md rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface font-headline-sm text-headline-sm flex items-center gap-1" title="Re-ejecutar extracción IA" type="button">
+<span class="material-symbols-outlined text-[18px]">cached</span>
+<span>Reanalizar</span>
+</button>
+<button class="h-9 px-space-lg rounded-lg bg-primary-container text-on-primary font-headline-sm text-headline-sm hover:opacity-95 transition-opacity flex items-center gap-space-xs shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Descargar PDF</span>
+</button>
+</div>
+</footer>
+</section>
+</div>
+</div>
+</div>
+<script>
+  (function () {
+    const overlay = document.getElementById('drawerOverlay');
+    const drawer = document.getElementById('invoiceDrawer');
+    const closeBtn = document.getElementById('closeDrawerBtn');
+    const closeFooterBtn = document.getElementById('closeDrawerFooterBtn');
+
+    function hideDrawer() {
+      if (overlay) {
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 300);
+      }
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', hideDrawer);
+    if (closeFooterBtn) closeFooterBtn.addEventListener('click', hideDrawer);
+
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay || e.target.parentElement === overlay) {
+          hideDrawer();
+        }
+      });
+    }
+
+    // Keyboard navigation: Escape key closes modal drawer
+    window.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        hideDrawer();
+      }
+    });
+  })();
+</script></div></main></div></body></html>

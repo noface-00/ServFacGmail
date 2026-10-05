@@ -1,6 +1,11 @@
+packages:
+  - apps/*
+
 allowBuilds:
   '@google/genai': true
   '@prisma/engines': true
+  # Solo copia el service worker para el navegador; las pruebas usan msw/node.
+  msw: false
   prisma: true
   protobufjs: true
   unrs-resolver: true

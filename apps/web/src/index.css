@@ -1,0 +1,6 @@
+/* source('.') limita la detección de clases a src/: sin ella Tailwind también lee los HTML de
+   referencia de design/stitch/ y mete sus clases en el bundle. */
+@import 'tailwindcss' source('.');
+
+/* Fase 0: solo Tailwind. Los tokens del sistema de diseño (DESIGN.md §3) llegan en la Fase 1
+   desde src/assets/css/tokens.css y base.css. */
