@@ -350,12 +350,5 @@ Estado actual: template de Vite + React 19 (JS) con axios. Pasos para alinearlo 
    - Mover `src/.env` y `src/.env.example` a la raíz de `apps/web/` (Vite solo lee `.env` desde la raíz del proyecto).
    - Interceptor de request que añade `x-api-key` desde `sessionStorage`; interceptor de response que normaliza errores (§6.1).
 4. **CORS:** la API rechaza orígenes de navegador por defecto. Añadir el origen del frontend a `CORS_ORIGINS` (p. ej. `http://localhost:5173` en desarrollo).
-5. **Estructura sugerida:**
-   ```
-   src/
-     api/          axios.js, accounts.js, scan.js, apiKeys.js, health.js
-     components/   Button, Input, EmailChipsInput, Badge, Alert, Toast, Dialog, DataTable, ...
-     features/     auth/, accounts/, scan/, admin/
-     styles/       tokens.css, base.css
-   ```
+5. **Estructura de carpetas:** `api/routes/`, `components/`, `hooks/`, `layouts/`, `pages/`, `stores/`, `assets/css/`; el detalle y las reglas están en [`PLAN.md`](./PLAN.md#estructura-de-carpetas).
 6. **Seguridad:** la clave maestra en un navegador es un riesgo. Para uso cotidiano, crear una clave por cliente con `allowedAccounts` acotado y reservar la maestra para tareas de administración puntuales.
