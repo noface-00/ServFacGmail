@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-surface":"#151c29","secondary-fixed":"#e7deff","primary-fixed-dim":"#84d5c8","surface-container-lowest":"#ffffff","tertiary-fixed":"#d5e3ff","surface-variant":"#dce2f6","on-tertiary-fixed-variant":"#004787","inverse-primary":"#84d5c8","surface-container":"#e8eeff","on-tertiary-container":"#cfe0ff","inverse-on-surface":"#ecf0ff","surface-container-high":"#e1e8fb","surface":"#f9f9ff","surface-bright":"#f9f9ff","tertiary-container":"#2363ac","surface-tint":"#046a60","on-primary-fixed":"#00201c","error":"#ba1a1a","inverse-surface":"#29303f","on-background":"#151c29","error-container":"#ffdad6","surface-dim":"#d3daed","on-secondary-fixed-variant":"#4b28b3","tertiary-fixed-dim":"#a6c8ff","surface-container-highest":"#dce2f6","on-primary-container":"#9cede0","on-error":"#ffffff","on-tertiary":"#ffffff","on-secondary-container":"#fffbff","secondary-container":"#7a5de4","on-tertiary-fixed":"#001c3b","on-secondary":"#ffffff","on-primary-fixed-variant":"#005048","primary":"#00544c","on-secondary-fixed":"#1e0061","secondary":"#6042ca","primary-fixed":"#a0f1e4","surface-container-low":"#f1f3ff","on-primary":"#ffffff","primary-container":"#0e6e64","outline-variant":"#bec9c6","on-surface-variant":"#3e4947","secondary-fixed-dim":"#cbbeff","background":"#f9f9ff","outline":"#6e7977","on-error-container":"#93000a","tertiary":"#004b8d"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter":"1rem","margin":"1rem","space-xl":"1.5rem","space-md":"0.75rem","space-xs":"0.25rem","space-lg":"1rem","gutter-desktop":"1.5rem","margin-desktop":"2rem","space-sm":"0.5rem"},"fontFamily":{"headline-lg":["IBM Plex Sans"],"display-kpi":["IBM Plex Mono"],"table-header":["IBM Plex Sans"],"table-cell-mono":["IBM Plex Mono"],"label-sm":["IBM Plex Sans"],"headline-sm":["IBM Plex Sans"],"headline-md":["IBM Plex Sans"],"table-cell":["IBM Plex Sans"],"label-xs-mono":["IBM Plex Mono"],"body-base":["IBM Plex Sans"],"body-base-semibold":["IBM Plex Sans"]},"fontSize":{"headline-lg":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"display-kpi":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"600"}],"table-header":["12px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"600"}],"table-cell-mono":["13px",{"lineHeight":"18px","letterSpacing":"-0.01em","fontWeight":"500"}],"label-sm":["12px",{"lineHeight":"16px","fontWeight":"500"}],"headline-sm":["14px",{"lineHeight":"20px","fontWeight":"600"}],"headline-md":["16px",{"lineHeight":"24px","fontWeight":"600"}],"table-cell":["13px",{"lineHeight":"18px","fontWeight":"400"}],"label-xs-mono":["11px",{"lineHeight":"14px","fontWeight":"500"}],"body-base":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-base-semibold":["14px",{"lineHeight":"20px","fontWeight":"600"}]}}}};</script></head><body class="bg-background font-body-base text-body-base text-on-surface antialiased"><header class="fixed top-0 left-0 w-full h-14 bg-surface-container-lowest z-40 border-b border-[#E2E5EA] flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md min-w-[216px]"><img alt="ServFacGmail Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UtH4fffTQ-aGkuUkfP2pKdC7XgVPuQtzVMRQDwflFF_4y8AUqpnOhUtfo_u3sObHmbUN9Gee2jbEPAQOel-TfrPra16MGBbbHwieHtO1Pi7nwT5tCMRQdN3UDiQZVDrh1JR8Ig1lQgSnkrgA276kGMMecdOIlYnLWbDxUec3Fc0kl7XGbGPlLM8Uas7_ewKMUHXu71X9_G3RpH_Q9rJb4gkGnSn-Ey8jVJP6UafKpBD9J3HQKMUArR4Ak"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">ServFacGmail</span></div><div class="flex items-center justify-center flex-1"><div class="flex items-center justify-between gap-space-sm h-9 px-space-md bg-surface-container-lowest border border-[#C9CED6] rounded cursor-pointer hover:bg-surface-container-low transition-colors"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-on-surface-variant">mail</span><span class="font-table-cell-mono text-table-cell-mono text-on-surface">contabilidad@empresa.com</span></div><span class="material-symbols-outlined text-[18px] text-on-surface-variant">keyboard_arrow_down</span></div></div><div class="flex items-center gap-space-lg justify-end"><div class="flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low rounded border border-[#E2E5EA]"><span class="inline-block w-2 h-2 rounded-full bg-[#1F7A3A]"></span><span class="font-label-xs-mono text-label-xs-mono text-on-surface-variant">API en línea</span></div><button aria-label="Notificaciones" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors rounded" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span></button><div class="flex items-center gap-space-xs pl-space-xs cursor-pointer"><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[#E2E5EA]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUHL2plAeMaxqNzaEdhwLYD5nEWA9Jsr1PHOInWq0DD2FD81HyjUyTVoAfxzXbUF5mrAzbrxMkHCRYYzOtUDNaqRV7VLHj3H2z0dTFRIbTbHKovsvVCLZGk9zzuS1aCFU5ZB84UE-hcorqxKBzNcZFcnRgXaJIjGjSqJAe98Z3fQ3K-TqGWHmdftNbAaEYXtQFZWkR2ufRLjFIKNexRh8oviTseAKUf_v1VX4dOsI18-P-iNCzKCpUrg"/><span class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-[232px] bg-surface-container-lowest border-r border-[#E2E5EA] z-30 flex flex-col justify-between py-space-md"><div class="flex flex-col gap-space-md"><div class="px-space-md"><div class="font-table-header text-table-header uppercase text-outline mb-space-xs tracking-wider">Escanear</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container-high text-on-surface border-l-2 border-primary-container font-body-base-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="recibidas" href="#"><span class="material-symbols-outlined text-[20px]">inbox</span><span>Recibidas</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="emitidas" href="#"><span class="material-symbols-outlined text-[20px]">send</span><span>Emitidas</span></a></nav></div><div class="px-space-md"><div class="font-table-header text-table-header uppercase text-outline mb-space-xs tracking-wider">Cuentas</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container-high text-on-surface border-l-2 border-primary-container font-body-base-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="cuentas-empresa" href="#"><span class="material-symbols-outlined text-[20px]">apartment</span><span>Cuentas</span></a></nav></div><div class="px-space-md pt-space-xs"><div class="flex items-center justify-between mb-space-xs"><span class="font-table-header text-table-header uppercase text-outline tracking-wider">Administración</span><span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-secondary-fixed text-on-secondary-fixed-variant">Admin</span></div><nav class="flex flex-col gap-1 pl-1 border-l-2 border-secondary-fixed" data-active-classes="bg-secondary-fixed text-on-secondary-fixed-variant border-l-2 border-secondary font-body-base-semibold"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 rounded transition-colors bg-secondary-fixed text-on-secondary-fixed-variant border-l-2 border-secondary font-body-base-semibold" data-path="cuentas-de-gmail" href="#"><span class="material-symbols-outlined text-[20px]">mail_lock</span><span>Cuentas de Gmail</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-base text-body-base" data-path="claves-de-api" href="#"><span class="material-symbols-outlined text-[20px]">key</span><span>Claves de API</span></a></nav></div></div><div class="px-space-md pt-space-md border-t border-[#E2E5EA]"><div class="flex items-center justify-between text-outline text-label-xs-mono font-label-xs-mono"><span>Versión 2.4.1</span><span class="text-[#1F7A3A]">Sincronizado</span></div></div></aside><div class="pl-[232px]"><main class="pt-14 min-h-screen bg-[#F7F8FA]"><div class="max-w-[1280px] mx-auto p-6"><div class="flex flex-col w-full gap-space-xl">
+<!-- Top Bar / Page Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs mb-1">
+<span class="font-table-header text-table-header uppercase text-outline tracking-wider">Administración</span>
+<span class="text-outline text-label-xs-mono">/</span>
+<span class="font-table-header text-table-header uppercase text-secondary font-semibold">Cuentas de Gmail</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Cuentas de Gmail</h1>
+<p class="font-body-base text-body-base text-on-surface-variant mt-0.5">Bandejas que el servicio puede leer para extraer comprobantes.</p>
+</div>
+<!-- Action Button (Admin Stylized) -->
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<button class="group inline-flex items-center gap-space-sm h-9 px-space-md bg-surface-container-lowest text-secondary font-body-base-semibold text-body-base-semibold rounded-lg shadow-sm hover:bg-secondary-fixed/30 hover:text-on-secondary-fixed-variant transition-all active:scale-[0.99] outline-none" id="btn-open-connect-modal" style="box-shadow: 0 0 0 1px #6042ca;" type="button">
+<svg aria-hidden="true" class="w-4 h-4 transition-transform group-hover:scale-105" viewbox="0 0 24 24">
+<path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" fill="#4285F4"></path>
+<path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.13C3.26 21.37 7.36 24 12 24z" fill="#34A853"></path>
+<path d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.25C.45 8.17 0 9.99 0 12s.45 3.83 1.25 5.42l4.03-3.13z" fill="#FBBC05"></path>
+<path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.63 1.25 6.58l4.03 3.13c.95-2.83 3.6-4.96 6.72-4.96z" fill="#EA4335"></path>
+</svg>
+<span>Conectar cuenta de Gmail</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-secondary-fixed text-on-secondary-fixed-variant ml-1">Admin</span>
+</button>
+</div>
+</div>
+<!-- Operational Insights Bar / Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-space-md">
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline text-label-xs-mono">
+<span class="font-table-header uppercase">Bandejas Activas</span>
+<span class="material-symbols-outlined text-[16px] text-primary">mark_email_read</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-kpi text-display-kpi text-on-surface">4</span>
+<span class="font-label-xs-mono text-label-xs-mono text-primary font-semibold">100% operativas</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full mt-3 overflow-hidden">
+<div class="bg-primary h-full w-full"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline text-label-xs-mono">
+<span class="font-table-header uppercase">Extracción Automática</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">sync</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-kpi text-display-kpi text-on-surface">15 min</span>
+<span class="font-label-xs-mono text-label-xs-mono text-on-surface-variant">intervalo</span>
+</div>
+<p class="font-label-xs-mono text-label-xs-mono text-outline mt-3">Próximo escaneo programado: 04:30 min</p>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline text-label-xs-mono">
+<span class="font-table-header uppercase">Comprobantes (Hoy)</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">receipt_long</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-kpi text-display-kpi text-on-surface">148</span>
+<span class="font-label-xs-mono text-label-xs-mono text-primary font-semibold">+24 XML/PDF</span>
+</div>
+<p class="font-label-xs-mono text-label-xs-mono text-outline mt-3">Procesados desde Google Workspace</p>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline text-label-xs-mono">
+<span class="font-table-header uppercase">Protocolo de Seguridad</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">security</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">OAuth 2.0</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">Read-Only</span>
+</div>
+<p class="font-label-xs-mono text-label-xs-mono text-on-surface-variant mt-3">Tokens con rotación de 3600s activa</p>
+</div>
+</div>
+<!-- Connected Accounts Main Surface -->
+<div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden flex flex-col">
+<!-- Header of the Table Container -->
+<div class="px-space-lg py-space-md bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">mail</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Cuentas Vinculadas</span>
+<span class="px-2 py-0.5 rounded text-label-xs-mono font-label-xs-mono bg-surface-variant text-on-surface-variant">4 registros</span>
+</div>
+<div class="flex items-center gap-space-sm self-stretch sm:self-auto">
+<div class="relative flex-1 sm:w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+<input class="w-full h-8 pl-8 pr-3 bg-surface-container-lowest text-on-surface rounded text-body-base font-body-base placeholder:text-outline outline-none focus:ring-1 focus:ring-primary shadow-xs" placeholder="Buscar por correo..." type="text"/>
+</div>
+<button class="h-8 px-2.5 bg-surface-container-lowest text-on-surface-variant rounded hover:bg-surface-container hover:text-on-surface text-label-sm font-label-sm flex items-center gap-1 shadow-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+<span class="hidden sm:inline">Actualizar</span>
+</button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high h-9 text-outline font-table-header text-table-header uppercase">
+<th class="px-space-lg font-semibold w-[36%]">Cuenta de Gmail</th>
+<th class="px-space-md font-semibold text-center w-[18%]">Estado de sincronización</th>
+<th class="px-space-md font-semibold text-right w-[15%]">Conectada el</th>
+<th class="px-space-md font-semibold text-right w-[15%]">Último token</th>
+<th class="px-space-lg font-semibold text-right w-[16%]">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1 -->
+<tr class="h-12 hover:bg-surface-container-low transition-colors">
+<td class="px-space-lg py-2">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[#EA4335]">mail</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface truncate">contabilidad@empresa.com</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">Principal • Depto. Fiscal</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-xs-mono font-label-xs-mono bg-[#E6F4EA] text-[#1F7A3A] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#1F7A3A]"></span>
+                Activa
+              </span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface">15 ago 2026</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1 font-table-cell-mono text-table-cell-mono text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
+<span>hace 12 min</span>
+</div>
+</td>
+<td class="px-space-lg py-2 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">scanner</span>
+<span>Escanear</span>
+</button>
+<button class="h-7 px-2 bg-transparent hover:bg-error-container text-error font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors group" title="Acción restringida de administrador" type="button">
+<span class="material-symbols-outlined text-[14px] group-hover:scale-110 transition-transform">lock</span>
+<span>Desconectar</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="h-12 hover:bg-surface-container-low transition-colors">
+<td class="px-space-lg py-2">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[#EA4335]">mail</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface truncate">facturacion.proveedores@empresa.ec</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">Sucursal Guayaquil • Auto-parse</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-xs-mono font-label-xs-mono bg-[#E6F4EA] text-[#1F7A3A] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#1F7A3A]"></span>
+                Activa
+              </span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface">22 jul 2026</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1 font-table-cell-mono text-table-cell-mono text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
+<span>hace 3 h</span>
+</div>
+</td>
+<td class="px-space-lg py-2 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">scanner</span>
+<span>Escanear</span>
+</button>
+<button class="h-7 px-2 bg-transparent hover:bg-error-container text-error font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors group" title="Acción restringida de administrador" type="button">
+<span class="material-symbols-outlined text-[14px] group-hover:scale-110 transition-transform">lock</span>
+<span>Desconectar</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="h-12 hover:bg-surface-container-low transition-colors">
+<td class="px-space-lg py-2">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[#EA4335]">mail</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface truncate">compras@empresa.com</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">Órdenes de Compra y Facturas</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-xs-mono font-label-xs-mono bg-[#E6F4EA] text-[#1F7A3A] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#1F7A3A]"></span>
+                Activa
+              </span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface">04 jun 2026</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1 font-table-cell-mono text-table-cell-mono text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
+<span>hace 58 min</span>
+</div>
+</td>
+<td class="px-space-lg py-2 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">scanner</span>
+<span>Escanear</span>
+</button>
+<button class="h-7 px-2 bg-transparent hover:bg-error-container text-error font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors group" title="Acción restringida de administrador" type="button">
+<span class="material-symbols-outlined text-[14px] group-hover:scale-110 transition-transform">lock</span>
+<span>Desconectar</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="h-12 hover:bg-surface-container-low transition-colors">
+<td class="px-space-lg py-2">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[#EA4335]">mail</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface truncate">administracion@empresa.com</span>
+<span class="font-label-xs-mono text-label-xs-mono text-outline">Gastos Administrativos Generales</span>
+</div>
+</div>
+</td>
+<td class="px-space-md py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-xs-mono font-label-xs-mono bg-[#E6F4EA] text-[#1F7A3A] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#1F7A3A]"></span>
+                Activa
+              </span>
+</td>
+<td class="px-space-md py-2 text-right">
+<span class="font-table-cell-mono text-table-cell-mono text-on-surface">19 may 2026</span>
+</td>
+<td class="px-space-md py-2 text-right">
+<div class="inline-flex items-center gap-1 font-table-cell-mono text-table-cell-mono text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
+<span>hace 4 h</span>
+</div>
+</td>
+<td class="px-space-lg py-2 text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">scanner</span>
+<span>Escanear</span>
+</button>
+<button class="h-7 px-2 bg-transparent hover:bg-error-container text-error font-label-sm text-label-sm rounded flex items-center gap-1 transition-colors group" title="Acción restringida de administrador" type="button">
+<span class="material-symbols-outlined text-[14px] group-hover:scale-110 transition-transform">lock</span>
+<span>Desconectar</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination & Audit note -->
+<div class="px-space-lg py-space-sm bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-sm text-outline text-label-xs-mono">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#1F7A3A]"></span>
+<span>Sincronización en segundo plano activa para todas las cuentas autorizadas.</span>
+</div>
+<div class="flex items-center gap-4">
+<span>Mostrando 4 de 4 buzones configurados</span>
+</div>
+</div>
+</div>
+<!-- Operational Context / Security & Audit Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+<div class="bg-surface-container-lowest p-space-lg rounded-lg shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-2 text-primary font-headline-sm text-headline-sm">
+<span class="material-symbols-outlined text-[20px]">shield</span>
+<span>Alcance de Permisos</span>
+</div>
+<p class="text-body-base font-body-base text-on-surface-variant">
+        La integración opera únicamente bajo el scope <code class="font-table-cell-mono text-label-xs-mono bg-surface-container px-1.5 py-0.5 rounded text-on-surface">gmail.readonly</code>. El servicio jamás envía correos, no modifica etiquetas ni elimina mensajes de la cuenta conectada.
+      </p>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-lg shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-2 text-tertiary font-headline-sm text-headline-sm">
+<span class="material-symbols-outlined text-[20px]">history_toggle_off</span>
+<span>Auditoría de Acceso</span>
+</div>
+<p class="text-body-base font-body-base text-on-surface-variant">
+        Cada consulta de la API genera un evento inmutable registrado con la IP del conector y el ID del mensaje escaneado. Los registros de acceso se resguardan por 365 días fiscales.
+      </p>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-lg shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-2 text-secondary font-headline-sm text-headline-sm">
+<span class="material-symbols-outlined text-[20px]">vpn_key</span>
+<span>Gestión de Tokens</span>
+</div>
+<p class="text-body-base font-body-base text-on-surface-variant">
+        Los Refresh Tokens de Google están cifrados en reposo mediante AES-256 en bóveda criptográfica. Desconectar una cuenta revoca el acceso de inmediato a nivel de inquilino.
+      </p>
+</div>
+</div>
+<!-- Inline Simulation Panel: Modal & Interactive Success Preview -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-outline">tune</span>
+<span class="font-table-header text-table-header uppercase text-outline tracking-wider">Flujo de Conexión en Proceso</span>
+</div>
+<span class="font-label-xs-mono text-label-xs-mono px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant">Vista operativa activa</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Center Inline Modal (Conectar cuenta de Gmail) -->
+<div class="lg:col-span-7 bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden p-space-lg flex flex-col gap-space-lg relative">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-secondary-fixed/50 flex items-center justify-center text-on-secondary-fixed-variant">
+<span class="material-symbols-outlined text-[20px]">add_link</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Conectar cuenta de Gmail</h3>
+<p class="font-label-xs-mono text-label-xs-mono text-outline">Autorización segura vía OAuth 2.0</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" id="btn-close-modal" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Waiting State Box -->
+<div class="bg-surface-container-low rounded-lg p-space-lg flex flex-col items-center text-center gap-space-md">
+<!-- Spinner -->
+<div class="relative w-12 h-12 flex items-center justify-center">
+<div class="w-10 h-10 rounded-full border-4 border-surface-variant border-t-primary-container animate-spin"></div>
+<span class="material-symbols-outlined absolute text-[18px] text-primary-container">lock_clock</span>
+</div>
+<div class="flex flex-col gap-1 max-w-md">
+<span class="font-headline-sm text-headline-sm text-on-surface">Esperando autorización en Google...</span>
+<p class="font-body-base text-body-base text-on-surface-variant">
+              Se abrió una ventana de Google. Elija la cuenta corporativa y acepte los permisos de solo lectura para extraer comprobantes fiscales.
+            </p>
+</div>
+<!-- Countdown and Helper -->
+<div class="flex flex-wrap items-center justify-center gap-space-sm pt-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-xs-mono font-label-xs-mono bg-[#FDF3E1] text-[#9A5B00] font-semibold">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span>El enlace caduca en <span id="countdown-timer">09:12</span></span>
+</span>
+<a class="inline-flex items-center gap-1 text-primary-container hover:text-primary font-body-base-semibold text-body-base-semibold text-sm hover:underline" href="#">
+<span>¿No se abrió la ventana? Abrir enlace</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Permission details breakdown -->
+<div class="flex flex-col gap-2 bg-surface-container-lowest p-space-sm rounded">
+<div class="flex items-center gap-2 text-label-xs-mono font-label-xs-mono text-outline uppercase font-semibold">
+<span class="material-symbols-outlined text-[14px]">checklist</span>
+<span>Permisos solicitados al usuario:</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label-sm font-label-sm text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span>Ver metadatos de correos (asunto, remitente)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span>Descargar archivos adjuntos (PDF y XML)</span>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="flex items-center justify-end pt-space-xs gap-space-sm">
+<button class="h-9 px-space-md rounded font-body-base-semibold text-body-base-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" id="btn-cancel-modal" type="button">
+            Cancelar
+          </button>
+</div>
+</div>
+<!-- Adjacent Informative Success Banner Preview -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<!-- Success Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-full bg-[#E6F4EA] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px] text-[#1F7A3A]">verified</span>
+</div>
+<div class="flex flex-col">
+<span class="font-table-header text-table-header uppercase text-[#1F7A3A] tracking-wider font-semibold">Conexión Verificada</span>
+<p class="font-headline-sm text-headline-sm text-on-surface mt-0.5">
+<span class="font-table-cell-mono font-semibold text-primary">ventas@empresa.com</span> ya está disponible para escanear.
+              </p>
+<p class="font-body-base text-body-base text-on-surface-variant mt-1">
+                La credencial OAuth fue intercambiada exitosamente y guardada en el llavero central.
+              </p>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col gap-2">
+<div class="flex items-center justify-between text-label-xs-mono">
+<span class="text-outline">Cuenta autorizada:</span>
+<span class="font-table-cell-mono text-on-surface font-semibold">ventas@empresa.com</span>
+</div>
+<div class="flex items-center justify-between text-label-xs-mono">
+<span class="text-outline">Tiempo de expiración token:</span>
+<span class="font-table-cell-mono text-on-surface">3600 segundos</span>
+</div>
+<div class="flex items-center justify-between text-label-xs-mono">
+<span class="text-outline">Filtro de entrada:</span>
+<span class="font-table-cell-mono text-on-surface">has:attachment filename:(xml OR pdf)</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="text-label-xs-mono font-label-xs-mono text-outline">Prueba de conexión: Exitosa (142ms)</span>
+<button class="h-8 px-space-md bg-primary hover:bg-[#0A5A52] text-on-primary rounded font-body-base-semibold text-body-base-semibold text-label-sm inline-flex items-center gap-1.5 transition-colors shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+<span>Iniciar Primer Escaneo</span>
+</button>
+</div>
+</div>
+<!-- Quick Help Note / Best Practices -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex items-center gap-space-md">
+<span class="material-symbols-outlined text-[28px] text-secondary shrink-0">tips_and_updates</span>
+<div class="flex flex-col">
+<span class="font-body-base-semibold text-body-base-semibold text-on-surface">¿Utiliza cuentas con alias o grupos?</span>
+<p class="font-body-base text-body-base text-on-surface-variant text-xs mt-0.5">
+              Conecte siempre la cuenta propietaria o de servicio que tiene acceso directo a la bandeja IMAP/OAuth para evitar pérdidas de sincronización por reenvíos automáticos.
+            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple countdown timer simulation for the OAuth authorization link
+  (function initTimer() {
+    let duration = 9 * 60 + 12; // 09:12
+    const display = document.getElementById('countdown-timer');
+    if (!display) return;
+
+    setInterval(function () {
+      if (duration <= 0) return;
+      duration--;
+      const minutes = String(Math.floor(duration / 60)).padStart(2, '0');
+      const seconds = String(duration % 60).padStart(2, '0');
+      display.textContent = `${minutes}:${seconds}`;
+    }, 1000);
+  })();
+
+  // Modal interactions
+  const openBtn = document.getElementById('btn-open-connect-modal');
+  const closeBtn = document.getElementById('btn-close-modal');
+  const cancelBtn = document.getElementById('btn-cancel-modal');
+
+  function flashHighlight() {
+    const modal = document.querySelector('.lg\\:col-span-7');
+    if (modal) {
+      modal.classList.add('ring-2', 'ring-secondary');
+      modal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        modal.classList.remove('ring-2', 'ring-secondary');
+      }, 1200);
+    }
+  }
+
+  if (openBtn) {
+    openBtn.addEventListener('click', flashHighlight);
+  }
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      const modal = document.querySelector('.lg\\:col-span-7');
+      if (modal) modal.style.opacity = '0.4';
+      setTimeout(() => { if (modal) modal.style.opacity = '1'; }, 600);
+    });
+  }
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      const modal = document.querySelector('.lg\\:col-span-7');
+      if (modal) modal.style.opacity = '0.4';
+      setTimeout(() => { if (modal) modal.style.opacity = '1'; }, 600);
+    });
+  }
+</script></div></main></div></body></html>
