@@ -1,0 +1,198 @@
+/* Tokens del sistema de diseño (DESIGN.md §3). Las variables --sf-* son la única fuente de verdad;
+   el bloque @theme las expone como utilidades de Tailwind (bg-surface, text-fg-muted, …). */
+
+:root {
+  /* Base */
+  --sf-bg: #f7f8fa;
+  --sf-surface: #ffffff;
+  --sf-surface-muted: #f1f3f6;
+  --sf-border: #e2e5ea;
+  --sf-border-strong: #c9ced6;
+  --sf-text: #1b2230;
+  --sf-text-muted: #5b6474;
+  --sf-text-subtle: #8a92a0;
+
+  /* Marca y semánticos */
+  --sf-primary: #0e6e64;
+  --sf-primary-hover: #0a5a52;
+  --sf-primary-soft: #e3f3f0;
+  --sf-on-primary: #ffffff;
+  --sf-success: #1f7a3a;
+  --sf-success-soft: #e6f4ea;
+  --sf-warning: #9a5b00;
+  --sf-warning-soft: #fdf3e1;
+  --sf-danger: #b42318;
+  --sf-danger-soft: #fdecea;
+  --sf-info: #1d5fa8;
+  --sf-info-soft: #e7f0fb;
+  --sf-admin: #5b3cc4;
+  --sf-admin-soft: #efebfb;
+
+  /* Tipografía */
+  --sf-font-sans: 'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sf-font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  /* Espaciado (base 4) */
+  --sf-space-1: 4px;
+  --sf-space-2: 8px;
+  --sf-space-3: 12px;
+  --sf-space-4: 16px;
+  --sf-space-5: 20px;
+  --sf-space-6: 24px;
+  --sf-space-8: 32px;
+  --sf-space-10: 40px;
+  --sf-space-12: 48px;
+
+  /* Radios, sombras, movimiento, capas */
+  --sf-radius-sm: 4px;
+  --sf-radius-md: 8px;
+  --sf-radius-lg: 12px;
+  --sf-radius-full: 999px;
+  --sf-shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --sf-shadow-md: 0 4px 12px rgb(16 24 40 / 0.08);
+  --sf-shadow-lg: 0 12px 32px rgb(16 24 40 / 0.14);
+  --sf-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --sf-dur-fast: 120ms;
+  --sf-dur: 200ms;
+  --sf-z-nav: 10;
+  --sf-z-drawer: 40;
+  --sf-z-dialog: 50;
+  --sf-z-toast: 60;
+
+  color-scheme: light;
+}
+
+/* Modo oscuro: el del sistema, salvo que el usuario haya elegido claro (data-theme="light"),
+   o el elegido manualmente con data-theme="dark". Mismo bloque de valores en ambos selectores. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --sf-bg: #0f1318;
+    --sf-surface: #161b22;
+    --sf-surface-muted: #1e242d;
+    --sf-border: #2a313c;
+    --sf-border-strong: #3a4250;
+    --sf-text: #e6e9ee;
+    --sf-text-muted: #a3abb8;
+    --sf-text-subtle: #6e7685;
+    --sf-primary: #3cc0ae;
+    --sf-primary-hover: #5bd0c0;
+    --sf-primary-soft: #12302c;
+    --sf-on-primary: #0f1318;
+    --sf-success: #4cc27a;
+    --sf-success-soft: #132a1c;
+    --sf-warning: #e3a33b;
+    --sf-warning-soft: #2e2310;
+    --sf-danger: #f0705f;
+    --sf-danger-soft: #341815;
+    --sf-info: #6aa6ea;
+    --sf-info-soft: #142336;
+    --sf-admin: #a08bf0;
+    --sf-admin-soft: #221c3a;
+    --sf-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.18);
+    --sf-shadow-md: 0 4px 12px rgb(0 0 0 / 0.24);
+    --sf-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.42);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --sf-bg: #0f1318;
+  --sf-surface: #161b22;
+  --sf-surface-muted: #1e242d;
+  --sf-border: #2a313c;
+  --sf-border-strong: #3a4250;
+  --sf-text: #e6e9ee;
+  --sf-text-muted: #a3abb8;
+  --sf-text-subtle: #6e7685;
+  --sf-primary: #3cc0ae;
+  --sf-primary-hover: #5bd0c0;
+  --sf-primary-soft: #12302c;
+  --sf-on-primary: #0f1318;
+  --sf-success: #4cc27a;
+  --sf-success-soft: #132a1c;
+  --sf-warning: #e3a33b;
+  --sf-warning-soft: #2e2310;
+  --sf-danger: #f0705f;
+  --sf-danger-soft: #341815;
+  --sf-info: #6aa6ea;
+  --sf-info-soft: #142336;
+  --sf-admin: #a08bf0;
+  --sf-admin-soft: #221c3a;
+  --sf-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.18);
+  --sf-shadow-md: 0 4px 12px rgb(0 0 0 / 0.24);
+  --sf-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.42);
+  color-scheme: dark;
+}
+
+/* inline: las utilidades usan var(--sf-*) directamente, así cambian con el tema sin recompilar. */
+@theme inline {
+  --color-bg: var(--sf-bg);
+  --color-surface: var(--sf-surface);
+  --color-surface-muted: var(--sf-surface-muted);
+  --color-border: var(--sf-border);
+  --color-border-strong: var(--sf-border-strong);
+  --color-fg: var(--sf-text);
+  --color-fg-muted: var(--sf-text-muted);
+  --color-fg-subtle: var(--sf-text-subtle);
+  --color-primary: var(--sf-primary);
+  --color-primary-hover: var(--sf-primary-hover);
+  --color-primary-soft: var(--sf-primary-soft);
+  --color-on-primary: var(--sf-on-primary);
+  --color-success: var(--sf-success);
+  --color-success-soft: var(--sf-success-soft);
+  --color-warning: var(--sf-warning);
+  --color-warning-soft: var(--sf-warning-soft);
+  --color-danger: var(--sf-danger);
+  --color-danger-soft: var(--sf-danger-soft);
+  --color-info: var(--sf-info);
+  --color-info-soft: var(--sf-info-soft);
+  --color-admin: var(--sf-admin);
+  --color-admin-soft: var(--sf-admin-soft);
+
+  /* Alias con los nombres del HTML de Stitch (design/stitch/), para poder pegar su marcado
+     sin reescribir clases. Apuntan a los mismos tokens. */
+  --color-background: var(--sf-bg);
+  --color-surface-container-lowest: var(--sf-surface);
+  --color-surface-container-low: var(--sf-surface-muted);
+  --color-surface-container: var(--sf-surface-muted);
+  --color-surface-container-high: var(--sf-border);
+  --color-surface-container-highest: var(--sf-border);
+  --color-on-surface: var(--sf-text);
+  --color-on-surface-variant: var(--sf-text-muted);
+  --color-outline: var(--sf-text-subtle);
+  --color-outline-variant: var(--sf-border-strong);
+  --color-primary-container: var(--sf-primary);
+  --color-on-primary-container: var(--sf-on-primary);
+  --color-error: var(--sf-danger);
+  --color-error-container: var(--sf-danger-soft);
+  --color-on-error-container: var(--sf-danger);
+  --color-secondary: var(--sf-admin);
+  --color-secondary-fixed: var(--sf-admin-soft);
+  --color-on-secondary-fixed-variant: var(--sf-admin);
+
+  --font-sans: var(--sf-font-sans);
+  --font-mono: var(--sf-font-mono);
+
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-md: 14px;
+  --text-md--line-height: 20px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 36px;
+
+  --radius-sm: var(--sf-radius-sm);
+  --radius-md: var(--sf-radius-md);
+  --radius-lg: var(--sf-radius-lg);
+
+  --shadow-sm: var(--sf-shadow-sm);
+  --shadow-md: var(--sf-shadow-md);
+  --shadow-lg: var(--sf-shadow-lg);
+
+  --ease-sf: var(--sf-ease);
+}
