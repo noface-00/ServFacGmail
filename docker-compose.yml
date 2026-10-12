@@ -1,5 +1,6 @@
-# Caddy (HTTPS) + servicio. La base de datos es externa: define DATABASE_URL en apps/api/.env.
-# DOMAIN se interpola desde el .env de la raíz (o usa `docker compose --env-file apps/api/.env up`).
+# Caddy (HTTPS) + API + panel web. La base de datos es externa: define DATABASE_URL en apps/api/.env.
+# DOMAIN (API) y WEB_DOMAIN (panel) se interpolan desde el .env de la raíz
+# (o usa `docker compose --env-file apps/api/.env up`).
 services:
   app:
     build:
@@ -16,7 +17,13 @@ services:
       - "3005"
 
   caddy:
-    image: caddy:2-alpine
+    # Imagen de Caddy con el build del panel en /srv/web (apps/web/Dockerfile).
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # El panel llama a la API en su mismo dominio (/api, ver Caddyfile).
+        VITE_API_URL: /api
     restart: unless-stopped
     depends_on:
       - app
@@ -26,6 +33,7 @@ services:
       - "443:443/udp"
     environment:
       DOMAIN: ${DOMAIN:?Define DOMAIN en el .env}
+      WEB_DOMAIN: ${WEB_DOMAIN:?Define WEB_DOMAIN en el .env (dominio del panel web)}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
