@@ -8,7 +8,7 @@ import { useModal } from '../components/ui/useModal.js'
  * Armazón de la aplicación: TopBar fija, Sidebar (232 px · 64 px bajo 1200 px · drawer bajo
  * 768 px) y contenido de hasta 1280 px. Los datos de sesión llegan por props hasta la Fase 2.
  */
-export function AppLayout({ isAdmin = false, accountSelector, health, onLogout, children }) {
+export function AppLayout({ isAdmin = false, accountSelector, health, themeToggle, onLogout, children }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const closeMenu = () => setMenuOpen(false)
   const menuRef = useModal({ open: menuOpen, onClose: closeMenu })
@@ -18,6 +18,7 @@ export function AppLayout({ isAdmin = false, accountSelector, health, onLogout, 
       <TopBar
         accountSelector={accountSelector}
         health={health}
+        themeToggle={themeToggle}
         isAdmin={isAdmin}
         onLogout={onLogout}
         onOpenMenu={() => setMenuOpen(true)}

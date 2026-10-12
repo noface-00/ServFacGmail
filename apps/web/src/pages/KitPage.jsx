@@ -20,6 +20,7 @@ import { Input } from '../components/ui/Input.jsx'
 import { Select } from '../components/ui/Select.jsx'
 import { Skeleton } from '../components/ui/Skeleton.jsx'
 import { Spinner } from '../components/ui/Spinner.jsx'
+import { useTheme } from '../hooks/useTheme.js'
 import { useToast } from '../hooks/useToast.js'
 import { AppLayout } from '../layouts/AppLayout.jsx'
 
@@ -49,19 +50,13 @@ const COLUMNS = [
 /** Catálogo de componentes de la Fase 1. Solo existe en desarrollo (ver App.jsx). */
 export default function KitPage() {
   const toast = useToast()
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'system')
+  const { theme, setTheme: changeTheme } = useTheme()
   const [mode, setMode] = useState('simple')
   const [emails, setEmails] = useState(['facturacion@proveedor.com', 'correo-invalido'])
   const [query, setQuery] = useState('from:facturas@proveedor.com has:attachment')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [tableState, setTableState] = useState('data')
-
-  function changeTheme(value) {
-    setTheme(value)
-    if (value === 'system') delete document.documentElement.dataset.theme
-    else document.documentElement.dataset.theme = value
-  }
 
   return (
     <AppLayout isAdmin health={<HealthIndicator status="online" />} onLogout={() => toast.show({ title: 'Cerrar sesión (demo)' })}>

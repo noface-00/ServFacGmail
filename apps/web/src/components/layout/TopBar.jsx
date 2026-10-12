@@ -7,7 +7,7 @@ import { Logo } from './Logo.jsx'
  * Los bloques dinámicos llegan como nodos (`accountSelector`, `health`) para que el componente
  * siga siendo de presentación.
  */
-export function TopBar({ accountSelector, health, isAdmin, onLogout, onOpenMenu }) {
+export function TopBar({ accountSelector, health, themeToggle, isAdmin, onLogout, onOpenMenu }) {
   return (
     <header
       className="fixed inset-x-0 top-0 flex h-14 items-center gap-3 border-b border-border bg-surface px-4"
@@ -22,6 +22,7 @@ export function TopBar({ accountSelector, health, isAdmin, onLogout, onOpenMenu 
       <div className="flex min-w-0 flex-1 justify-center">{accountSelector}</div>
       <div className="flex items-center gap-2">
         <span className="hidden sm:inline-flex">{health}</span>
+        {themeToggle}
         {isAdmin && <Badge preset="admin" />}
         {onLogout && (
           <Button variant="ghost" size="sm" icon="logout" aria-label="Cerrar sesión" onClick={onLogout}>

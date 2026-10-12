@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { HealthIndicator } from '../components/layout/HealthIndicator.jsx'
+import { ThemeToggle } from '../components/layout/ThemeToggle.jsx'
 import { Alert } from '../components/ui/Alert.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { Icon } from '../components/ui/Icon.jsx'
@@ -8,6 +9,7 @@ import { Input } from '../components/ui/Input.jsx'
 import { useHealth } from '../hooks/useHealth.js'
 import { useLogin } from '../hooks/useLogin.js'
 import { useSession } from '../hooks/useSession.js'
+import { useTheme } from '../hooks/useTheme.js'
 import { AuthLayout } from '../layouts/AuthLayout.jsx'
 
 const INVALID_KEY = 'La clave no es válida.'
@@ -30,6 +32,7 @@ export default function LoginPage() {
   const { isAuthenticated, notice, clearNotice } = useSession()
   const location = useLocation()
   const health = useHealth()
+  const { theme, setTheme } = useTheme()
   const loginMutation = useLogin()
   const [apiKey, setApiKey] = useState('')
   const [emptyError, setEmptyError] = useState(false)
@@ -54,7 +57,12 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      aside={<HealthIndicator status={health.status} />}
+      aside={
+        <span className="flex items-center gap-2">
+          <HealthIndicator status={health.status} />
+          <ThemeToggle theme={theme} onChange={setTheme} />
+        </span>
+      }
       footer="La clave se guarda solo mientras esta pestaña esté abierta."
     >
       <div className="rounded-lg border border-border bg-surface p-6 shadow-md sm:p-8">
