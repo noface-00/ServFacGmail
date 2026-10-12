@@ -1,26 +1,37 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
+import { AppShell } from './layouts/AppShell.jsx'
+import { RequireAdmin } from './layouts/RequireAdmin.jsx'
+import { RequireAuth } from './layouts/RequireAuth.jsx'
+import LoginPage from './pages/LoginPage.jsx'
+import PendingPage from './pages/PendingPage.jsx'
+import ServiceUnavailablePage from './pages/ServiceUnavailablePage.jsx'
 
 // La página /_kit solo se registra en desarrollo; en el build de producción esta rama se elimina.
 const KitPage = import.meta.env.DEV ? lazy(() => import('./pages/KitPage.jsx')) : null
-
-function Placeholder() {
-  return (
-    <main className="flex min-h-svh items-center justify-center bg-bg text-fg">
-      <div className="text-center">
-        <h1 className="text-xl font-semibold">ServFacGmail</h1>
-        <p className="mt-1 text-sm text-fg-muted">Panel en construcción</p>
-      </div>
-    </main>
-  )
-}
 
 function App() {
   return (
     <Suspense fallback={null}>
       <Routes>
+        <Route path="/acceso" element={<LoginPage />} />
+        <Route path="/servicio-no-disponible" element={<ServiceUnavailablePage />} />
         {KitPage && <Route path="/_kit" element={<KitPage />} />}
-        <Route path="*" element={<Placeholder />} />
+
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+            <Route index element={<Navigate to="/escanear/recibidas" replace />} />
+            <Route path="escanear/recibidas" element={<PendingPage title="Facturas recibidas" phase={4} icon="inbox" />} />
+            <Route path="escanear/emitidas" element={<PendingPage title="Facturas emitidas" phase={4} icon="send" />} />
+            <Route path="cuentas" element={<PendingPage title="Cuentas" phase={3} icon="alternate_email" />} />
+            <Route path="admin" element={<RequireAdmin />}>
+              <Route path="cuentas" element={<PendingPage title="Cuentas de Gmail" phase={3} icon="mail_lock" />} />
+              <Route path="claves" element={<PendingPage title="Claves de API" phase={6} icon="key" />} />
+            </Route>
+          </Route>
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   )

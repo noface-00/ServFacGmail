@@ -24,7 +24,7 @@ export function TopBar({ accountSelector, health, isAdmin, onLogout, onOpenMenu 
         <span className="hidden sm:inline-flex">{health}</span>
         {isAdmin && <Badge preset="admin" />}
         {onLogout && (
-          <Button variant="ghost" size="sm" icon="logout" onClick={onLogout}>
+          <Button variant="ghost" size="sm" icon="logout" aria-label="Cerrar sesión" onClick={onLogout}>
             <span className="hidden sm:inline">Cerrar sesión</span>
           </Button>
         )}
