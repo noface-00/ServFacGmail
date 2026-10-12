@@ -81,9 +81,38 @@ Tests mock `googleapis` (`google.gmail`, `google.auth.OAuth2`) and `@google/gena
 
 `src/tests/scanner.service.test.ts` is organized by concern: per-country XML parsing, ZIP/XML-vs-PDF prioritization, Gmail query construction, pagination/truncation, error collection into `fallidas`, and `downloadInvoicePDF` (including the ZIP-extraction and XML→PDF attachment-swap edge cases). `jest.config.js` maps `.js`-suffixed imports back to `.ts` for `ts-jest`, since `tsconfig.json` targets `NodeNext` module resolution (imports use `.js` extensions in source even though the files are `.ts`).
 
+## Web panel (`apps/web`)
+
+The repo is a pnpm monorepo: the API above lives in `apps/api` (paths in the Architecture section are relative to it) and the React panel in `apps/web`. Root scripts: `pnpm dev:web`, `pnpm dev:api`, `pnpm build`, `pnpm lint` (web).
+
+```bash
+pnpm --filter @servfac/web dev      # Vite on :5173, needs VITE_API_URL in apps/web/.env
+pnpm --filter @servfac/web test     # Vitest + Testing Library + MSW
+pnpm --filter @servfac/web exec vitest run src/tests/scan.test.jsx
+pnpm --filter @servfac/web lint
+pnpm --filter @servfac/web build
+```
+
+Stack: React 19 (JS + JSDoc, no TypeScript), Vite 8, Tailwind CSS v4 (`@theme inline` over the `--sf-*` tokens in `src/assets/css/tokens.css`), React Router 8, TanStack Query 5, axios. `apps/web/DESIGN.md` is the design system and `apps/web/PLAN.md` the phase plan with a decision log; update PLAN.md (status + Bitácora) in the same change as the code.
+
+Layering rules (from PLAN.md):
+- `components/` are presentational: props only, never import `api/`, `hooks/`, `stores/` or `pages/`.
+- Only `hooks/` call `api/routes/*`; pages get data through hooks. `stores/` (React Context) hold client state only: session (API key + role in `sessionStorage`), selected Gmail account, toasts. Server data lives in React Query.
+- `api/axios.js` adds `x-api-key`, normalizes every failure to `ApiError { status, userMessage, technicalError, code }` (`api/errors.js`, including Blob error bodies), and calls global handlers for 401 (logout) and 503 (service-unavailable screen) unless the request sets `skipSessionHandling` (login uses it).
+- Files exporting non-components live apart from components (`eslint-plugin-react-refresh`), e.g. `stores/*Context.js`, `components/form/fieldProps.js`.
+
+Things that are easy to get wrong:
+- The scan response is a **flat** `ParsedInvoiceData` per invoice (no `parsedData`, `fileBase64`, `emailSubject`). Origin (XML vs PDF·IA) is derived from `filename`'s extension; PDFs always come from `GET /download-pdf`.
+- `GET /download-pdf`: only send `filename` when it ends in `.pdf` (the API uses it to pick the entry inside a ZIP). The client checks the `%PDF` signature and forces `application/pdf` before creating a blob URL (the upstream Content-Type comes from the email).
+- `/download-pdf` counts against `RATE_LIMIT_SCAN`, so the PDF preview is on demand and its blob is cached for the download.
+- OAuth popup: opened blank synchronously inside the click, then pointed at `authUrl`; poll `/accounts` (new email or newer `updatedAt`). Don't rely on `popup.closed` (Google's COOP).
+- The created API key must never reach global state: `useCreateApiKey` uses `gcTime: 0` and the key only lives in `SecretRevealDialog`'s parent state.
+
+Tests: MSW (`src/tests/msw/server.js`) intercepts `http://api.test` (`test.env.VITE_API_URL` in `vite.config.js`), `onUnhandledRequest: 'error'`. `src/tests/renderApp.jsx` renders the whole app at a route with an optional preloaded session. jsdom has no `matchMedia` (define it per test for mobile views).
+
 ## Deployment
 
-Alternative to Dokploy: `docker-compose.yml` + `Caddyfile` run the app behind Caddy (automatic HTTPS, `{$DOMAIN}` from `.env`). The app has no published ports there; `TRUST_PROXY=1` is set in the compose file since Caddy is the single proxy in front. Database is external (`DATABASE_URL`).
+Alternative to Dokploy: `docker-compose.yml` + `Caddyfile` run the app behind Caddy (automatic HTTPS). `{$DOMAIN}` serves the API; `{$WEB_DOMAIN}` serves the web panel's static build and proxies `/api/*` to the API (same origin, so no CORS for the panel). The Caddy image is built by `apps/web/Dockerfile` (`VITE_API_URL=/api`), and the panel site sets security headers and a strict CSP: if the panel starts loading something from a new origin, update the CSP in the `Caddyfile`. The app has no published ports there; `TRUST_PROXY=1` is set in the compose file since Caddy is the single proxy in front. Database is external (`DATABASE_URL`).
 
 Deployed via a multi-stage `Dockerfile` (builder compiles TypeScript, runner installs only production deps) to Dokploy. Both stages copy `prisma.config.ts` and `prisma/` and run `pnpm install --frozen-lockfile` *before* anything else, because `postinstall: prisma generate` needs the schema present. The container's `CMD` runs `pnpm exec prisma migrate deploy` before `pnpm start`, since `DATABASE_URL` is a Dokploy runtime env var, not available at build time. See the "Despliegue en Dokploy" section of `README.md` for the full list of required environment variables (`SERVICE_API_KEY` (master key), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `DATABASE_URL`, `TOKEN_ENCRYPTION_KEY`, `GEMINI_API_KEY`, `SUPPLIER_EMAILS`).
 
