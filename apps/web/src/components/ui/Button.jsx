@@ -60,7 +60,7 @@ export function Button({
 }
 
 /** Botón cuadrado solo con icono; `label` es obligatorio para accesibilidad. */
-export function IconButton({ icon, label, size = 'md', variant = 'ghost', className, ...props }) {
+export function IconButton({ icon, label, size = 'md', variant = 'ghost', loading = false, className, ...props }) {
   const box = { sm: 'h-7 w-7', md: 'h-9 w-9', lg: 'h-11 w-11' }[size]
   return (
     <Button
@@ -68,10 +68,11 @@ export function IconButton({ icon, label, size = 'md', variant = 'ghost', classN
       size={size}
       aria-label={label}
       title={label}
+      loading={loading}
       className={cn('px-0', box, className)}
       {...props}
     >
-      <Icon name={icon} size={ICON_SIZES[size]} />
+      {!loading && <Icon name={icon} size={ICON_SIZES[size]} />}
     </Button>
   )
 }

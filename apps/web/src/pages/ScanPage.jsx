@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { EmptyState } from '../components/data/EmptyState.jsx'
+import { InvoiceDrawer } from '../components/invoice/InvoiceDrawer.jsx'
 import { PageHeader } from '../components/layout/PageHeader.jsx'
 import { FailedList } from '../components/scan/FailedList.jsx'
 import { InvoiceTable } from '../components/scan/InvoiceTable.jsx'
@@ -8,11 +9,12 @@ import { ScanForm } from '../components/scan/ScanForm.jsx'
 import { ScanProgress } from '../components/scan/ScanProgress.jsx'
 import { ScanSummary } from '../components/scan/ScanSummary.jsx'
 import { Alert } from '../components/ui/Alert.jsx'
-import { Button } from '../components/ui/Button.jsx'
+import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Dialog } from '../components/ui/Dialog.jsx'
 import { Icon } from '../components/ui/Icon.jsx'
 import { useAccounts } from '../hooks/useAccounts.js'
 import { useCountdown } from '../hooks/useCountdown.js'
+import { useDownloadPdf, usePdfPreview } from '../hooks/usePdf.js'
 import { useScan } from '../hooks/useScan.js'
 import { useSelectedAccount } from '../hooks/useSelectedAccount.js'
 import { useSession } from '../hooks/useSession.js'
@@ -47,6 +49,13 @@ export default function ScanPage({ kind }) {
   const [confirmReplace, setConfirmReplace] = useState(false)
   const [cooldownWindow, setCooldownWindow] = useState(null)
   const cooldown = useCountdown(cooldownWindow)
+
+  // Detalle y PDF: siempre con la cuenta con la que se hizo el escaneo, no la elegida ahora.
+  const scanAccount = scan.last?.payload.accountEmail
+  const [selected, setSelected] = useState(null)
+  const [previewKey, setPreviewKey] = useState(null)
+  const pdf = useDownloadPdf(scanAccount)
+  const preview = usePdfPreview(scanAccount, selected, selected && previewKey === selected._key)
 
   const error = scan.error?.code === 'canceled' ? null : scan.error
   const apiFieldErrors = error?.status === 400 ? mapApiFieldErrors(error.technicalError) : {}
@@ -102,6 +111,36 @@ export default function ScanPage({ kind }) {
     downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `facturas-${kind === 'sent' ? 'emitidas' : 'recibidas'}-${date}.csv`)
   }
 
+  function openDetail(invoice) {
+    setSelected(invoice)
+  }
+
+  function renderActions(invoice) {
+    return (
+      <div className="flex justify-end gap-0.5">
+        <IconButton
+          size="sm"
+          icon="visibility"
+          label={`Ver detalle de ${invoice.numeroFactura ?? 'la factura'}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            openDetail(invoice)
+          }}
+        />
+        <IconButton
+          size="sm"
+          icon="download"
+          label={`Descargar PDF de ${invoice.numeroFactura ?? 'la factura'}`}
+          loading={pdf.isDownloading(invoice)}
+          onClick={(e) => {
+            e.stopPropagation()
+            pdf.download(invoice)
+          }}
+        />
+      </div>
+    )
+  }
+
   const submitLabel = cooldown > 0 ? `Espere ${cooldown} s` : 'Escanear'
 
   return (
@@ -154,7 +193,13 @@ export default function ScanPage({ kind }) {
                 <span className="tabular">{scan.last.payload.accountEmail}</span>
               </p>
               <ScanSummary result={scan.last.result} />
-              <InvoiceTable invoices={scan.last.result.facturas} kind={kind} onExport={exportCsv} />
+              <InvoiceTable
+                invoices={scan.last.result.facturas}
+                kind={kind}
+                onExport={exportCsv}
+                onRowClick={openDetail}
+                renderActions={renderActions}
+              />
               <FailedList failures={scan.last.result.fallidas} />
             </>
           ) : (
@@ -170,6 +215,20 @@ export default function ScanPage({ kind }) {
           )}
         </section>
       </div>
+
+      <InvoiceDrawer
+        invoice={selected}
+        kind={kind}
+        onClose={() => setSelected(null)}
+        onDownload={() => pdf.download(selected)}
+        downloading={selected ? pdf.isDownloading(selected) : false}
+        preview={{
+          blob: preview.data?.blob,
+          loading: preview.isFetching,
+          error: preview.error,
+          onLoad: () => setPreviewKey(selected?._key ?? null),
+        }}
+      />
 
       <Dialog
         open={confirmReplace}

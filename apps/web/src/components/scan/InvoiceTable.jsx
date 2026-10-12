@@ -17,9 +17,10 @@ const ORIGIN_FILTERS = [
 
 /**
  * Tabla de facturas (DESIGN.md §5.3) con búsqueda, filtro por origen y exportación de lo visible.
- * @param {{ invoices: import('../../api/routes/scan.js').Invoice[], kind: 'received' | 'sent', onExport: (rows: any[]) => void, renderActions?: (invoice: any) => import('react').ReactNode }} props
+ * Las filas que recibe `renderActions` / `onRowClick` llevan además `_key` y `_origin`.
+ * @param {{ invoices: import('../../api/routes/scan.js').Invoice[], kind: 'received' | 'sent', onExport: (rows: any[]) => void, renderActions?: (invoice: any) => import('react').ReactNode, onRowClick?: (invoice: any) => void }} props
  */
-export function InvoiceTable({ invoices, kind, onExport, renderActions }) {
+export function InvoiceTable({ invoices, kind, onExport, renderActions, onRowClick }) {
   const [search, setSearch] = useState('')
   const [origin, setOrigin] = useState('all')
 
@@ -121,6 +122,7 @@ export function InvoiceTable({ invoices, kind, onExport, renderActions }) {
         columns={columns}
         rows={rows}
         rowKey={(r) => r._key}
+        onRowClick={onRowClick}
         initialSort={{ key: 'fechaEmision', direction: 'desc' }}
         empty={
           filtered ? (
