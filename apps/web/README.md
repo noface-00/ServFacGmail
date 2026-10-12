@@ -79,6 +79,12 @@ Pantalla de Acceso con la clave de API (se guarda en `sessionStorage`). La clave
 |---|---|
 | ![Pantalla de Acceso](./docs/img/fase-2-acceso.png) | ![Pantalla de Acceso en móvil](./docs/img/fase-2-acceso-movil.png) |
 
+### Fase 3 — Cuentas de Gmail
+
+Pantalla de Cuentas (`/cuentas` y, para administradores, `/admin/cuentas`) con fecha de conexión y última actualización del token. Selector de la cuenta activa en la barra superior. El administrador conecta cuentas desde la UI: se abre la ventana de Google y la lista se actualiza sola al terminar el consentimiento. Para desconectar una cuenta hay que escribir su correo como confirmación.
+
+![Cuentas de Gmail en la zona de Administración](./docs/img/fase-3-cuentas.png)
+
 ### Diseños de referencia (Google Stitch)
 
 Pantallas exportadas a [`design/stitch/`](./design/stitch/) que se integrarán en las próximas fases. Algunos elementos que Stitch añadió no tienen respaldo en la API y no se implementarán: ver [`design/stitch/README.md`](./design/stitch/README.md).
