@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import { AppShell } from './layouts/AppShell.jsx'
 import { RequireAdmin } from './layouts/RequireAdmin.jsx'
 import { RequireAuth } from './layouts/RequireAuth.jsx'
+import AccountsPage from './pages/AccountsPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import PendingPage from './pages/PendingPage.jsx'
 import ServiceUnavailablePage from './pages/ServiceUnavailablePage.jsx'
@@ -23,9 +24,9 @@ function App() {
             <Route index element={<Navigate to="/escanear/recibidas" replace />} />
             <Route path="escanear/recibidas" element={<PendingPage title="Facturas recibidas" phase={4} icon="inbox" />} />
             <Route path="escanear/emitidas" element={<PendingPage title="Facturas emitidas" phase={4} icon="send" />} />
-            <Route path="cuentas" element={<PendingPage title="Cuentas" phase={3} icon="alternate_email" />} />
+            <Route path="cuentas" element={<AccountsPage />} />
             <Route path="admin" element={<RequireAdmin />}>
-              <Route path="cuentas" element={<PendingPage title="Cuentas de Gmail" phase={3} icon="mail_lock" />} />
+              <Route path="cuentas" element={<AccountsPage adminView />} />
               <Route path="claves" element={<PendingPage title="Claves de API" phase={6} icon="key" />} />
             </Route>
           </Route>
