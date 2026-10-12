@@ -85,6 +85,21 @@ Pantalla de Cuentas (`/cuentas` y, para administradores, `/admin/cuentas`) con f
 
 ![Cuentas de Gmail en la zona de Administración](./docs/img/fase-3-cuentas.png)
 
+### Fase 4 — Escaneo de facturas
+
+Pantallas **Recibidas** (`POST /scan`) y **Emitidas** (`POST /scan-sent`). Admiten dos modos: Simple (fecha + correos, o la lista por defecto del servidor) y Consulta avanzada (sintaxis de Gmail). La validación en el cliente es la misma que aplica la API. Mientras se escanea, se muestra el progreso con el tiempo transcurrido y la opción de cancelar. Al terminar aparecen:
+
+- un resumen con el total por moneda, las facturas leídas por IA y las fallidas;
+- un aviso si se alcanzó el límite de 500 correos;
+- la tabla con búsqueda, filtro por origen (XML / PDF · IA) y exportación a CSV;
+- la lista de adjuntos que no se pudieron leer.
+
+Cada pestaña conserva sus resultados al cambiar de una a otra.
+
+| Resultados | Escaneo en curso |
+|---|---|
+| ![Resultados del escaneo](./docs/img/fase-4-escanear.png) | ![Escaneo en curso](./docs/img/fase-4-progreso.png) |
+
 ### Diseños de referencia (Google Stitch)
 
 Pantallas exportadas a [`design/stitch/`](./design/stitch/) que se integrarán en las próximas fases. Algunos elementos que Stitch añadió no tienen respaldo en la API y no se implementarán: ver [`design/stitch/README.md`](./design/stitch/README.md).

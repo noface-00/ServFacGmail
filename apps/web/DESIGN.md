@@ -172,7 +172,7 @@ Para `supplierEmails`, `clientEmails` y `allowedAccounts`.
 | `XML` | success | Factura parseada desde XML (gratuito, exacto) |
 | `PDF · IA` | warning | Datos extraídos de PDF con Gemini (revisar) |
 | `ZIP` | neutral | El adjunto venía comprimido |
-| `Sin datos` | neutral | `parsedData` ausente |
+| `Sin datos` | neutral | El archivo no es `.xml` ni `.pdf` (origen desconocido) |
 | `Activa` / `Revocada` | success / danger | Estado de clave de API (`revokedAt`) |
 | `Todas las cuentas` / `n cuentas` | neutral | `allowedAccounts` vacío / con elementos |
 | `Admin` | admin | Rol de la sesión actual |
@@ -237,23 +237,25 @@ Mismo layout, dos pestañas. Formulario a la izquierda (o arriba en < 1024 px), 
 
 | Columna | Fuente |
 |---|---|
-| Fecha emisión | `parsedData.fechaEmision` (fallback `emailDate`) |
-| Proveedor / Cliente | `parsedData.supplierName` + RUC en mono debajo (`supplierRuc`) |
-| N.º factura | `parsedData.numeroFactura` |
+| Fecha emisión | `fechaEmision` |
+| Emisor | `supplierName` + RUC en mono debajo (`supplierRuc`) |
+| N.º factura | `numeroFactura` |
 | Subtotal · IVA · Total | `subtotal`, `iva`, `total` + `moneda` |
 | Origen | Badge XML / PDF · IA / ZIP |
-| Correo | `senderEmail` (Recibidas) o `parsedData.recipientEmail` (Emitidas) |
+| Correo | `senderEmail` (Recibidas) o `recipientEmail` (Emitidas) |
 | Acciones | Ver detalle · Descargar |
 
 4. Panel "Fallidas" (si hay): lista con `filename`, `messageId` en mono y `error`. Colapsado por defecto si son pocas, con badge rojo en el encabezado.
 5. Exportar CSV (cliente) de la tabla visible.
 
+> **Forma real de la respuesta (verificada en `scanner.service.ts`, 2026-10-12):** cada elemento de `facturas` es un `ParsedInvoiceData` **plano** — `messageId`, `attachmentId`, `filename`, `claveAcceso`, `supplierRuc`, `supplierName`, `numeroFactura`, `fechaEmision`, `subtotal`, `iva`, `total`, `moneda`, `items[]` (`nombre`, `cantidad`, `precioUnitario`, `total?`), `senderEmail`, `recipientEmail`. **No** hay `parsedData` anidado, `fileBase64`, `emailSubject`, `emailDate` ni `mimeType` (el tipo `ScanResponseItem` del servicio no se usa en la respuesta). Consecuencias: el origen (XML / PDF · IA) se deduce de la extensión de `filename`; el badge `ZIP` no se puede mostrar; la descarga y la vista previa siempre usan `GET /download-pdf`. Subtotal e IVA se muestran bajo el Total para que la tabla quepa a 1440 px.
+
 ### 5.4 Detalle de factura (drawer lateral, 480 px; pantalla completa en móvil)
 - Encabezado: proveedor, número, total grande, badge de origen.
-- Bloques: Emisor (nombre, RUC), Documento (número, fecha, clave de acceso con copiar), Correo (asunto `emailSubject`, remitente, fecha, `filename`).
+- Bloques: Emisor (nombre, RUC), Documento (número, fecha, clave de acceso con copiar), Correo (remitente o destinatario, `messageId`, `filename`).
 - Tabla de ítems (`items[]`): Descripción · Cantidad · P. unitario · Total. Pie con suma de ítems; si difiere del `subtotal`, se marca la diferencia en `warning` ("Los ítems no cuadran con el subtotal") — adelanta el `needsReview` pendiente en el roadmap.
 - Acciones: "Descargar PDF" (primary) y "Ver adjunto original" si no es PDF.
-- Si el adjunto es PDF, vista previa embebida con el `fileBase64` ya recibido (sin pedir de nuevo).
+- Si el adjunto es PDF, vista previa embebida con el blob de `GET /download-pdf` (la respuesta del escaneo no trae el archivo).
 
 ### 5.5 Administración → Claves de API
 - Tabla: **Nombre** · **Prefijo** (`keyPrefix…` en mono) · **Alcance** (badge) · **Creada** · **Último uso** (`lastUsedAt` o "Nunca") · **Estado** · acciones.
@@ -301,13 +303,13 @@ Toda respuesta no-2xx con JSON `{ userMessage, technicalError }` se normaliza en
 ### 6.4 Descarga de PDF
 - No se puede usar `<a href>` porque la API exige `x-api-key` en cabecera. Se usa `GET /download-pdf?accountEmail=&messageId=&attachmentId=&filename=` con `responseType: 'blob'`, y se dispara la descarga con un object URL; el nombre sale de `Content-Disposition`.
 - Botón en estado loading mientras dura; error → toast `danger` (aquí sí toast, porque no bloquea la vista).
-- Si la respuesta ya incluye `fileBase64` del PDF, se descarga directamente sin llamar al endpoint.
+- La respuesta del escaneo no incluye el archivo: la descarga siempre pasa por el endpoint. Para leer el nombre de `Content-Disposition` desde el navegador, la API debe incluirlo en `Access-Control-Expose-Headers`.
 
 ### 6.5 Escaneos largos
 - Timeout específico para `/scan` y `/scan-sent` de al menos 10 min (el `timeout: 15000` global de `src/api/axios.js` cancelaría casi cualquier escaneo real).
 - Durante el escaneo el formulario queda deshabilitado y se muestra ScanProgress en el área de resultados.
 - Los resultados del último escaneo se conservan en memoria al cambiar de pestaña; aviso antes de lanzar otro que los reemplace.
-- Respuestas grandes: cada factura trae `fileBase64`; no se re-renderiza la tabla con el base64 en props — se guarda aparte por `gmailAttachmentId`.
+- Los resultados de cada pestaña se guardan en la caché de React Query y se conservan al cambiar de pestaña; antes de reemplazarlos se pide confirmación.
 
 ---
 
