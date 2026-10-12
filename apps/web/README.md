@@ -15,6 +15,7 @@ pnpm dev:web                          # servidor de desarrollo en http://localho
 pnpm --filter @servfac/web test       # pruebas (Vitest + Testing Library)
 pnpm --filter @servfac/web lint       # ESLint
 pnpm --filter @servfac/web build      # build de producción en apps/web/dist
+docker build -f apps/web/Dockerfile . # imagen de Caddy con el panel (ver docker-compose.yml)
 ```
 
 ## Configuración
@@ -123,6 +124,20 @@ Para crear una clave se indica un nombre y, si se quiere, las cuentas permitidas
 | Listado | Clave recién creada |
 |---|---|
 | ![Claves de API](./docs/img/fase-6-claves.png) | ![Revelado de la clave](./docs/img/fase-6-revelado.png) |
+
+### Fase 7 — Calidad, responsive y despliegue
+
+- **Móvil:** las facturas se ven como tarjetas, el menú lateral es un panel desplegable y los controles miden 44 px.
+- **Tema:** selector claro / oscuro / del sistema, recordado por usuario.
+- **Contraste:** cumple WCAG AA (se corrigieron el texto secundario y el botón de peligro en modo oscuro).
+- **Accesibilidad:** enlace «Saltar al contenido», título por página y página 404.
+- **Errores:** las tablas ofrecen «Reintentar» ante fallos de red.
+- **Carga:** las pantallas se cargan bajo demanda.
+- **Producción:** Caddy sirve el panel en `WEB_DOMAIN` y la API bajo `/api` en el mismo dominio, con CSP estricta (ver el [README raíz](../../README.md#despliegue-con-caddy-https)).
+
+| Móvil | Móvil (oscuro) |
+|---|---|
+| ![Escaneo en móvil](./docs/img/fase-7-movil.png) | ![Escaneo en móvil, tema oscuro](./docs/img/fase-7-movil-oscuro.png) |
 
 ### Diseños de referencia (Google Stitch)
 

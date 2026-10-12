@@ -10,7 +10,7 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 
 ## Estado del proyecto
 
-**Fase actual:** Fase 7 — Calidad, responsive y despliegue (Fases 2 a 6 terminadas salvo la verificación con la API real; 0.9 sigue bloqueada)
+**Fase actual:** Fases 1–7 terminadas. Pendiente: verificación de punta a punta con la API real (7.9) y 0.9 (Stitch, bloqueada)
 **Última actualización:** 2026-10-12
 
 | Fase | Nombre | Estado | Avance |
@@ -22,7 +22,7 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 | 4 | Escaneo de facturas | ✅ Terminada (falta verificar con la API real) | 11 / 11 |
 | 5 | Detalle de factura y descarga | ✅ Terminada (falta verificar con la API real) | 6 / 6 |
 | 6 | Administración de claves de API | ✅ Terminada (falta verificar con la API real) | 6 / 6 |
-| 7 | Calidad, responsive y despliegue | ⬜ Pendiente | 0 / 9 |
+| 7 | Calidad, responsive y despliegue | 🟦 8 / 9 (falta 7.9, prueba manual con la API real) | 8 / 9 |
 
 Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 
@@ -40,13 +40,13 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | Carga y vacío del escaneo (3.3) | — | ⬜ Falta generar | Fase 4 | ✅ (hecha con el kit, sin diseño de Stitch) |
 | Confirmar desconexión (3.8) | — | ⬜ Falta generar | Fase 3 | ✅ (hecha con el kit, sin diseño de Stitch) |
 | Crear clave y revelado (3.10) | — | ⬜ Falta generar | Fase 6 | ✅ (hecha con el kit, sin diseño de Stitch) |
-| Errores globales (3.11) | — | ⬜ Falta generar | Fase 7 | ⬜ |
-| Versión móvil (3.12) | — | ⬜ Falta generar | Fase 7 | ⬜ |
+| Errores globales (3.11) | — | ⬜ Falta generar | Fase 7 | ✅ (hecha con el kit, sin diseño de Stitch) |
+| Versión móvil (3.12) | — | ⬜ Falta generar | Fase 7 | ✅ (hecha con el kit, sin diseño de Stitch) |
 
 ### Bloqueos y decisiones abiertas
 
-- **La API no expone `Retry-After` ni `Content-Disposition` por CORS** (`cors()` sin `exposedHeaders` en `apps/api/src/index.ts`): desde el navegador, tras un `429` se espera siempre el valor por defecto (60 s) y en la Fase 5 no se podrá leer el nombre del PDF de la cabecera. Propuesta para la API: `cors({ origin, exposedHeaders: ['Retry-After', 'Content-Disposition'] })`. El frontend ya lee ambas cabeceras si llegan.
-- **Criterios de aceptación de las Fases 2 a 6 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login (clave maestra y de cliente), la conexión real de una cuenta de Gmail por OAuth, un escaneo real, la descarga de un PDF directo y de uno dentro de un ZIP, y crear/usar/revocar una clave solo están cubiertos por las pruebas con MSW. Verificarlos a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173` y `GOOGLE_REDIRECT_URI` apuntando a la API).
+- ~~**La API no expone `Retry-After` ni `Content-Disposition` por CORS**~~ **Resuelto en producción por el despliegue (7.7):** el panel llama a la API por `/api` en su mismo dominio, sin CORS, y el navegador lee ambas cabeceras. Solo afecta al desarrollo local (`localhost:5173` → `localhost:3005`): ahí, tras un `429` se espera el valor por defecto (60 s) y el nombre del PDF sale del adjunto. Si se quiere también en desarrollo: `cors({ origin, exposedHeaders: ['Retry-After', 'Content-Disposition'] })` en `apps/api/src/index.ts`.
+- **Criterios de aceptación de las Fases 2 a 6 y prueba 7.9 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login (clave maestra y de cliente), la conexión real de una cuenta de Gmail por OAuth, un escaneo real, la descarga de un PDF directo y de uno dentro de un ZIP, y crear/usar/revocar una clave solo están cubiertos por las pruebas con MSW. Verificarlos a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173` y `GOOGLE_REDIRECT_URI` apuntando a la API).
 
 - **`pnpm dev` de la API falla con Node 26**: `ts-node` 10 no es compatible (`ERR_INVALID_ARG_TYPE` en `fileURLToPath`). No bloquea el frontend: se puede usar `pnpm --filter @servfac/api build && node apps/api/dist/index.js`. Pendiente decidir si se migra el script `dev` a `tsx`.
 - **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP). No bloquea las fases siguientes: las pantallas que faltan se componen con el kit de la Fase 1 siguiendo `DESIGN.md`.
@@ -93,6 +93,13 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | Cuentas permitidas al crear | `EmailChipsInput` con `suggestions` (botones de un clic con las cuentas de `GET /accounts`) | Evita teclear correos y permite cuentas aún no conectadas |
 | Claves revocadas | Ocultas por defecto; con «Mostrar revocadas (n)» se ven al 60 % de opacidad y sin acción | DESIGN.md §5.5 |
 | `PendingPage` | Eliminada | Con la Fase 6 ya no quedan rutas en construcción |
+| Contraste | `--sf-text-subtle` pasa a `#686F7D` / `#848B98` y se añade `--sf-on-danger` (oscuro `#0F1318`) | Los valores originales daban 3.1:1, 3.8:1 y 2.9:1 (WCAG AA pide 4.5:1); verificado con cálculo de contraste para texto y semánticos |
+| Tema | `ThemeToggle` (sistema → claro → oscuro) en la barra y en Acceso; preferencia en `localStorage`; `public/theme-init.js` la aplica antes de pintar | Comodidad por usuario; script externo para cumplir la CSP `script-src 'self'` |
+| Móvil | Bajo 768 px las facturas son tarjetas; `ScanPage` decide con `matchMedia` (no se renderizan ambas); controles de 44 px con `max-md:`; la barra deja solo el icono del logo | DESIGN.md §3.6 y §7; renderizar ambas duplicaría botones para lectores de pantalla |
+| Errores en tablas | `lib/errorTone.js`: 404 info, 429 warning, resto danger; «Reintentar» ante red y 5xx | Antes un 429 de una lista salía en rojo y un fallo de red no tenía salida |
+| Accesibilidad | Enlace «Saltar al contenido», `<main id="contenido">`, `<title>` por página (React 19) y `NotFoundPage` | Los lectores anuncian cada ruta; las rutas desconocidas se explican en vez de redirigir |
+| Bundle | Escanear, Cuentas y Claves con `React.lazy`; `Suspense` dentro de `AppLayout` | JS inicial de 412 kB a ~349 kB (gzip 130 → ~114 kB); el armazón sigue visible al cargar |
+| Despliegue | Caddy sirve el panel en `{$WEB_DOMAIN}` (SPA con `try_files`) y reenvía `/api/*` a la API; imagen con `apps/web/Dockerfile` (`VITE_API_URL=/api`); CSP estricta y cabeceras de seguridad; `{$DOMAIN}` sigue sirviendo la API | Mismo origen: sin CORS y con `Retry-After`/`Content-Disposition` legibles; no cambia nada para los clientes actuales de la API. Verificado con Docker y Chrome sin violaciones de CSP |
 | Pruebas de API | MSW contra `http://api.test` (`test.env.VITE_API_URL` en `vite.config.js`), `onUnhandledRequest: 'error'` | Ninguna prueba sale a la red |
 
 Si alguna decisión cambia, se registra aquí y en la Bitácora.
@@ -286,15 +293,15 @@ apps/web/
 
 **Pantallas Stitch:** Errores globales · Versión móvil.
 
-- [ ] 7.1 Revisar todos los errores contra la tabla de `DESIGN.md` §6.1 (400, 401, 403, 404, 429, 500, 503, red).
-- [ ] 7.2 Responsive: Sidebar como drawer bajo 768 px, tabla de facturas como tarjetas, objetivos táctiles de 44 px.
-- [ ] 7.3 Modo oscuro completo y selector manual de tema.
-- [ ] 7.4 Accesibilidad: navegación por teclado, `aria-sort`, `role="status"`/`role="alert"`, contraste (DESIGN.md §7).
-- [ ] 7.5 `NotFoundPage` y eliminar la ruta `/_kit` del build de producción.
-- [ ] 7.6 `pnpm lint` y `pnpm build` sin errores; revisar el tamaño del bundle.
-- [ ] 7.7 Despliegue: build estático servido por Caddy (añadir el sitio al `Caddyfile` y al `docker-compose.yml`) con `VITE_API_URL` de producción y `CORS_ORIGINS` actualizado.
-- [ ] 7.8 Actualizar `README.md` y `CLAUDE.md` con los comandos y la arquitectura del frontend.
-- [ ] 7.9 Prueba de punta a punta manual: acceso → conectar cuenta → escanear → detalle → descargar → crear y revocar clave.
+- [x] 7.1 Revisar todos los errores contra la tabla de `DESIGN.md` §6.1 (400, 401, 403, 404, 429, 500, 503, red).
+- [x] 7.2 Responsive: Sidebar como drawer bajo 768 px, tabla de facturas como tarjetas, objetivos táctiles de 44 px.
+- [x] 7.3 Modo oscuro completo y selector manual de tema.
+- [x] 7.4 Accesibilidad: navegación por teclado, `aria-sort`, `role="status"`/`role="alert"`, contraste (DESIGN.md §7).
+- [x] 7.5 `NotFoundPage` y eliminar la ruta `/_kit` del build de producción.
+- [x] 7.6 `pnpm lint` y `pnpm build` sin errores; revisar el tamaño del bundle.
+- [x] 7.7 Despliegue: build estático servido por Caddy (añadir el sitio al `Caddyfile` y al `docker-compose.yml`) con `VITE_API_URL` de producción y `CORS_ORIGINS` actualizado.
+- [x] 7.8 Actualizar `README.md` y `CLAUDE.md` con los comandos y la arquitectura del frontend.
+- [ ] 7.9 🟦 Prueba de punta a punta manual: acceso → conectar cuenta → escanear → detalle → descargar → crear y revocar clave.
 
 **Criterio de aceptación:** la aplicación funciona en producción detrás de Caddy, en escritorio y móvil, con todos los flujos de la API cubiertos.
 
@@ -332,3 +339,5 @@ La Fase 6 solo depende de la sesión (Fase 2), así que puede avanzar en paralel
 | 2026-10-12 | 4 | Hallazgos: la respuesta real del escaneo es plana y sin `fileBase64` (`DESIGN.md` corregido; 4.10 no aplica), y la API no expone `Retry-After` ni `Content-Disposition` por CORS (registrado como bloqueo menor). Revisión visual con API simulada: se rehízo la tabla para que el Total quepa a 1440 px. |
 | 2026-10-12 | 5 | Tareas 5.1–5.6 terminadas: `downloadPdf`, `usePdfPreview`/`useDownloadPdf` (validación `%PDF`, nombre desde `Content-Disposition`, adjunto o número), `InvoiceDrawer`, `InvoiceItems` (suma y descuadre), `PdfPreview` a petición, `CopyButton` y acciones «Ver detalle» / «Descargar PDF» en la tabla. 103 pruebas, lint y build en verde. Revisión visual con API simulada: el PDF se muestra en el drawer. |
 | 2026-10-12 | 6 | Tareas 6.1–6.6 terminadas: `createApiKey`/`revokeApiKey`, `useApiKeys`/`useCreateApiKey`/`useRevokeApiKey`, `CreateKeyDialog` (con sugerencias de cuentas), `SecretRevealDialog`, `RevokeDialog` y `ApiKeysPage`. El criterio de aceptación (clave creada → entra como cliente limitado → revocada → vuelve a Acceso) está cubierto por una prueba con MSW. 113 pruebas, lint y build en verde. |
+| 2026-10-12 | 7 | Tareas 7.1–7.8 terminadas: tono y «Reintentar» de errores (7.1), tarjetas y controles de 44 px en móvil (7.2), selector de tema y contraste AA (7.3, 7.4), saltar al contenido, títulos por página y `NotFoundPage` (7.4, 7.5), carga diferida de páginas (7.6), despliegue con Caddy en `{$WEB_DOMAIN}` + `/api` verificado con Docker y Chrome sin violaciones de CSP (7.7), y README/CLAUDE.md de la raíz (7.8). 120 pruebas, lint y build en verde. |
+| 2026-10-12 | 7 | 7.9 pendiente: requiere la API real con base de datos y una cuenta de Gmail (acceso → conectar cuenta → escanear → detalle → descargar → crear y revocar clave). |
