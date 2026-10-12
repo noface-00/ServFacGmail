@@ -90,28 +90,37 @@ describe('Sesión activa', () => {
   })
 
   it('logs out and returns to Acceso when the API answers 401', async () => {
+    // La barra superior carga /accounts al entrar: con una clave revocada responde 401.
     renderApp('/cuentas', { session: { apiKey: 'sfg_revocada', role: 'client' } })
-    expect(await screen.findByRole('heading', { name: 'Cuentas' })).toBeInTheDocument()
-
-    await act(async () => {
-      await api.get('/accounts').catch(() => {})
-    })
 
     expect(await screen.findByRole('heading', { name: 'Acceder al panel' })).toBeInTheDocument()
     expect(screen.getByText('Su clave de API no es válida o fue revocada.')).toBeInTheDocument()
     expect(getApiKey()).toBeNull()
   })
 
+  it('returns to the same page after logging in again', async () => {
+    renderApp('/cuentas', { session: { apiKey: 'sfg_revocada', role: 'client' } })
+    await screen.findByRole('heading', { name: 'Acceder al panel' })
+    await loginWith(CLIENT_KEY)
+    expect(await screen.findByRole('heading', { name: 'Cuentas' })).toBeInTheDocument()
+  })
+
   it('shows the service unavailable screen on 503', async () => {
     server.use(http.get(`${API}/accounts`, () => HttpResponse.json({ userMessage: 'No disponible.' }, { status: 503 })))
     renderApp('/cuentas', { session: { apiKey: CLIENT_KEY, role: 'client' } })
-    await screen.findByRole('heading', { name: 'Cuentas' })
+    expect(await screen.findByRole('heading', { name: 'Servicio no disponible' })).toBeInTheDocument()
+  })
+
+  it('reacts to a 401 from any request made during the session', async () => {
+    renderApp('/escanear/recibidas', { session: { apiKey: CLIENT_KEY, role: 'client' } })
+    await screen.findByRole('heading', { name: 'Facturas recibidas' })
+    server.use(http.get(`${API}/accounts`, () => HttpResponse.json({ userMessage: 'No autorizado.' }, { status: 401 })))
 
     await act(async () => {
       await api.get('/accounts').catch(() => {})
     })
 
-    expect(await screen.findByRole('heading', { name: 'Servicio no disponible' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Acceder al panel' })).toBeInTheDocument()
   })
 
   it('logs out from the top bar', async () => {
