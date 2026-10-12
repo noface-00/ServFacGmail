@@ -10,14 +10,14 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 
 ## Estado del proyecto
 
-**Fase actual:** Fase 2 — Sesión y acceso (Fase 1 terminada; 0.9 sigue bloqueada)
+**Fase actual:** Fase 3 — Cuentas de Gmail (Fase 2 terminada salvo la verificación con la API real; 0.9 sigue bloqueada)
 **Última actualización:** 2026-10-12
 
 | Fase | Nombre | Estado | Avance |
 |---|---|---|---|
 | 0 | Preparación del entorno | 🟦 En curso (0.9 bloqueada) | 8 / 9 |
 | 1 | Fundaciones: tokens, componentes base y layout | ✅ Terminada | 14 / 14 |
-| 2 | Sesión y acceso | ⬜ Pendiente | 0 / 8 |
+| 2 | Sesión y acceso | ✅ Terminada (falta verificar con la API real) | 8 / 8 |
 | 3 | Cuentas de Gmail | ⬜ Pendiente | 0 / 8 |
 | 4 | Escaneo de facturas | ⬜ Pendiente | 0 / 11 |
 | 5 | Detalle de factura y descarga | ⬜ Pendiente | 0 / 6 |
@@ -30,7 +30,7 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 
 | Pantalla en Stitch | ID | Estado en Stitch | Integrada en | Estado |
 |---|---|---|---|---|
-| Acceso - Clave de API | `7bd47151e2cd45f1a5d6c58d9e49fca1` | ✅ Generada | Fase 2 | ⬜ |
+| Acceso - Clave de API | `7bd47151e2cd45f1a5d6c58d9e49fca1` | ✅ Generada | Fase 2 | ✅ |
 | Escanear - Facturas Recibidas | `9cdf1f8fb11d4e288b68ebc21dc914bd` | ✅ Generada | Fase 4 | ⬜ |
 | Detalle de Factura (Drawer) | `b2dcabfa99da46829f9bbca31ba859aa` | ✅ Generada | Fase 5 | ⬜ |
 | Cuentas de Gmail y Conexión OAuth | `d519020c25df43ce860d889af0e34945` | ✅ Generada | Fase 3 | ⬜ |
@@ -44,6 +44,8 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | Versión móvil (3.12) | — | ⬜ Falta generar | Fase 7 | ⬜ |
 
 ### Bloqueos y decisiones abiertas
+
+- **Criterio de aceptación de la Fase 2 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login con clave maestra y de cliente solo está cubierto por las pruebas con MSW. Verificarlo a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173`).
 
 - **`pnpm dev` de la API falla con Node 26**: `ts-node` 10 no es compatible (`ERR_INVALID_ARG_TYPE` en `fileURLToPath`). No bloquea el frontend: se puede usar `pnpm --filter @servfac/api build && node apps/api/dist/index.js`. Pendiente decidir si se migra el script `dev` a `tsx`.
 - **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP). No bloquea las fases siguientes: las pantallas que faltan se componen con el kit de la Fase 1 siguiendo `DESIGN.md`.
@@ -68,6 +70,11 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | Breakpoint de navegación | `--breakpoint-nav: 75rem` (1200 px) en `@theme`, usado como `nav:` / `max-nav:` | Las variantes arbitrarias `min-[1200px]` se ordenaban antes de `md` y no sobrescribían el padding |
 | Toasts | `ToastProvider` en `stores/ToastStore.jsx`, presentación en `components/ui/Toast.jsx`, hook en `hooks/useToast.js` | Respeta la regla 1 (los componentes no importan de `stores/`) |
 | `/_kit` | Ruta registrada solo con `import.meta.env.DEV` y cargada con `lazy` | No entra en el build de producción (verificado); adelanta parte de 7.5 |
+| Pantalla de Acceso | Un solo campo «Clave de API»; se descartan usuario, contraseña, «Recordar sesión» y «¿Olvidó su contraseña?» del diseño de Stitch | La API solo autentica con `x-api-key`; la clave vive en `sessionStorage` (DESIGN.md §5.1) |
+| Validación y rol | `hooks/useLogin` (no el store) llama a `GET /accounts` y `GET /admin/api-keys`; el store solo guarda y borra | Respeta la regla 2 (solo `hooks/` llama a `api/routes/`) |
+| 401 y 503 globales | `api/axios.js` expone `setApiEventHandlers`; los registra `RequireAuth` vía `useApiEventHandlers`. Las peticiones del login usan `skipSessionHandling` | Un 401 en el login significa «clave incorrecta», no «sesión caducada» |
+| Rutas | `/acceso`, `/servicio-no-disponible`, `/escanear/recibidas`, `/escanear/emitidas`, `/cuentas`, `/admin/cuentas`, `/admin/claves`; las de fases futuras muestran `PendingPage` | Navegación completa desde ya; cada fase reemplaza su `PendingPage` |
+| Pruebas de API | MSW contra `http://api.test` (`test.env.VITE_API_URL` en `vite.config.js`), `onUnhandledRequest: 'error'` | Ninguna prueba sale a la red |
 
 Si alguna decisión cambia, se registra aquí y en la Bitácora.
 
@@ -172,14 +179,14 @@ apps/web/
 **Endpoints:** `GET /accounts` (validar clave) · `GET /admin/api-keys` (detectar rol) · `GET /health`.
 **Pantalla Stitch:** Acceso - Clave de API.
 
-- [ ] 2.1 `api/errors.js`: convierte errores de axios a `{ status, userMessage, technicalError }`, incluidos red y timeout.
-- [ ] 2.2 `api/axios.js`: interceptor que añade `x-api-key` desde `lib/storage.js` (`sessionStorage`); ante `401`, cierra la sesión.
-- [ ] 2.3 `stores/SessionStore` + hook `useSession` (`apiKey`, `role: 'admin' | 'client'`, `login()`, `logout()`).
-- [ ] 2.4 `LoginPage` a partir del HTML de Stitch: validación con `GET /accounts`, mensajes para 401 y 503.
-- [ ] 2.5 Detección de rol con `GET /admin/api-keys` (200 → admin, 403 → cliente).
-- [ ] 2.6 `RequireAuth` y `RequireAdmin` (en `layouts/`) como guardas de ruta; definir rutas en `App.jsx`.
-- [ ] 2.7 `layout/HealthIndicator` + `hooks/useHealth` en la TopBar (consulta cada 60 s) y `ServiceUnavailablePage`.
-- [ ] 2.8 Pruebas: login correcto, clave inválida, rol admin y cliente, cierre de sesión por 401.
+- [x] 2.1 `api/errors.js`: convierte errores de axios a `{ status, userMessage, technicalError }`, incluidos red y timeout.
+- [x] 2.2 `api/axios.js`: interceptor que añade `x-api-key` desde `lib/storage.js` (`sessionStorage`); ante `401`, cierra la sesión.
+- [x] 2.3 `stores/SessionStore` + hook `useSession` (`apiKey`, `role: 'admin' | 'client'`, `login()`, `logout()`).
+- [x] 2.4 `LoginPage` a partir del HTML de Stitch: validación con `GET /accounts`, mensajes para 401 y 503.
+- [x] 2.5 Detección de rol con `GET /admin/api-keys` (200 → admin, 403 → cliente).
+- [x] 2.6 `RequireAuth` y `RequireAdmin` (en `layouts/`) como guardas de ruta; definir rutas en `App.jsx`.
+- [x] 2.7 `layout/HealthIndicator` + `hooks/useHealth` en la TopBar (consulta cada 60 s) y `ServiceUnavailablePage`.
+- [x] 2.8 Pruebas: login correcto, clave inválida, rol admin y cliente, cierre de sesión por 401.
 
 **Criterio de aceptación:** con la clave maestra se ve Administración; con una clave de cliente no; una clave inválida muestra el error y no entra.
 
@@ -298,3 +305,5 @@ La Fase 6 solo depende de la sesión (Fase 2), así que puede avanzar en paralel
 | 2026-10-12 | 0 | 0.9 sigue bloqueada: el MCP de Stitch no está disponible en la sesión. Se continúa con la Fase 1 sin las pantallas que faltan. |
 | 2026-10-12 | 1 | Tareas 1.1–1.14 terminadas: `tokens.css` (claro, oscuro por sistema y `data-theme`, `@theme inline` con alias de Stitch) y `base.css`; componentes `ui/` (Icon, Spinner, Skeleton, Button, Input, Select, Badge, Alert, Toast, Dialog, Drawer), `form/` (Field, TextareaCounter, DateInput, SegmentedControl, EmailChipsInput), `data/` (DataTable, StatCard, EmptyState, MoneyCell) y `layout/` (TopBar, Sidebar, PageHeader, AdminSection, HealthIndicator, Logo) más `layouts/AppLayout`; `lib/cn.js`, `lib/format.js`, `lib/validation.js`. Página `/_kit` solo en desarrollo. 21 pruebas, lint y build en verde. |
 | 2026-10-12 | 1 | Corregido el colapso de la navegación a 1200 px con un breakpoint propio (`nav`). Capturas de `/_kit` en claro y oscuro en `docs/img/`. |
+| 2026-10-12 | 2 | Tareas 2.1–2.8 terminadas: `api/errors.js` (`ApiError` con red, timeout, cancelación y `Retry-After`), interceptores de `api/axios.js` (`x-api-key` desde `lib/storage.js`, manejadores de 401/503), `SessionProvider` + `useSession` + `useLogin` (detección de rol), `LoginPage`, `RequireAuth`, `RequireAdmin`, `AppShell` con `useHealth` cada 60 s, `ServiceUnavailablePage` y rutas de toda la app. 42 pruebas (MSW), lint y build en verde. |
+| 2026-10-12 | 2 | Pendiente verificar el criterio de aceptación con la API real (no hay `.env` ni base de datos en esta copia). |

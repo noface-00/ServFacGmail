@@ -71,6 +71,14 @@ Todos los componentes se ven en **`/_kit`** con `pnpm dev:web` (la ruta solo exi
 |---|---|
 | ![Kit de componentes en modo claro](./docs/img/fase-1-kit-claro.png) | ![Kit de componentes en modo oscuro](./docs/img/fase-1-kit-oscuro.png) |
 
+### Fase 2 — Sesión y acceso
+
+Pantalla de Acceso con la clave de API (se guarda en `sessionStorage`). La clave se valida con `GET /accounts`, y el rol se detecta con `GET /admin/api-keys`: la clave maestra ve Administración y las de cliente no. Un `401` durante la sesión la cierra y vuelve a Acceso; un `503` lleva a «Servicio no disponible». La barra superior consulta `GET /health` cada 60 s. Todos los errores de la API llegan a la UI con el formato `{ status, userMessage, technicalError }`.
+
+| Escritorio | Móvil (oscuro) |
+|---|---|
+| ![Pantalla de Acceso](./docs/img/fase-2-acceso.png) | ![Pantalla de Acceso en móvil](./docs/img/fase-2-acceso-movil.png) |
+
 ### Diseños de referencia (Google Stitch)
 
 Pantallas exportadas a [`design/stitch/`](./design/stitch/) que se integrarán en las próximas fases. Algunos elementos que Stitch añadió no tienen respaldo en la API y no se implementarán: ver [`design/stitch/README.md`](./design/stitch/README.md).
