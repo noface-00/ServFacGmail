@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Outlet } from 'react-router'
 import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { TopBar } from '../components/layout/TopBar.jsx'
+import { Spinner } from '../components/ui/Spinner.jsx'
 import { useModal } from '../components/ui/useModal.js'
 
 /**
@@ -51,7 +52,18 @@ export function AppLayout({ isAdmin = false, accountSelector, health, themeToggl
       )}
 
       <div className="pt-14 md:pl-16 nav:pl-[232px]">
-        <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] px-4 py-6 outline-none sm:px-6">{children ?? <Outlet />}</main>
+        <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] px-4 py-6 outline-none sm:px-6">
+          {/* Las páginas se cargan bajo demanda: el armazón sigue visible mientras llegan. */}
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-16 text-primary">
+                <Spinner size={28} label="Cargando…" />
+              </div>
+            }
+          >
+            {children ?? <Outlet />}
+          </Suspense>
+        </main>
       </div>
     </div>
   )

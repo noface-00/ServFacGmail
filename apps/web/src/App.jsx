@@ -3,12 +3,15 @@ import { Navigate, Route, Routes } from 'react-router'
 import { AppShell } from './layouts/AppShell.jsx'
 import { RequireAdmin } from './layouts/RequireAdmin.jsx'
 import { RequireAuth } from './layouts/RequireAuth.jsx'
-import AccountsPage from './pages/AccountsPage.jsx'
-import ApiKeysPage from './pages/ApiKeysPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
-import ScanPage from './pages/ScanPage.jsx'
 import ServiceUnavailablePage from './pages/ServiceUnavailablePage.jsx'
+
+// Las pantallas de la zona autenticada se cargan bajo demanda: Acceso (la primera que se ve sin
+// sesión) queda en el bundle inicial.
+const ScanPage = lazy(() => import('./pages/ScanPage.jsx'))
+const AccountsPage = lazy(() => import('./pages/AccountsPage.jsx'))
+const ApiKeysPage = lazy(() => import('./pages/ApiKeysPage.jsx'))
 
 // La página /_kit solo se registra en desarrollo; en el build de producción esta rama se elimina.
 const KitPage = import.meta.env.DEV ? lazy(() => import('./pages/KitPage.jsx')) : null
