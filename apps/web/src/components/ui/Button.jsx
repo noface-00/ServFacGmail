@@ -7,6 +7,7 @@ const VARIANTS = {
   secondary: 'bg-surface text-fg border border-border-strong hover:bg-surface-muted',
   ghost: 'bg-transparent text-fg-muted border border-transparent hover:bg-surface-muted hover:text-fg',
   danger: 'bg-danger text-white border border-transparent hover:opacity-90',
+  dangerGhost: 'bg-transparent text-danger border border-transparent hover:bg-danger-soft',
   admin: 'bg-surface text-admin border border-admin hover:bg-admin-soft',
 }
 
@@ -19,7 +20,8 @@ const SIZES = {
 const ICON_SIZES = { sm: 16, md: 18, lg: 20 }
 
 /**
- * Botón del sistema de diseño (DESIGN.md §4.1).
+ * Botón del sistema de diseño (DESIGN.md §4.1). `dangerGhost` es la acción destructiva
+ * secundaria de una fila (p. ej. Desconectar), sin el peso de un botón `danger` relleno.
  * En `loading` se deshabilita, muestra un spinner en lugar del icono y conserva el texto.
  */
 export function Button({

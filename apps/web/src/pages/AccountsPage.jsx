@@ -118,9 +118,8 @@ export default function AccountsPage({ adminView = false }) {
           {isAdmin && (
             <Button
               size="sm"
-              variant="ghost"
+              variant="dangerGhost"
               icon="link_off"
-              className="text-danger hover:bg-danger-soft hover:text-danger"
               aria-label={`Desconectar ${a.email}`}
               onClick={() => openDisconnect(a.email)}
             >
