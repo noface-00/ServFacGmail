@@ -64,7 +64,7 @@ Todos los tokens son variables CSS en `:root` (reemplazan las del template de Vi
 | `--sf-border-strong` | `#C9CED6` | Bordes de inputs |
 | `--sf-text` | `#1B2230` | Texto principal |
 | `--sf-text-muted` | `#5B6474` | Texto secundario, etiquetas |
-| `--sf-text-subtle` | `#8A92A0` | Placeholders, metadatos |
+| `--sf-text-subtle` | `#686F7D` | Placeholders, metadatos (antes `#8A92A0`: 3.1:1, no cumplía AA) |
 
 ### 3.2 Color — marca y semánticos (modo claro)
 
@@ -75,7 +75,7 @@ Todos los tokens son variables CSS en `:root` (reemplazan las del template de Vi
 | `--sf-primary-soft` | `#E3F3F0` | Fondo de selección, chip activo |
 | `--sf-success` | `#1F7A3A` / soft `#E6F4EA` | Cuenta conectada, XML parseado, 2xx |
 | `--sf-warning` | `#9A5B00` / soft `#FDF3E1` | `truncated`, datos extraídos por IA, 429 |
-| `--sf-danger` | `#B42318` / soft `#FDECEA` | Errores, `fallidas`, acciones destructivas, clave revocada |
+| `--sf-danger` | `#B42318` / soft `#FDECEA` / on `#FFFFFF` | Errores, `fallidas`, acciones destructivas, clave revocada |
 | `--sf-info` | `#1D5FA8` / soft `#E7F0FB` | Avisos neutros, 404 de cuenta no conectada |
 | `--sf-admin` | `#5B3CC4` / soft `#EFEBFB` | Marca visual de la zona de Administración |
 
@@ -92,15 +92,15 @@ Se aplica con `@media (prefers-color-scheme: dark)` y con `[data-theme="dark"]` 
 | `--sf-border-strong` | `#3A4250` |
 | `--sf-text` | `#E6E9EE` |
 | `--sf-text-muted` | `#A3ABB8` |
-| `--sf-text-subtle` | `#6E7685` |
+| `--sf-text-subtle` | `#848B98` (antes `#6E7685`: 3.8:1) |
 | `--sf-primary` | `#3CC0AE` (hover `#5BD0C0`, soft `#12302C`) |
 | `--sf-success` | `#4CC27A` (soft `#132A1C`) |
 | `--sf-warning` | `#E3A33B` (soft `#2E2310`) |
-| `--sf-danger` | `#F0705F` (soft `#341815`) |
+| `--sf-danger` | `#F0705F` (soft `#341815`, on `#0F1318`: el blanco sobre este rojo da 2.9:1) |
 | `--sf-info` | `#6AA6EA` (soft `#142336`) |
 | `--sf-admin` | `#A08BF0` (soft `#221C3A`) |
 
-Contraste mínimo: texto normal ≥ 4.5:1 sobre `--sf-surface` en ambos modos; los colores semánticos nunca son el único portador de significado (siempre van con icono o texto).
+Contraste mínimo: texto normal ≥ 4.5:1 sobre `--sf-surface` y `--sf-surface-muted` en ambos modos (verificado el 2026-10-12 para texto, semánticos y sus fondos soft); los colores semánticos nunca son el único portador de significado (siempre van con icono o texto).
 
 ### 3.4 Tipografía
 

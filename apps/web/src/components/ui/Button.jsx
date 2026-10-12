@@ -6,7 +6,7 @@ const VARIANTS = {
   primary: 'bg-primary text-on-primary hover:bg-primary-hover border border-transparent',
   secondary: 'bg-surface text-fg border border-border-strong hover:bg-surface-muted',
   ghost: 'bg-transparent text-fg-muted border border-transparent hover:bg-surface-muted hover:text-fg',
-  danger: 'bg-danger text-white border border-transparent hover:opacity-90',
+  danger: 'bg-danger text-on-danger border border-transparent hover:opacity-90',
   dangerGhost: 'bg-transparent text-danger border border-transparent hover:bg-danger-soft',
   admin: 'bg-surface text-admin border border-admin hover:bg-admin-soft',
 }
