@@ -27,3 +27,18 @@ export async function runScan(kind, payload, { signal } = {}) {
   const { data } = await api.post(path, payload, { timeout: SCAN_TIMEOUT_MS, signal })
   return data
 }
+
+export const DOWNLOAD_TIMEOUT_MS = 2 * 60 * 1000
+
+/**
+ * GET /download-pdf → el PDF del correo (si el adjunto es un ZIP, la API extrae el PDF de dentro;
+ * si es un XML, busca el PDF del mismo correo). `filename` solo se envía cuando es un .pdf: la
+ * API lo usa para elegir la entrada dentro del ZIP y con un .xml no encontraría ningún PDF.
+ * @returns {Promise<{ blob: Blob, contentDisposition: string | null }>}
+ */
+export async function downloadPdf({ accountEmail, messageId, attachmentId, filename }) {
+  const params = { accountEmail, messageId, attachmentId }
+  if (filename?.toLowerCase().endsWith('.pdf')) params.filename = filename
+  const response = await api.get('/download-pdf', { params, responseType: 'blob', timeout: DOWNLOAD_TIMEOUT_MS })
+  return { blob: response.data, contentDisposition: response.headers?.['content-disposition'] ?? null }
+}

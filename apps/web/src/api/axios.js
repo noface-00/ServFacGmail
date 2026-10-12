@@ -37,7 +37,16 @@ api.interceptors.request.use((config) => {
 // donde un 401 significa "clave incorrecta", no "sesión caducada").
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // Con responseType 'blob' el JSON de error llega como Blob: se lee para no perder el userMessage.
+    const data = error?.response?.data
+    if (typeof Blob !== 'undefined' && data instanceof Blob) {
+      try {
+        error.response.data = JSON.parse(await data.text())
+      } catch {
+        // No era JSON: se usa el mensaje por defecto del estado HTTP.
+      }
+    }
     const apiError = normalizeError(error)
     if (!error?.config?.skipSessionHandling) {
       if (apiError.status === 401) handlers.unauthorized?.(apiError)
