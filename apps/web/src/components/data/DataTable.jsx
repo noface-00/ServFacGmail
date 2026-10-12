@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { cn } from '../../lib/cn.js'
+import { errorTone, isRetryable } from '../../lib/errorTone.js'
 import { Alert } from '../ui/Alert.jsx'
+import { Button } from '../ui/Button.jsx'
 import { Icon } from '../ui/Icon.jsx'
 import { Skeleton } from '../ui/Skeleton.jsx'
 import { EmptyState } from './EmptyState.jsx'
@@ -37,7 +39,8 @@ function compare(a, b) {
  *   rowKey: (row: any) => string,
  *   caption?: string,
  *   loading?: boolean,
- *   error?: { userMessage: string, technicalError?: string } | null,
+ *   error?: { status?: number, userMessage: string, technicalError?: string } | null,
+ *   onRetry?: () => void,
  *   empty?: import('react').ReactNode,
  *   initialSort?: { key: string, direction: 'asc' | 'desc' },
  *   rowClassName?: (row: any) => string | undefined,
@@ -51,6 +54,7 @@ export function DataTable({
   caption,
   loading = false,
   error = null,
+  onRetry,
   empty,
   initialSort,
   rowClassName,
@@ -77,7 +81,21 @@ export function DataTable({
   }
 
   if (error) {
-    return <Alert tone="danger" title={error.userMessage} technicalError={error.technicalError} />
+    return (
+      <Alert
+        tone={errorTone(error)}
+        title={error.userMessage}
+        technicalError={error.technicalError}
+        action={
+          onRetry &&
+          isRetryable(error) && (
+            <Button variant="secondary" size="sm" icon="refresh" onClick={onRetry}>
+              Reintentar
+            </Button>
+          )
+        }
+      />
+    )
   }
 
   const showEmpty = !loading && rows.length === 0

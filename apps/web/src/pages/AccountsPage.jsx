@@ -22,7 +22,7 @@ const HIGHLIGHT_MS = 2000
  */
 export default function AccountsPage({ adminView = false }) {
   const { isAdmin } = useSession()
-  const { accounts, isPending, error } = useAccounts()
+  const { accounts, isPending, error, refetch } = useAccounts()
   const { selectAccount } = useSelectedAccount()
   const navigate = useNavigate()
   const toast = useToast()
@@ -160,6 +160,7 @@ export default function AccountsPage({ adminView = false }) {
       rowKey={(a) => a.email}
       loading={isPending}
       error={error}
+      onRetry={refetch}
       empty={empty}
       initialSort={{ key: 'email', direction: 'asc' }}
       rowClassName={(a) => (a.email === highlighted ? 'bg-primary-soft' : undefined)}

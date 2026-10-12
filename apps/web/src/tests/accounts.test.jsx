@@ -275,3 +275,28 @@ describe('Desconectar cuenta', () => {
     expect(screen.getByRole('alertdialog')).toBeInTheDocument()
   })
 })
+
+describe('Errores de carga', () => {
+  it('offers "Reintentar" on a network error and recovers', async () => {
+    let fail = true
+    server.use(
+      http.get(`${API}/accounts`, () => (fail ? HttpResponse.error() : HttpResponse.json({ accounts: db, count: db.length }))),
+    )
+    renderApp('/cuentas', { session: admin })
+    expect(await screen.findByText('No se pudo contactar con el servicio.')).toBeInTheDocument()
+    fail = false
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await (await table()).findByText('pagos@empresa.com')).toBeInTheDocument()
+  })
+
+  it('shows a 429 as a warning without retry', async () => {
+    server.use(
+      http.get(`${API}/accounts`, () => HttpResponse.json({ userMessage: 'Demasiadas solicitudes.' }, { status: 429 })),
+    )
+    renderApp('/cuentas', { session: admin })
+    const message = await screen.findByText('Demasiadas solicitudes.')
+    // Advertencia (role="status"), no error (role="alert").
+    expect(message.closest('[role]')).toHaveAttribute('role', 'status')
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument()
+  })
+})

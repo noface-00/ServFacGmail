@@ -14,7 +14,7 @@ import { formatDate, formatDateTime, formatRelative } from '../lib/format.js'
 
 /** Administración → Claves de API (DESIGN.md §5.5). */
 export default function ApiKeysPage() {
-  const { apiKeys, isPending, error } = useApiKeys()
+  const { apiKeys, isPending, error, refetch } = useApiKeys()
   const { accounts } = useAccounts()
   const createKey = useCreateApiKey()
   const revokeKey = useRevokeApiKey()
@@ -159,6 +159,7 @@ export default function ApiKeysPage() {
         rowKey={(k) => k.id}
         loading={isPending}
         error={error}
+      onRetry={refetch}
         rowClassName={(k) => (k.revokedAt ? 'opacity-60' : undefined)}
         empty={
           apiKeys.length > 0 ? (
