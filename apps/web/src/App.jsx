@@ -4,8 +4,8 @@ import { AppShell } from './layouts/AppShell.jsx'
 import { RequireAdmin } from './layouts/RequireAdmin.jsx'
 import { RequireAuth } from './layouts/RequireAuth.jsx'
 import AccountsPage from './pages/AccountsPage.jsx'
+import ApiKeysPage from './pages/ApiKeysPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
-import PendingPage from './pages/PendingPage.jsx'
 import ScanPage from './pages/ScanPage.jsx'
 import ServiceUnavailablePage from './pages/ServiceUnavailablePage.jsx'
 
@@ -28,7 +28,7 @@ function App() {
             <Route path="cuentas" element={<AccountsPage />} />
             <Route path="admin" element={<RequireAdmin />}>
               <Route path="cuentas" element={<AccountsPage adminView />} />
-              <Route path="claves" element={<PendingPage title="Claves de API" phase={6} icon="key" />} />
+              <Route path="claves" element={<ApiKeysPage />} />
             </Route>
           </Route>
         </Route>
