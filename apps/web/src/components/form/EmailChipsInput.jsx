@@ -10,7 +10,8 @@ const SEPARATORS = /[\s,;]+/
  * Lista de correos como chips (DESIGN.md §4.3). Separa por coma, punto y coma, espacio, Enter o
  * pegado múltiple; ignora duplicados; marca los inválidos; bloquea la entrada al llegar a `max`.
  * Los correos inválidos se conservan en `value` para que el formulario pueda rechazar el envío.
- * @param {{ value: string[], onChange: (emails: string[]) => void, max?: number }} props
+ * `suggestions` muestra botones de un clic para agregar correos conocidos (p. ej. cuentas conectadas).
+ * @param {{ value: string[], onChange: (emails: string[]) => void, max?: number, suggestions?: string[], suggestionsLabel?: string }} props
  */
 export function EmailChipsInput({
   label,
@@ -22,6 +23,8 @@ export function EmailChipsInput({
   placeholder = 'Escriba un correo y pulse Enter',
   disabled,
   required,
+  suggestions = [],
+  suggestionsLabel = 'Sugerencias',
   className,
   id,
 }) {
@@ -30,6 +33,7 @@ export function EmailChipsInput({
   const [draft, setDraft] = useState('')
   const full = value.length >= max
   const invalidCount = value.filter((e) => !isValidEmail(e)).length
+  const pendingSuggestions = suggestions.filter((s) => !value.includes(s.toLowerCase()))
 
   function add(raw) {
     const incoming = raw
@@ -143,6 +147,24 @@ export function EmailChipsInput({
           className="min-w-[160px] flex-1 bg-transparent px-1 py-0.5 text-sm text-fg outline-none placeholder:text-fg-subtle"
         />
       </div>
+      {pendingSuggestions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-fg-muted">{suggestionsLabel}:</span>
+          {pendingSuggestions.map((email) => (
+            <button
+              key={email}
+              type="button"
+              disabled={disabled || full}
+              onClick={() => add(email)}
+              aria-label={`Agregar ${email}`}
+              className="tabular inline-flex items-center gap-0.5 rounded-sm border border-dashed border-border-strong px-1.5 py-0.5 text-xs text-fg-muted hover:border-primary hover:text-primary disabled:opacity-50"
+            >
+              <Icon name="add" size={14} />
+              {email}
+            </button>
+          ))}
+        </div>
+      )}
     </Field>
   )
 }
