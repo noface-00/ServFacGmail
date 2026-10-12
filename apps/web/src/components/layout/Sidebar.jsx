@@ -27,7 +27,7 @@ const ADMIN_LINKS = [
  * En móvil la muestra AppLayout como drawer con `expanded`.
  */
 export function Sidebar({ isAdmin, expanded = false, onNavigate }) {
-  const showLabels = expanded ? '' : 'md:max-[1199px]:sr-only'
+  const showLabels = expanded ? '' : 'md:max-nav:sr-only'
 
   return (
     <nav aria-label="Principal" className="flex h-full flex-col gap-4 overflow-y-auto px-3 py-3">

@@ -196,3 +196,8 @@
 
   --ease-sf: var(--sf-ease);
 }
+
+/* Breakpoint de la navegación lateral (DESIGN.md §3.6): bajo 1200 px se colapsa a iconos. */
+@theme {
+  --breakpoint-nav: 75rem;
+}

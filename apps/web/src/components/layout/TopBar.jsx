@@ -16,7 +16,7 @@ export function TopBar({ accountSelector, health, isAdmin, onLogout, onOpenMenu 
       {onOpenMenu && (
         <IconButton icon="menu" label="Abrir navegación" className="md:hidden" onClick={onOpenMenu} />
       )}
-      <div className="min-[1200px]:w-[200px]">
+      <div className="nav:w-[200px]">
         <Logo />
       </div>
       <div className="flex min-w-0 flex-1 justify-center">{accountSelector}</div>

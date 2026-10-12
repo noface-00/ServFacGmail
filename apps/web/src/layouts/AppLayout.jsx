@@ -23,7 +23,7 @@ export function AppLayout({ isAdmin = false, accountSelector, health, onLogout, 
         onOpenMenu={() => setMenuOpen(true)}
       />
 
-      <aside className="fixed top-14 bottom-0 left-0 hidden w-16 border-r border-border bg-surface md:block min-[1200px]:w-[232px]">
+      <aside className="fixed top-14 bottom-0 left-0 hidden w-16 border-r border-border bg-surface md:block nav:w-[232px]">
         <Sidebar isAdmin={isAdmin} />
       </aside>
 
@@ -42,7 +42,7 @@ export function AppLayout({ isAdmin = false, accountSelector, health, onLogout, 
         </div>
       )}
 
-      <div className="pt-14 md:pl-16 min-[1200px]:pl-[232px]">
+      <div className="pt-14 md:pl-16 nav:pl-[232px]">
         <main className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6">{children ?? <Outlet />}</main>
       </div>
     </div>
