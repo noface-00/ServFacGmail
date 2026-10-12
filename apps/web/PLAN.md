@@ -10,7 +10,7 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 
 ## Estado del proyecto
 
-**Fase actual:** Fase 5 — Detalle de factura y descarga (Fases 2 a 4 terminadas salvo la verificación con la API real; 0.9 sigue bloqueada)
+**Fase actual:** Fase 6 — Administración de claves de API (Fases 2 a 5 terminadas salvo la verificación con la API real; 0.9 sigue bloqueada)
 **Última actualización:** 2026-10-12
 
 | Fase | Nombre | Estado | Avance |
@@ -20,7 +20,7 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 | 2 | Sesión y acceso | ✅ Terminada (falta verificar con la API real) | 8 / 8 |
 | 3 | Cuentas de Gmail | ✅ Terminada (falta verificar con la API real) | 8 / 8 |
 | 4 | Escaneo de facturas | ✅ Terminada (falta verificar con la API real) | 11 / 11 |
-| 5 | Detalle de factura y descarga | ⬜ Pendiente | 0 / 6 |
+| 5 | Detalle de factura y descarga | ✅ Terminada (falta verificar con la API real) | 6 / 6 |
 | 6 | Administración de claves de API | ⬜ Pendiente | 0 / 6 |
 | 7 | Calidad, responsive y despliegue | ⬜ Pendiente | 0 / 9 |
 
@@ -32,7 +32,7 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 |---|---|---|---|---|
 | Acceso - Clave de API | `7bd47151e2cd45f1a5d6c58d9e49fca1` | ✅ Generada | Fase 2 | ✅ |
 | Escanear - Facturas Recibidas | `9cdf1f8fb11d4e288b68ebc21dc914bd` | ✅ Generada | Fase 4 | ✅ |
-| Detalle de Factura (Drawer) | `b2dcabfa99da46829f9bbca31ba859aa` | ✅ Generada | Fase 5 | ⬜ |
+| Detalle de Factura (Drawer) | `b2dcabfa99da46829f9bbca31ba859aa` | ✅ Generada | Fase 5 | ✅ |
 | Cuentas de Gmail y Conexión OAuth | `d519020c25df43ce860d889af0e34945` | ✅ Generada | Fase 3 | ✅ |
 | Administración - Claves de API | `6b9acbdf9ab0417b9947351579664cc1` | ✅ Generada | Fase 6 | ⬜ |
 | Registro - Crear Cuenta | `279b50da97e74b888807a5879da53033` | ⚠️ Sin endpoint | — (descartar) | — |
@@ -46,7 +46,7 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 ### Bloqueos y decisiones abiertas
 
 - **La API no expone `Retry-After` ni `Content-Disposition` por CORS** (`cors()` sin `exposedHeaders` en `apps/api/src/index.ts`): desde el navegador, tras un `429` se espera siempre el valor por defecto (60 s) y en la Fase 5 no se podrá leer el nombre del PDF de la cabecera. Propuesta para la API: `cors({ origin, exposedHeaders: ['Retry-After', 'Content-Disposition'] })`. El frontend ya lee ambas cabeceras si llegan.
-- **Criterios de aceptación de las Fases 2 a 4 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login (clave maestra y de cliente), la conexión real de una cuenta de Gmail por OAuth y un escaneo real solo están cubiertos por las pruebas con MSW. Verificarlos a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173` y `GOOGLE_REDIRECT_URI` apuntando a la API).
+- **Criterios de aceptación de las Fases 2 a 5 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login (clave maestra y de cliente), la conexión real de una cuenta de Gmail por OAuth, un escaneo real y la descarga de un PDF directo y de uno dentro de un ZIP solo están cubiertos por las pruebas con MSW. Verificarlos a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173` y `GOOGLE_REDIRECT_URI` apuntando a la API).
 
 - **`pnpm dev` de la API falla con Node 26**: `ts-node` 10 no es compatible (`ERR_INVALID_ARG_TYPE` en `fileURLToPath`). No bloquea el frontend: se puede usar `pnpm --filter @servfac/api build && node apps/api/dist/index.js`. Pendiente decidir si se migra el script `dev` a `tsx`.
 - **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP). No bloquea las fases siguientes: las pantallas que faltan se componen con el kit de la Fase 1 siguiendo `DESIGN.md`.
@@ -83,6 +83,12 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | Tabla de facturas | Subtotal e IVA bajo el Total; correo solo desde `2xl` (1536 px); formulario de ancho fijo (300–340 px) | A 1440 px la tabla cortaba el Total. El correo sigue en la búsqueda y el CSV |
 | Total acumulado | Primero la moneda con más facturas y decimales propios de cada moneda | Comparar importes de CLP con USD no tiene sentido |
 | CSV | Separador `;`, BOM UTF-8, montos sin formato y celdas que empiezan por `= + - @` prefijadas con `'` | Excel en español lo abre en columnas; evita inyección de fórmulas |
+| Parámetros de `/download-pdf` | `filename` solo se envía si termina en `.pdf` | La API lo usa para elegir la entrada dentro del ZIP; con el `.xml` de una factura leída de XML no encontraría el PDF. Sin él, la API busca el PDF del mismo correo |
+| Vista previa del PDF | A petición («Mostrar vista previa»), con el blob en caché de React Query (`['pdf', cuenta, messageId, attachmentId, filename]`) que luego reutiliza la descarga | `/download-pdf` cuenta para el límite `RATE_LIMIT_SCAN`; abrir el detalle no debe gastar cupo |
+| Seguridad del PDF | Se exige la firma `%PDF` y se fuerza `application/pdf` antes de crear el object URL | El `Content-Type` sale del correo (lo controla el remitente); un `text/html` abierto como blob se ejecutaría con el origen del panel, donde está la clave de API |
+| Errores con `responseType: 'blob'` | El interceptor lee el Blob como JSON antes de normalizar | Si no, se perdía el `userMessage` de los errores de descarga |
+| Clave de acceso | Se oculta cuando es igual al `messageId` | La API pone el `messageId` como `claveAcceso` cuando la factura no trae una |
+| Cuenta de descarga | La del escaneo (`payload.accountEmail`), no la elegida en la barra | El usuario puede cambiar de cuenta después de escanear |
 | Pruebas de API | MSW contra `http://api.test` (`test.env.VITE_API_URL` en `vite.config.js`), `onUnhandledRequest: 'error'` | Ninguna prueba sale a la red |
 
 Si alguna decisión cambia, se registra aquí y en la Bitácora.
@@ -245,12 +251,12 @@ apps/web/
 **Endpoint:** `GET /download-pdf`.
 **Pantalla Stitch:** Detalle de Factura (Drawer).
 
-- [ ] 5.1 `InvoiceDrawer` con emisor, documento, correo y clave de acceso copiable.
-- [ ] 5.2 `InvoiceItems` con suma de ítems y aviso si no cuadra con el subtotal.
-- [ ] 5.3 `PdfPreview` usando el `fileBase64` ya recibido (sin pedirlo de nuevo).
-- [ ] 5.4 `useDownloadPdf`: si existe el base64 del PDF, descarga local; si no, `GET /download-pdf` con `responseType: 'blob'` y nombre desde `Content-Disposition` (`lib/download.js`).
-- [ ] 5.5 Botón Descargar en la tabla y en el drawer con estado de carga y toast de error.
-- [ ] 5.6 Pruebas: apertura del drawer, descuadre de ítems, descarga local y descarga por API.
+- [x] 5.1 `InvoiceDrawer` con emisor, documento, correo y clave de acceso copiable.
+- [x] 5.2 `InvoiceItems` con suma de ítems y aviso si no cuadra con el subtotal.
+- [x] 5.3 `PdfPreview` ~~usando el `fileBase64` ya recibido~~ con el blob de `GET /download-pdf`, cargado a petición y reutilizado por la descarga (la API no devuelve `fileBase64`).
+- [x] 5.4 `useDownloadPdf`: ~~si existe el base64 del PDF, descarga local; si no,~~ `GET /download-pdf` (o el blob ya cargado por la vista previa) con `responseType: 'blob'` y nombre desde `Content-Disposition` (`lib/download.js`).
+- [x] 5.5 Botón Descargar en la tabla y en el drawer con estado de carga y toast de error.
+- [x] 5.6 Pruebas: apertura del drawer, descuadre de ítems, descarga local y descarga por API.
 
 **Criterio de aceptación:** se descarga el PDF correcto tanto de un adjunto PDF directo como de uno dentro de un ZIP.
 
@@ -320,3 +326,4 @@ La Fase 6 solo depende de la sesión (Fase 2), así que puede avanzar en paralel
 | 2026-10-12 | 3 | Como la barra superior carga `/accounts` al entrar, una clave revocada vuelve a Acceso de inmediato (pruebas de la Fase 2 ajustadas). Pendiente verificar la conexión OAuth con una cuenta real. |
 | 2026-10-12 | 4 | Tareas 4.1–4.11 terminadas: `runScan` (timeout de 10 min, `AbortSignal`), `useScan`, `lib/scanForm.js` (validación espejo de `validation.ts`, armado del cuerpo, mapeo de 400 a campos), `lib/invoices.js`, `lib/csv.js`, `lib/download.js`, `ScanForm`, `ScanProgress`, `ScanSummary`, `InvoiceTable`, `FailedList` y `ScanPage` en `/escanear/recibidas` y `/escanear/emitidas`. 90 pruebas, lint y build en verde. |
 | 2026-10-12 | 4 | Hallazgos: la respuesta real del escaneo es plana y sin `fileBase64` (`DESIGN.md` corregido; 4.10 no aplica), y la API no expone `Retry-After` ni `Content-Disposition` por CORS (registrado como bloqueo menor). Revisión visual con API simulada: se rehízo la tabla para que el Total quepa a 1440 px. |
+| 2026-10-12 | 5 | Tareas 5.1–5.6 terminadas: `downloadPdf`, `usePdfPreview`/`useDownloadPdf` (validación `%PDF`, nombre desde `Content-Disposition`, adjunto o número), `InvoiceDrawer`, `InvoiceItems` (suma y descuadre), `PdfPreview` a petición, `CopyButton` y acciones «Ver detalle» / «Descargar PDF» en la tabla. 103 pruebas, lint y build en verde. Revisión visual con API simulada: el PDF se muestra en el drawer. |

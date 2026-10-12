@@ -100,6 +100,20 @@ Cada pestaña conserva sus resultados al cambiar de una a otra.
 |---|---|
 | ![Resultados del escaneo](./docs/img/fase-4-escanear.png) | ![Escaneo en curso](./docs/img/fase-4-progreso.png) |
 
+### Fase 5 — Detalle de factura y descarga
+
+Al hacer clic en una factura se abre un panel lateral con:
+
+- el emisor;
+- el documento, con la clave de acceso copiable;
+- el correo de origen;
+- los ítems, con su suma y un aviso si no cuadran con el subtotal;
+- la vista previa del PDF, que se carga solo al pedirla.
+
+«Descargar PDF» está tanto en el panel como en cada fila de la tabla. Si el adjunto es un ZIP, la API extrae el PDF de dentro; si la factura se leyó de un XML, busca el PDF del mismo correo. Por seguridad, solo se muestra el archivo si es un PDF válido.
+
+![Detalle de factura con vista previa del PDF](./docs/img/fase-5-detalle.png)
+
 ### Diseños de referencia (Google Stitch)
 
 Pantallas exportadas a [`design/stitch/`](./design/stitch/) que se integrarán en las próximas fases. Algunos elementos que Stitch añadió no tienen respaldo en la API y no se implementarán: ver [`design/stitch/README.md`](./design/stitch/README.md).
