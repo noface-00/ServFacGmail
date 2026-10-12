@@ -10,13 +10,13 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 
 ## Estado del proyecto
 
-**Fase actual:** Fase 0 — Preparación (en curso)
-**Última actualización:** 2026-10-05
+**Fase actual:** Fase 2 — Sesión y acceso (Fase 1 terminada; 0.9 sigue bloqueada)
+**Última actualización:** 2026-10-12
 
 | Fase | Nombre | Estado | Avance |
 |---|---|---|---|
 | 0 | Preparación del entorno | 🟦 En curso (0.9 bloqueada) | 8 / 9 |
-| 1 | Fundaciones: tokens, componentes base y layout | ⬜ Pendiente | 0 / 14 |
+| 1 | Fundaciones: tokens, componentes base y layout | ✅ Terminada | 14 / 14 |
 | 2 | Sesión y acceso | ⬜ Pendiente | 0 / 8 |
 | 3 | Cuentas de Gmail | ⬜ Pendiente | 0 / 8 |
 | 4 | Escaneo de facturas | ⬜ Pendiente | 0 / 11 |
@@ -46,7 +46,7 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 ### Bloqueos y decisiones abiertas
 
 - **`pnpm dev` de la API falla con Node 26**: `ts-node` 10 no es compatible (`ERR_INVALID_ARG_TYPE` en `fileURLToPath`). No bloquea el frontend: se puede usar `pnpm --filter @servfac/api build && node apps/api/dist/index.js`. Pendiente decidir si se migra el script `dev` a `tsx`.
-- **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP).
+- **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP). No bloquea las fases siguientes: las pantallas que faltan se componen con el kit de la Fase 1 siguiendo `DESIGN.md`.
 - **"Registro - Crear Cuenta" sigue en Stitch**: el MCP no permite borrar pantallas; hay que eliminarla a mano desde la interfaz de Stitch.
 
 ---
@@ -64,6 +64,10 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | HTTP | `axios` (ya instalado) con interceptores | Añade `x-api-key` y normaliza `{ userMessage, technicalError }` |
 | Estado global | React Context en `src/stores/` | Sin dependencias nuevas; solo sesión, cuenta seleccionada y toasts |
 | Pruebas | Vitest 5 + Testing Library + MSW 2 (MSW 2 por compatibilidad con Vitest 5) | Mismo enfoque que la API: sin red real |
+| Nombres de color en Tailwind | Utilidades con los nombres de `DESIGN.md` (`bg-surface`, `text-fg-muted`, `bg-primary-soft`, …); los nombres de Stitch (`surface-container-low`, `on-surface`, …) quedan como alias de los mismos tokens | El código nuevo usa un solo vocabulario; el HTML de Stitch se puede pegar sin reescribir clases |
+| Breakpoint de navegación | `--breakpoint-nav: 75rem` (1200 px) en `@theme`, usado como `nav:` / `max-nav:` | Las variantes arbitrarias `min-[1200px]` se ordenaban antes de `md` y no sobrescribían el padding |
+| Toasts | `ToastProvider` en `stores/ToastStore.jsx`, presentación en `components/ui/Toast.jsx`, hook en `hooks/useToast.js` | Respeta la regla 1 (los componentes no importan de `stores/`) |
+| `/_kit` | Ruta registrada solo con `import.meta.env.DEV` y cargada con `lazy` | No entra en el build de producción (verificado); adelanta parte de 7.5 |
 
 Si alguna decisión cambia, se registra aquí y en la Bitácora.
 
@@ -144,20 +148,20 @@ apps/web/
 **Objetivo:** tener el kit de componentes y el armazón de la app, sin lógica de negocio.
 **Fuente:** el `tailwind.config` embebido en cualquier HTML de Stitch + `DESIGN.md` §3–4.
 
-- [ ] 1.1 `assets/css/tokens.css`: variables `--sf-*` (claro y oscuro) y bloque `@theme` con los nombres de Stitch apuntando a ellas.
-- [ ] 1.2 `assets/css/base.css`: tipografía base 14 px, foco visible, `prefers-reduced-motion`.
-- [ ] 1.3 `ui/Icon`, `ui/Spinner`, `ui/Skeleton`.
-- [ ] 1.4 `ui/Button` (primary, secondary, ghost, danger, admin; sm/md/lg; loading).
-- [ ] 1.5 `ui/Input`, `ui/Select`, `form/TextareaCounter`, `form/DateInput` (label, ayuda, error).
-- [ ] 1.6 `form/EmailChipsInput` (validación de email, límite 200, pegado múltiple).
-- [ ] 1.7 `form/SegmentedControl`.
-- [ ] 1.8 `ui/Badge` con las variantes de `DESIGN.md` §4.4.
-- [ ] 1.9 `ui/Alert` con detalle técnico plegable y botón Copiar.
-- [ ] 1.10 `ui/Toast` + `ToastProvider` + hook `useToast`.
-- [ ] 1.11 `ui/Dialog` y `ui/Drawer` (trampa de foco, `Esc`, retorno de foco).
-- [ ] 1.12 `data/DataTable` (ordenación, estados loading/empty/error), `data/StatCard`, `data/EmptyState`, `data/MoneyCell`.
-- [ ] 1.13 `layouts/AppLayout`, `layout/TopBar`, `Sidebar`, `PageHeader`, `AdminSection`, extraídos del marco común de las pantallas de Stitch.
-- [ ] 1.14 Página temporal `/_kit` (solo en desarrollo) que muestra todos los componentes, y pruebas unitarias de Button, EmailChipsInput, Alert y Dialog.
+- [x] 1.1 `assets/css/tokens.css`: variables `--sf-*` (claro y oscuro) y bloque `@theme` con los nombres de Stitch apuntando a ellas.
+- [x] 1.2 `assets/css/base.css`: tipografía base 14 px, foco visible, `prefers-reduced-motion`.
+- [x] 1.3 `ui/Icon`, `ui/Spinner`, `ui/Skeleton`.
+- [x] 1.4 `ui/Button` (primary, secondary, ghost, danger, admin; sm/md/lg; loading).
+- [x] 1.5 `ui/Input`, `ui/Select`, `form/TextareaCounter`, `form/DateInput` (label, ayuda, error).
+- [x] 1.6 `form/EmailChipsInput` (validación de email, límite 200, pegado múltiple).
+- [x] 1.7 `form/SegmentedControl`.
+- [x] 1.8 `ui/Badge` con las variantes de `DESIGN.md` §4.4.
+- [x] 1.9 `ui/Alert` con detalle técnico plegable y botón Copiar.
+- [x] 1.10 `ui/Toast` + `ToastProvider` + hook `useToast`.
+- [x] 1.11 `ui/Dialog` y `ui/Drawer` (trampa de foco, `Esc`, retorno de foco).
+- [x] 1.12 `data/DataTable` (ordenación, estados loading/empty/error), `data/StatCard`, `data/EmptyState`, `data/MoneyCell`.
+- [x] 1.13 `layouts/AppLayout`, `layout/TopBar`, `Sidebar`, `PageHeader`, `AdminSection`, extraídos del marco común de las pantallas de Stitch.
+- [x] 1.14 Página temporal `/_kit` (solo en desarrollo) que muestra todos los componentes, y pruebas unitarias de Button, EmailChipsInput, Alert y Dialog.
 
 **Criterio de aceptación:** `/_kit` coincide visualmente con Stitch en claro y oscuro; pruebas en verde.
 
@@ -291,3 +295,6 @@ La Fase 6 solo depende de la sesión (Fase 2), así que puede avanzar en paralel
 | 2026-10-05 | 0 | Bloqueo menor registrado: `pnpm dev` de la API no arranca en Node 26 por `ts-node` 10. |
 | 2026-10-05 | 0 | Tailwind limitado a `src/` con `@import 'tailwindcss' source('.')`: leía los HTML de `design/stitch/` y el CSS subía de 5 kB a 28 kB. README de `apps/web` reescrito con capturas de la Fase 0 (`docs/img/`) y galería de diseños de Stitch. |
 | 2026-10-05 | 0 | 0.9 bloqueada: la generación de "Escanear - Emitidas" en Stitch no terminó (timeout y sin pantalla nueva tras ~25 min). |
+| 2026-10-12 | 0 | 0.9 sigue bloqueada: el MCP de Stitch no está disponible en la sesión. Se continúa con la Fase 1 sin las pantallas que faltan. |
+| 2026-10-12 | 1 | Tareas 1.1–1.14 terminadas: `tokens.css` (claro, oscuro por sistema y `data-theme`, `@theme inline` con alias de Stitch) y `base.css`; componentes `ui/` (Icon, Spinner, Skeleton, Button, Input, Select, Badge, Alert, Toast, Dialog, Drawer), `form/` (Field, TextareaCounter, DateInput, SegmentedControl, EmailChipsInput), `data/` (DataTable, StatCard, EmptyState, MoneyCell) y `layout/` (TopBar, Sidebar, PageHeader, AdminSection, HealthIndicator, Logo) más `layouts/AppLayout`; `lib/cn.js`, `lib/format.js`, `lib/validation.js`. Página `/_kit` solo en desarrollo. 21 pruebas, lint y build en verde. |
+| 2026-10-12 | 1 | Corregido el colapso de la navegación a 1200 px con un breakpoint propio (`nav`). Capturas de `/_kit` en claro y oscuro en `docs/img/`. |

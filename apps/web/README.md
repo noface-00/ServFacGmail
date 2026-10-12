@@ -61,6 +61,16 @@ Proyecto base listo: cliente HTTP corregido (`import.meta.env`), `.env` en la ra
 
 ![Salida de pruebas, lint, build y CORS](./docs/img/fase-0-verificacion.png)
 
+### Fase 1 — Fundaciones
+
+Tokens del sistema de diseño (`src/assets/css/tokens.css`, claro y oscuro), estilos base y el kit de componentes: botones, inputs, lista de correos con chips, badges, avisos con detalle técnico, toasts, diálogos y drawer con trampa de foco, tabla de datos con orden y estados, tarjetas de resumen y el armazón de la app (barra superior, navegación lateral y zona de Administración).
+
+Todos los componentes se ven en **`/_kit`** con `pnpm dev:web` (la ruta solo existe en desarrollo).
+
+| Claro | Oscuro |
+|---|---|
+| ![Kit de componentes en modo claro](./docs/img/fase-1-kit-claro.png) | ![Kit de componentes en modo oscuro](./docs/img/fase-1-kit-oscuro.png) |
+
 ### Diseños de referencia (Google Stitch)
 
 Pantallas exportadas a [`design/stitch/`](./design/stitch/) que se integrarán en las próximas fases. Algunos elementos que Stitch añadió no tienen respaldo en la API y no se implementarán: ver [`design/stitch/README.md`](./design/stitch/README.md).
