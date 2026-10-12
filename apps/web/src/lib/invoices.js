@@ -18,16 +18,22 @@ export function invoiceKey(invoice, index) {
   return [invoice.messageId, invoice.attachmentId, invoice.filename, invoice.numeroFactura].filter(Boolean).join('|') || `row-${index}`
 }
 
-/** Totales agrupados por moneda (`null` = moneda desconocida), de mayor a menor. */
+/**
+ * Totales agrupados por moneda (`null` = moneda desconocida), primero la moneda con más facturas:
+ * comparar importes de monedas distintas (CLP frente a USD) no tiene sentido.
+ */
 export function totalsByCurrency(invoices) {
   const totals = new Map()
   for (const inv of invoices) {
     const amount = Number(inv.total)
     if (inv.total === undefined || inv.total === null || Number.isNaN(amount)) continue
     const key = inv.moneda || null
-    totals.set(key, (totals.get(key) ?? 0) + amount)
+    const entry = totals.get(key) ?? { currency: key, total: 0, count: 0 }
+    entry.total += amount
+    entry.count += 1
+    totals.set(key, entry)
   }
-  return [...totals.entries()].map(([currency, total]) => ({ currency, total })).sort((a, b) => b.total - a.total)
+  return [...totals.values()].sort((a, b) => b.count - a.count || b.total - a.total)
 }
 
 /** Correo relevante de la factura: remitente (recibidas) o destinatario (emitidas). */

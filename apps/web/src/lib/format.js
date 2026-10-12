@@ -24,6 +24,17 @@ export function formatMoney(amount, currency) {
   return moneyFormatters.get(key).format(value)
 }
 
+/** Monto sin símbolo con los decimales propios de la moneda (CLP sin decimales, USD con dos). */
+export function formatAmount(amount, currency) {
+  const value = Number(amount)
+  if (amount === null || amount === undefined || amount === '' || Number.isNaN(value)) return '—'
+  let digits = 2
+  if (isKnownCurrency(currency)) {
+    digits = new Intl.NumberFormat('es', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits
+  }
+  return new Intl.NumberFormat('es', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value)
+}
+
 /** true si `currency` es un código que Intl reconoce (USD, PEN, CLP…). */
 export function isKnownCurrency(currency) {
   if (!currency) return false

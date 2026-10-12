@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatDate, toDate } from '../../lib/format.js'
+import { formatAmount, formatDate, toDate } from '../../lib/format.js'
 import { invoiceEmail, invoiceKey, invoiceOrigin, matchesSearch } from '../../lib/invoices.js'
 import { DataTable } from '../data/DataTable.jsx'
 import { EmptyState } from '../data/EmptyState.jsx'
@@ -51,9 +51,22 @@ export function InvoiceTable({ invoices, kind, onExport, renderActions }) {
       ),
     },
     { key: 'numeroFactura', header: 'N.º factura', sortable: true, mono: true, className: 'whitespace-nowrap', render: (r) => r.numeroFactura ?? '—' },
-    { key: 'subtotal', header: 'Subtotal', align: 'right', sortable: true, render: (r) => <MoneyCell amount={r.subtotal} currency={r.moneda} /> },
-    { key: 'iva', header: 'IVA', align: 'right', sortable: true, render: (r) => <MoneyCell amount={r.iva} currency={r.moneda} /> },
-    { key: 'total', header: 'Total', align: 'right', sortable: true, render: (r) => <MoneyCell amount={r.total} currency={r.moneda} strong /> },
+    {
+      key: 'total',
+      header: 'Total',
+      align: 'right',
+      sortable: true,
+      render: (r) => (
+        <div className="flex flex-col items-end">
+          <MoneyCell amount={r.total} currency={r.moneda} strong />
+          {(r.subtotal !== undefined || r.iva !== undefined) && (
+            <span className="tabular text-xs whitespace-nowrap text-fg-subtle">
+              Sub. {formatAmount(r.subtotal, r.moneda)} · IVA {formatAmount(r.iva, r.moneda)}
+            </span>
+          )}
+        </div>
+      ),
+    },
     {
       key: '_origin',
       header: 'Origen',
@@ -63,6 +76,9 @@ export function InvoiceTable({ invoices, kind, onExport, renderActions }) {
       key: 'email',
       header: kind === 'sent' ? 'Destinatario' : 'Remitente',
       sortable: true,
+      // Columna secundaria: solo en pantallas anchas. Sigue en la búsqueda, el CSV y el detalle.
+      className: 'hidden 2xl:table-cell',
+      headerClassName: 'hidden 2xl:table-cell',
       sortValue: (r) => invoiceEmail(r, kind),
       render: (r) => <span className="tabular block max-w-[220px] truncate text-xs text-fg-muted" title={invoiceEmail(r, kind)}>{invoiceEmail(r, kind) ?? '—'}</span>,
     },

@@ -1,4 +1,4 @@
-import { formatMoney, isKnownCurrency } from '../../lib/format.js'
+import { formatAmount, isKnownCurrency } from '../../lib/format.js'
 import { invoiceOrigin, totalsByCurrency } from '../../lib/invoices.js'
 import { StatCard } from '../data/StatCard.jsx'
 import { Alert } from '../ui/Alert.jsx'
@@ -23,10 +23,10 @@ export function ScanSummary({ result }) {
         <StatCard
           label="Total acumulado"
           unit={main && isKnownCurrency(main.currency) ? main.currency : undefined}
-          value={main ? formatMoney(main.total) : '—'}
+          value={main ? formatAmount(main.total, main.currency) : '—'}
           detail={
             others.length > 0
-              ? others.map((t) => `${t.currency ?? 'Sin moneda'} ${formatMoney(t.total)}`).join(' · ')
+              ? others.map((t) => `${t.currency ?? 'Sin moneda'} ${formatAmount(t.total, t.currency)}`).join(' · ')
               : main && !isKnownCurrency(main.currency)
                 ? 'Moneda desconocida'
                 : undefined

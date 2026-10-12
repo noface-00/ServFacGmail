@@ -108,8 +108,8 @@ export default function ScanPage({ kind }) {
     <div className="flex flex-col gap-6">
       <PageHeader title={TITLES[kind].title} description={TITLES[kind].description} actions={<ScanTabs />} />
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-        <section className="lg:col-span-4" aria-label="Formulario de escaneo">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)]">
+        <section aria-label="Formulario de escaneo">
           <ScanForm
             kind={kind}
             values={values}
@@ -132,7 +132,7 @@ export default function ScanPage({ kind }) {
           />
         </section>
 
-        <section className="flex min-w-0 flex-col gap-4 lg:col-span-8" aria-label="Resultados">
+        <section className="flex min-w-0 flex-col gap-4" aria-label="Resultados">
           {error && (
             <ScanError
               error={error}

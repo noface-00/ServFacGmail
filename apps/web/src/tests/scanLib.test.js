@@ -78,10 +78,13 @@ describe('invoices', () => {
     expect(invoiceOrigin({})).toBe('unknown')
   })
 
-  it('totals by currency, unknown currency as null', () => {
-    expect(totalsByCurrency([{ total: 10, moneda: 'USD' }, { total: 5.5, moneda: 'USD' }, { total: 3 }, { moneda: 'PEN' }])).toEqual([
-      { currency: 'USD', total: 15.5 },
-      { currency: null, total: 3 },
+  it('totals by currency, unknown currency as null, most frequent currency first', () => {
+    expect(
+      totalsByCurrency([{ total: 900000, moneda: 'CLP' }, { total: 10, moneda: 'USD' }, { total: 5.5, moneda: 'USD' }, { total: 3 }, { moneda: 'PEN' }]),
+    ).toEqual([
+      { currency: 'USD', total: 15.5, count: 2 },
+      { currency: 'CLP', total: 900000, count: 1 },
+      { currency: null, total: 3, count: 1 },
     ])
   })
 
