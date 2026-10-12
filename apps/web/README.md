@@ -15,6 +15,7 @@ pnpm dev:web                          # servidor de desarrollo en http://localho
 pnpm --filter @servfac/web test       # pruebas (Vitest + Testing Library)
 pnpm --filter @servfac/web lint       # ESLint
 pnpm --filter @servfac/web build      # build de producción en apps/web/dist
+docker build -f apps/web/Dockerfile . # imagen de Caddy con el panel (ver docker-compose.yml)
 ```
 
 ## Configuración
@@ -60,6 +61,83 @@ Proyecto base listo: cliente HTTP corregido (`import.meta.env`), `.env` en la ra
 **Verificación**: pruebas, lint y build en verde; la API acepta el origen `http://localhost:5173`, incluida la cabecera `x-api-key` en el preflight de CORS.
 
 ![Salida de pruebas, lint, build y CORS](./docs/img/fase-0-verificacion.png)
+
+### Fase 1 — Fundaciones
+
+Tokens del sistema de diseño (`src/assets/css/tokens.css`, claro y oscuro), estilos base y el kit de componentes: botones, inputs, lista de correos con chips, badges, avisos con detalle técnico, toasts, diálogos y drawer con trampa de foco, tabla de datos con orden y estados, tarjetas de resumen y el armazón de la app (barra superior, navegación lateral y zona de Administración).
+
+Todos los componentes se ven en **`/_kit`** con `pnpm dev:web` (la ruta solo existe en desarrollo).
+
+| Claro | Oscuro |
+|---|---|
+| ![Kit de componentes en modo claro](./docs/img/fase-1-kit-claro.png) | ![Kit de componentes en modo oscuro](./docs/img/fase-1-kit-oscuro.png) |
+
+### Fase 2 — Sesión y acceso
+
+Pantalla de Acceso con la clave de API (se guarda en `sessionStorage`). La clave se valida con `GET /accounts`, y el rol se detecta con `GET /admin/api-keys`: la clave maestra ve Administración y las de cliente no. Un `401` durante la sesión la cierra y vuelve a Acceso; un `503` lleva a «Servicio no disponible». La barra superior consulta `GET /health` cada 60 s. Todos los errores de la API llegan a la UI con el formato `{ status, userMessage, technicalError }`.
+
+| Escritorio | Móvil (oscuro) |
+|---|---|
+| ![Pantalla de Acceso](./docs/img/fase-2-acceso.png) | ![Pantalla de Acceso en móvil](./docs/img/fase-2-acceso-movil.png) |
+
+### Fase 3 — Cuentas de Gmail
+
+Pantalla de Cuentas (`/cuentas` y, para administradores, `/admin/cuentas`) con fecha de conexión y última actualización del token. Selector de la cuenta activa en la barra superior. El administrador conecta cuentas desde la UI: se abre la ventana de Google y la lista se actualiza sola al terminar el consentimiento. Para desconectar una cuenta hay que escribir su correo como confirmación.
+
+![Cuentas de Gmail en la zona de Administración](./docs/img/fase-3-cuentas.png)
+
+### Fase 4 — Escaneo de facturas
+
+Pantallas **Recibidas** (`POST /scan`) y **Emitidas** (`POST /scan-sent`). Admiten dos modos: Simple (fecha + correos, o la lista por defecto del servidor) y Consulta avanzada (sintaxis de Gmail). La validación en el cliente es la misma que aplica la API. Mientras se escanea, se muestra el progreso con el tiempo transcurrido y la opción de cancelar. Al terminar aparecen:
+
+- un resumen con el total por moneda, las facturas leídas por IA y las fallidas;
+- un aviso si se alcanzó el límite de 500 correos;
+- la tabla con búsqueda, filtro por origen (XML / PDF · IA) y exportación a CSV;
+- la lista de adjuntos que no se pudieron leer.
+
+Cada pestaña conserva sus resultados al cambiar de una a otra.
+
+| Resultados | Escaneo en curso |
+|---|---|
+| ![Resultados del escaneo](./docs/img/fase-4-escanear.png) | ![Escaneo en curso](./docs/img/fase-4-progreso.png) |
+
+### Fase 5 — Detalle de factura y descarga
+
+Al hacer clic en una factura se abre un panel lateral con:
+
+- el emisor;
+- el documento, con la clave de acceso copiable;
+- el correo de origen;
+- los ítems, con su suma y un aviso si no cuadran con el subtotal;
+- la vista previa del PDF, que se carga solo al pedirla.
+
+«Descargar PDF» está tanto en el panel como en cada fila de la tabla. Si el adjunto es un ZIP, la API extrae el PDF de dentro; si la factura se leyó de un XML, busca el PDF del mismo correo. Por seguridad, solo se muestra el archivo si es un PDF válido.
+
+![Detalle de factura con vista previa del PDF](./docs/img/fase-5-detalle.png)
+
+### Fase 6 — Administración de claves de API
+
+En **Administración → Claves de API** se listan las claves con su prefijo, las cuentas que pueden usar, la fecha de creación, el último uso y su estado. Las revocadas quedan ocultas salvo que se active «Mostrar revocadas».
+
+Para crear una clave se indica un nombre y, si se quiere, las cuentas permitidas (con sugerencias de las cuentas conectadas). La clave se muestra **una sola vez**, y el diálogo no se cierra hasta copiarla o confirmar que se guardó. Revocar una clave pide confirmación y corta el acceso de inmediato.
+
+| Listado | Clave recién creada |
+|---|---|
+| ![Claves de API](./docs/img/fase-6-claves.png) | ![Revelado de la clave](./docs/img/fase-6-revelado.png) |
+
+### Fase 7 — Calidad, responsive y despliegue
+
+- **Móvil:** las facturas se ven como tarjetas, el menú lateral es un panel desplegable y los controles miden 44 px.
+- **Tema:** selector claro / oscuro / del sistema, recordado por usuario.
+- **Contraste:** cumple WCAG AA (se corrigieron el texto secundario y el botón de peligro en modo oscuro).
+- **Accesibilidad:** enlace «Saltar al contenido», título por página y página 404.
+- **Errores:** las tablas ofrecen «Reintentar» ante fallos de red.
+- **Carga:** las pantallas se cargan bajo demanda.
+- **Producción:** Caddy sirve el panel en `WEB_DOMAIN` y la API bajo `/api` en el mismo dominio, con CSP estricta (ver el [README raíz](../../README.md#despliegue-con-caddy-https)).
+
+| Móvil | Móvil (oscuro) |
+|---|---|
+| ![Escaneo en móvil](./docs/img/fase-7-movil.png) | ![Escaneo en móvil, tema oscuro](./docs/img/fase-7-movil-oscuro.png) |
 
 ### Diseños de referencia (Google Stitch)
 

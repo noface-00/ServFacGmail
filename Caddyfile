@@ -1,4 +1,4 @@
-# Reverse proxy con HTTPS automático (Let's Encrypt) delante del servicio.
+# Reverse proxy con HTTPS automático (Let's Encrypt) delante de la API y del panel web.
 # DOMAIN se define en el .env (ej. facturas.tu-dominio.com); el DNS debe apuntar a este servidor
 # y los puertos 80/443 deben estar abiertos para que Caddy obtenga el certificado.
 {$DOMAIN} {
@@ -12,4 +12,43 @@
 	# Caddy añade X-Forwarded-For/Proto/Host; la app confía en un único proxy (TRUST_PROXY=1).
 	# No expone el header Server.
 	header -Server
+}
+
+# Panel web (apps/web): estáticos en /srv/web (los copia apps/web/Dockerfile) y la API bajo /api
+# en el mismo dominio. Al ser mismo origen no hace falta CORS para el panel, y el navegador puede
+# leer Retry-After y Content-Disposition. La API sigue disponible en {$DOMAIN} para otros clientes.
+{$WEB_DOMAIN} {
+	encode zstd gzip
+
+	# /api/scan → app:3005/scan (handle_path quita el prefijo).
+	handle_path /api/* {
+		reverse_proxy app:3005
+	}
+
+	handle {
+		root * /srv/web
+
+		# Archivos con hash en el nombre: caché larga. index.html: siempre revalidar.
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		@html path / /index.html
+		header @html Cache-Control "no-cache"
+
+		# SPA: cualquier ruta del panel (/escanear/recibidas, /admin/claves…) sirve index.html.
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		-Server
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# - style-src 'unsafe-inline': React usa atributos style (anchos, animaciones, z-index).
+		# - fonts.googleapis.com / fonts.gstatic.com: IBM Plex y Material Symbols.
+		# - frame-src/object-src blob:: vista previa del PDF (ya validado como %PDF en el cliente).
+		# - connect-src 'self': la API va por /api. Si VITE_API_URL apunta a otro origen, añadirlo aquí.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-src blob:; object-src blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+	}
 }

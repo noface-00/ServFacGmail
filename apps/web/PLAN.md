@@ -10,19 +10,19 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 
 ## Estado del proyecto
 
-**Fase actual:** Fase 0 — Preparación (en curso)
-**Última actualización:** 2026-10-05
+**Fase actual:** Fases 1–7 terminadas. Pendiente: verificación de punta a punta con la API real (7.9) y 0.9 (Stitch, bloqueada)
+**Última actualización:** 2026-10-12
 
 | Fase | Nombre | Estado | Avance |
 |---|---|---|---|
 | 0 | Preparación del entorno | 🟦 En curso (0.9 bloqueada) | 8 / 9 |
-| 1 | Fundaciones: tokens, componentes base y layout | ⬜ Pendiente | 0 / 14 |
-| 2 | Sesión y acceso | ⬜ Pendiente | 0 / 8 |
-| 3 | Cuentas de Gmail | ⬜ Pendiente | 0 / 8 |
-| 4 | Escaneo de facturas | ⬜ Pendiente | 0 / 11 |
-| 5 | Detalle de factura y descarga | ⬜ Pendiente | 0 / 6 |
-| 6 | Administración de claves de API | ⬜ Pendiente | 0 / 6 |
-| 7 | Calidad, responsive y despliegue | ⬜ Pendiente | 0 / 9 |
+| 1 | Fundaciones: tokens, componentes base y layout | ✅ Terminada | 14 / 14 |
+| 2 | Sesión y acceso | ✅ Terminada (falta verificar con la API real) | 8 / 8 |
+| 3 | Cuentas de Gmail | ✅ Terminada (falta verificar con la API real) | 8 / 8 |
+| 4 | Escaneo de facturas | ✅ Terminada (falta verificar con la API real) | 11 / 11 |
+| 5 | Detalle de factura y descarga | ✅ Terminada (falta verificar con la API real) | 6 / 6 |
+| 6 | Administración de claves de API | ✅ Terminada (falta verificar con la API real) | 6 / 6 |
+| 7 | Calidad, responsive y despliegue | 🟦 8 / 9 (falta 7.9, prueba manual con la API real) | 8 / 9 |
 
 Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 
@@ -30,23 +30,26 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 
 | Pantalla en Stitch | ID | Estado en Stitch | Integrada en | Estado |
 |---|---|---|---|---|
-| Acceso - Clave de API | `7bd47151e2cd45f1a5d6c58d9e49fca1` | ✅ Generada | Fase 2 | ⬜ |
-| Escanear - Facturas Recibidas | `9cdf1f8fb11d4e288b68ebc21dc914bd` | ✅ Generada | Fase 4 | ⬜ |
-| Detalle de Factura (Drawer) | `b2dcabfa99da46829f9bbca31ba859aa` | ✅ Generada | Fase 5 | ⬜ |
-| Cuentas de Gmail y Conexión OAuth | `d519020c25df43ce860d889af0e34945` | ✅ Generada | Fase 3 | ⬜ |
-| Administración - Claves de API | `6b9acbdf9ab0417b9947351579664cc1` | ✅ Generada | Fase 6 | ⬜ |
+| Acceso - Clave de API | `7bd47151e2cd45f1a5d6c58d9e49fca1` | ✅ Generada | Fase 2 | ✅ |
+| Escanear - Facturas Recibidas | `9cdf1f8fb11d4e288b68ebc21dc914bd` | ✅ Generada | Fase 4 | ✅ |
+| Detalle de Factura (Drawer) | `b2dcabfa99da46829f9bbca31ba859aa` | ✅ Generada | Fase 5 | ✅ |
+| Cuentas de Gmail y Conexión OAuth | `d519020c25df43ce860d889af0e34945` | ✅ Generada | Fase 3 | ✅ |
+| Administración - Claves de API | `6b9acbdf9ab0417b9947351579664cc1` | ✅ Generada | Fase 6 | ✅ |
 | Registro - Crear Cuenta | `279b50da97e74b888807a5879da53033` | ⚠️ Sin endpoint | — (descartar) | — |
-| Escanear - Emitidas (STITCH.md 3.4) | — | ⬜ Falta generar | Fase 4 | ⬜ |
-| Carga y vacío del escaneo (3.3) | — | ⬜ Falta generar | Fase 4 | ⬜ |
-| Confirmar desconexión (3.8) | — | ⬜ Falta generar | Fase 3 | ⬜ |
-| Crear clave y revelado (3.10) | — | ⬜ Falta generar | Fase 6 | ⬜ |
-| Errores globales (3.11) | — | ⬜ Falta generar | Fase 7 | ⬜ |
-| Versión móvil (3.12) | — | ⬜ Falta generar | Fase 7 | ⬜ |
+| Escanear - Emitidas (STITCH.md 3.4) | — | ⬜ Falta generar | Fase 4 | ✅ (misma pantalla que Recibidas) |
+| Carga y vacío del escaneo (3.3) | — | ⬜ Falta generar | Fase 4 | ✅ (hecha con el kit, sin diseño de Stitch) |
+| Confirmar desconexión (3.8) | — | ⬜ Falta generar | Fase 3 | ✅ (hecha con el kit, sin diseño de Stitch) |
+| Crear clave y revelado (3.10) | — | ⬜ Falta generar | Fase 6 | ✅ (hecha con el kit, sin diseño de Stitch) |
+| Errores globales (3.11) | — | ⬜ Falta generar | Fase 7 | ✅ (hecha con el kit, sin diseño de Stitch) |
+| Versión móvil (3.12) | — | ⬜ Falta generar | Fase 7 | ✅ (hecha con el kit, sin diseño de Stitch) |
 
 ### Bloqueos y decisiones abiertas
 
+- ~~**La API no expone `Retry-After` ni `Content-Disposition` por CORS**~~ **Resuelto en producción por el despliegue (7.7):** el panel llama a la API por `/api` en su mismo dominio, sin CORS, y el navegador lee ambas cabeceras. Solo afecta al desarrollo local (`localhost:5173` → `localhost:3005`): ahí, tras un `429` se espera el valor por defecto (60 s) y el nombre del PDF sale del adjunto. Si se quiere también en desarrollo: `cors({ origin, exposedHeaders: ['Retry-After', 'Content-Disposition'] })` en `apps/api/src/index.ts`.
+- **Criterios de aceptación de las Fases 2 a 6 y prueba 7.9 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login (clave maestra y de cliente), la conexión real de una cuenta de Gmail por OAuth, un escaneo real, la descarga de un PDF directo y de uno dentro de un ZIP, y crear/usar/revocar una clave solo están cubiertos por las pruebas con MSW. Verificarlos a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173` y `GOOGLE_REDIRECT_URI` apuntando a la API).
+
 - **`pnpm dev` de la API falla con Node 26**: `ts-node` 10 no es compatible (`ERR_INVALID_ARG_TYPE` en `fileURLToPath`). No bloquea el frontend: se puede usar `pnpm --filter @servfac/api build && node apps/api/dist/index.js`. Pendiente decidir si se migra el script `dev` a `tsx`.
-- **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP).
+- **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP). No bloquea las fases siguientes: las pantallas que faltan se componen con el kit de la Fase 1 siguiendo `DESIGN.md`.
 - **"Registro - Crear Cuenta" sigue en Stitch**: el MCP no permite borrar pantallas; hay que eliminarla a mano desde la interfaz de Stitch.
 
 ---
@@ -64,6 +67,40 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | HTTP | `axios` (ya instalado) con interceptores | Añade `x-api-key` y normaliza `{ userMessage, technicalError }` |
 | Estado global | React Context en `src/stores/` | Sin dependencias nuevas; solo sesión, cuenta seleccionada y toasts |
 | Pruebas | Vitest 5 + Testing Library + MSW 2 (MSW 2 por compatibilidad con Vitest 5) | Mismo enfoque que la API: sin red real |
+| Nombres de color en Tailwind | Utilidades con los nombres de `DESIGN.md` (`bg-surface`, `text-fg-muted`, `bg-primary-soft`, …); los nombres de Stitch (`surface-container-low`, `on-surface`, …) quedan como alias de los mismos tokens | El código nuevo usa un solo vocabulario; el HTML de Stitch se puede pegar sin reescribir clases |
+| Breakpoint de navegación | `--breakpoint-nav: 75rem` (1200 px) en `@theme`, usado como `nav:` / `max-nav:` | Las variantes arbitrarias `min-[1200px]` se ordenaban antes de `md` y no sobrescribían el padding |
+| Toasts | `ToastProvider` en `stores/ToastStore.jsx`, presentación en `components/ui/Toast.jsx`, hook en `hooks/useToast.js` | Respeta la regla 1 (los componentes no importan de `stores/`) |
+| `/_kit` | Ruta registrada solo con `import.meta.env.DEV` y cargada con `lazy` | No entra en el build de producción (verificado); adelanta parte de 7.5 |
+| Pantalla de Acceso | Un solo campo «Clave de API»; se descartan usuario, contraseña, «Recordar sesión» y «¿Olvidó su contraseña?» del diseño de Stitch | La API solo autentica con `x-api-key`; la clave vive en `sessionStorage` (DESIGN.md §5.1) |
+| Validación y rol | `hooks/useLogin` (no el store) llama a `GET /accounts` y `GET /admin/api-keys`; el store solo guarda y borra | Respeta la regla 2 (solo `hooks/` llama a `api/routes/`) |
+| 401 y 503 globales | `api/axios.js` expone `setApiEventHandlers`; los registra `RequireAuth` vía `useApiEventHandlers`. Las peticiones del login usan `skipSessionHandling` | Un 401 en el login significa «clave incorrecta», no «sesión caducada» |
+| Rutas | `/acceso`, `/servicio-no-disponible`, `/escanear/recibidas`, `/escanear/emitidas`, `/cuentas`, `/admin/cuentas`, `/admin/claves`; las de fases futuras muestran `PendingPage` | Navegación completa desde ya; cada fase reemplaza su `PendingPage` |
+| Conexión OAuth | La ventana se abre en blanco y de forma síncrona en el clic, y luego se dirige al `authUrl`; se sondea `/accounts` cada 3 s y se detecta una cuenta nueva o una existente con `updatedAt` mayor (reconectar hace upsert). El sondeo termina con éxito, al caducar (10 min) o con Cancelar; no se usa `popup.closed` | Abrir la ventana tras un `await` la bloquea el navegador; el COOP de Google hace que `popup.closed` informe «cerrada» aunque siga abierta |
+| Cuenta seleccionada | `stores/AccountStore` (React Context + `sessionStorage`), montado dentro de `AppShell` para reiniciarse con cada sesión; si la elegida deja de estar en la lista se toma la primera | La usan por defecto las pantallas de escaneo (Fase 4) |
+| Vista de cuentas | Una sola `AccountsPage` para `/cuentas` y `/admin/cuentas` (`adminView` cambia solo el encabezado); las acciones dependen del rol | Evita duplicar la tabla; un admin ve las mismas acciones en ambas rutas |
+| Respuesta del escaneo | `facturas` es un `ParsedInvoiceData` plano (sin `parsedData`, `fileBase64`, `emailSubject` ni `emailDate`); `DESIGN.md` §5.3 corregido | Verificado en `scanner.service.ts`. El origen sale de la extensión de `filename`; no hay badge `ZIP`; la descarga de la Fase 5 siempre usa `GET /download-pdf` |
+| Resultados del escaneo | El último resultado de cada tipo se guarda en la caché de React Query (`['scan-result', kind]`, sin caducidad) y el `AbortController` en un `Map` del módulo | Se conservan al cambiar de pestaña y se puede cancelar un escaneo lanzado antes de volver a la pestaña; se borran al cerrar sesión |
+| Tabla de facturas | Subtotal e IVA bajo el Total; correo solo desde `2xl` (1536 px); formulario de ancho fijo (300–340 px) | A 1440 px la tabla cortaba el Total. El correo sigue en la búsqueda y el CSV |
+| Total acumulado | Primero la moneda con más facturas y decimales propios de cada moneda | Comparar importes de CLP con USD no tiene sentido |
+| CSV | Separador `;`, BOM UTF-8, montos sin formato y celdas que empiezan por `= + - @` prefijadas con `'` | Excel en español lo abre en columnas; evita inyección de fórmulas |
+| Parámetros de `/download-pdf` | `filename` solo se envía si termina en `.pdf` | La API lo usa para elegir la entrada dentro del ZIP; con el `.xml` de una factura leída de XML no encontraría el PDF. Sin él, la API busca el PDF del mismo correo |
+| Vista previa del PDF | A petición («Mostrar vista previa»), con el blob en caché de React Query (`['pdf', cuenta, messageId, attachmentId, filename]`) que luego reutiliza la descarga | `/download-pdf` cuenta para el límite `RATE_LIMIT_SCAN`; abrir el detalle no debe gastar cupo |
+| Seguridad del PDF | Se exige la firma `%PDF` y se fuerza `application/pdf` antes de crear el object URL | El `Content-Type` sale del correo (lo controla el remitente); un `text/html` abierto como blob se ejecutaría con el origen del panel, donde está la clave de API |
+| Errores con `responseType: 'blob'` | El interceptor lee el Blob como JSON antes de normalizar | Si no, se perdía el `userMessage` de los errores de descarga |
+| Clave de acceso | Se oculta cuando es igual al `messageId` | La API pone el `messageId` como `claveAcceso` cuando la factura no trae una |
+| Cuenta de descarga | La del escaneo (`payload.accountEmail`), no la elegida en la barra | El usuario puede cambiar de cuenta después de escanear |
+| Clave en claro | La mutación de crear usa `gcTime: 0` y se hace `reset()` tras el éxito; la clave pasa al estado local de `ApiKeysPage` solo mientras está abierto `SecretRevealDialog` | DESIGN.md §6.3: la clave no debe quedar en ningún estado global ni en la caché de React Query |
+| Cuentas permitidas al crear | `EmailChipsInput` con `suggestions` (botones de un clic con las cuentas de `GET /accounts`) | Evita teclear correos y permite cuentas aún no conectadas |
+| Claves revocadas | Ocultas por defecto; con «Mostrar revocadas (n)» se ven al 60 % de opacidad y sin acción | DESIGN.md §5.5 |
+| `PendingPage` | Eliminada | Con la Fase 6 ya no quedan rutas en construcción |
+| Contraste | `--sf-text-subtle` pasa a `#686F7D` / `#848B98` y se añade `--sf-on-danger` (oscuro `#0F1318`) | Los valores originales daban 3.1:1, 3.8:1 y 2.9:1 (WCAG AA pide 4.5:1); verificado con cálculo de contraste para texto y semánticos |
+| Tema | `ThemeToggle` (sistema → claro → oscuro) en la barra y en Acceso; preferencia en `localStorage`; `public/theme-init.js` la aplica antes de pintar | Comodidad por usuario; script externo para cumplir la CSP `script-src 'self'` |
+| Móvil | Bajo 768 px las facturas son tarjetas; `ScanPage` decide con `matchMedia` (no se renderizan ambas); controles de 44 px con `max-md:`; la barra deja solo el icono del logo | DESIGN.md §3.6 y §7; renderizar ambas duplicaría botones para lectores de pantalla |
+| Errores en tablas | `lib/errorTone.js`: 404 info, 429 warning, resto danger; «Reintentar» ante red y 5xx | Antes un 429 de una lista salía en rojo y un fallo de red no tenía salida |
+| Accesibilidad | Enlace «Saltar al contenido», `<main id="contenido">`, `<title>` por página (React 19) y `NotFoundPage` | Los lectores anuncian cada ruta; las rutas desconocidas se explican en vez de redirigir |
+| Bundle | Escanear, Cuentas y Claves con `React.lazy`; `Suspense` dentro de `AppLayout` | JS inicial de 412 kB a ~349 kB (gzip 130 → ~114 kB); el armazón sigue visible al cargar |
+| Despliegue | Caddy sirve el panel en `{$WEB_DOMAIN}` (SPA con `try_files`) y reenvía `/api/*` a la API; imagen con `apps/web/Dockerfile` (`VITE_API_URL=/api`); CSP estricta y cabeceras de seguridad; `{$DOMAIN}` sigue sirviendo la API | Mismo origen: sin CORS y con `Retry-After`/`Content-Disposition` legibles; no cambia nada para los clientes actuales de la API. Verificado con Docker y Chrome sin violaciones de CSP |
+| Pruebas de API | MSW contra `http://api.test` (`test.env.VITE_API_URL` en `vite.config.js`), `onUnhandledRequest: 'error'` | Ninguna prueba sale a la red |
 
 Si alguna decisión cambia, se registra aquí y en la Bitácora.
 
@@ -144,20 +181,20 @@ apps/web/
 **Objetivo:** tener el kit de componentes y el armazón de la app, sin lógica de negocio.
 **Fuente:** el `tailwind.config` embebido en cualquier HTML de Stitch + `DESIGN.md` §3–4.
 
-- [ ] 1.1 `assets/css/tokens.css`: variables `--sf-*` (claro y oscuro) y bloque `@theme` con los nombres de Stitch apuntando a ellas.
-- [ ] 1.2 `assets/css/base.css`: tipografía base 14 px, foco visible, `prefers-reduced-motion`.
-- [ ] 1.3 `ui/Icon`, `ui/Spinner`, `ui/Skeleton`.
-- [ ] 1.4 `ui/Button` (primary, secondary, ghost, danger, admin; sm/md/lg; loading).
-- [ ] 1.5 `ui/Input`, `ui/Select`, `form/TextareaCounter`, `form/DateInput` (label, ayuda, error).
-- [ ] 1.6 `form/EmailChipsInput` (validación de email, límite 200, pegado múltiple).
-- [ ] 1.7 `form/SegmentedControl`.
-- [ ] 1.8 `ui/Badge` con las variantes de `DESIGN.md` §4.4.
-- [ ] 1.9 `ui/Alert` con detalle técnico plegable y botón Copiar.
-- [ ] 1.10 `ui/Toast` + `ToastProvider` + hook `useToast`.
-- [ ] 1.11 `ui/Dialog` y `ui/Drawer` (trampa de foco, `Esc`, retorno de foco).
-- [ ] 1.12 `data/DataTable` (ordenación, estados loading/empty/error), `data/StatCard`, `data/EmptyState`, `data/MoneyCell`.
-- [ ] 1.13 `layouts/AppLayout`, `layout/TopBar`, `Sidebar`, `PageHeader`, `AdminSection`, extraídos del marco común de las pantallas de Stitch.
-- [ ] 1.14 Página temporal `/_kit` (solo en desarrollo) que muestra todos los componentes, y pruebas unitarias de Button, EmailChipsInput, Alert y Dialog.
+- [x] 1.1 `assets/css/tokens.css`: variables `--sf-*` (claro y oscuro) y bloque `@theme` con los nombres de Stitch apuntando a ellas.
+- [x] 1.2 `assets/css/base.css`: tipografía base 14 px, foco visible, `prefers-reduced-motion`.
+- [x] 1.3 `ui/Icon`, `ui/Spinner`, `ui/Skeleton`.
+- [x] 1.4 `ui/Button` (primary, secondary, ghost, danger, admin; sm/md/lg; loading).
+- [x] 1.5 `ui/Input`, `ui/Select`, `form/TextareaCounter`, `form/DateInput` (label, ayuda, error).
+- [x] 1.6 `form/EmailChipsInput` (validación de email, límite 200, pegado múltiple).
+- [x] 1.7 `form/SegmentedControl`.
+- [x] 1.8 `ui/Badge` con las variantes de `DESIGN.md` §4.4.
+- [x] 1.9 `ui/Alert` con detalle técnico plegable y botón Copiar.
+- [x] 1.10 `ui/Toast` + `ToastProvider` + hook `useToast`.
+- [x] 1.11 `ui/Dialog` y `ui/Drawer` (trampa de foco, `Esc`, retorno de foco).
+- [x] 1.12 `data/DataTable` (ordenación, estados loading/empty/error), `data/StatCard`, `data/EmptyState`, `data/MoneyCell`.
+- [x] 1.13 `layouts/AppLayout`, `layout/TopBar`, `Sidebar`, `PageHeader`, `AdminSection`, extraídos del marco común de las pantallas de Stitch.
+- [x] 1.14 Página temporal `/_kit` (solo en desarrollo) que muestra todos los componentes, y pruebas unitarias de Button, EmailChipsInput, Alert y Dialog.
 
 **Criterio de aceptación:** `/_kit` coincide visualmente con Stitch en claro y oscuro; pruebas en verde.
 
@@ -168,14 +205,14 @@ apps/web/
 **Endpoints:** `GET /accounts` (validar clave) · `GET /admin/api-keys` (detectar rol) · `GET /health`.
 **Pantalla Stitch:** Acceso - Clave de API.
 
-- [ ] 2.1 `api/errors.js`: convierte errores de axios a `{ status, userMessage, technicalError }`, incluidos red y timeout.
-- [ ] 2.2 `api/axios.js`: interceptor que añade `x-api-key` desde `lib/storage.js` (`sessionStorage`); ante `401`, cierra la sesión.
-- [ ] 2.3 `stores/SessionStore` + hook `useSession` (`apiKey`, `role: 'admin' | 'client'`, `login()`, `logout()`).
-- [ ] 2.4 `LoginPage` a partir del HTML de Stitch: validación con `GET /accounts`, mensajes para 401 y 503.
-- [ ] 2.5 Detección de rol con `GET /admin/api-keys` (200 → admin, 403 → cliente).
-- [ ] 2.6 `RequireAuth` y `RequireAdmin` (en `layouts/`) como guardas de ruta; definir rutas en `App.jsx`.
-- [ ] 2.7 `layout/HealthIndicator` + `hooks/useHealth` en la TopBar (consulta cada 60 s) y `ServiceUnavailablePage`.
-- [ ] 2.8 Pruebas: login correcto, clave inválida, rol admin y cliente, cierre de sesión por 401.
+- [x] 2.1 `api/errors.js`: convierte errores de axios a `{ status, userMessage, technicalError }`, incluidos red y timeout.
+- [x] 2.2 `api/axios.js`: interceptor que añade `x-api-key` desde `lib/storage.js` (`sessionStorage`); ante `401`, cierra la sesión.
+- [x] 2.3 `stores/SessionStore` + hook `useSession` (`apiKey`, `role: 'admin' | 'client'`, `login()`, `logout()`).
+- [x] 2.4 `LoginPage` a partir del HTML de Stitch: validación con `GET /accounts`, mensajes para 401 y 503.
+- [x] 2.5 Detección de rol con `GET /admin/api-keys` (200 → admin, 403 → cliente).
+- [x] 2.6 `RequireAuth` y `RequireAdmin` (en `layouts/`) como guardas de ruta; definir rutas en `App.jsx`.
+- [x] 2.7 `layout/HealthIndicator` + `hooks/useHealth` en la TopBar (consulta cada 60 s) y `ServiceUnavailablePage`.
+- [x] 2.8 Pruebas: login correcto, clave inválida, rol admin y cliente, cierre de sesión por 401.
 
 **Criterio de aceptación:** con la clave maestra se ve Administración; con una clave de cliente no; una clave inválida muestra el error y no entra.
 
@@ -186,14 +223,14 @@ apps/web/
 **Endpoints:** `GET /accounts` · `GET /auth/google/login` · `DELETE /accounts/:email`.
 **Pantallas Stitch:** Cuentas de Gmail y Conexión OAuth · Confirmar desconexión.
 
-- [ ] 3.1 `api/routes/accounts.js` + hook `useAccounts` (React Query).
-- [ ] 3.2 `AccountsPage`: tabla con correo, fecha de conexión, último token y acción "Escanear".
-- [ ] 3.3 `AccountSelector` en la TopBar; la cuenta elegida se guarda en `sessionStorage` y la usan las pantallas de escaneo.
-- [ ] 3.4 `ConnectAccountDialog`: pide `authUrl`, abre un popup, sondea `/accounts` cada 3 s hasta 10 min, maneja el popup bloqueado y la caducidad (DESIGN.md §6.2).
-- [ ] 3.5 `DisconnectDialog` con confirmación escribiendo el correo.
-- [ ] 3.6 Acciones de administración visibles solo con `role === 'admin'`; misma vista reutilizada en `/admin/cuentas`.
-- [ ] 3.7 Estado vacío diferente para admin y cliente.
-- [ ] 3.8 Pruebas: listado filtrado, flujo OAuth con sondeo simulado, desconexión y error 404.
+- [x] 3.1 `api/routes/accounts.js` + hook `useAccounts` (React Query).
+- [x] 3.2 `AccountsPage`: tabla con correo, fecha de conexión, último token y acción "Escanear".
+- [x] 3.3 `AccountSelector` en la TopBar; la cuenta elegida se guarda en `sessionStorage` y la usan las pantallas de escaneo.
+- [x] 3.4 `ConnectAccountDialog`: pide `authUrl`, abre un popup, sondea `/accounts` cada 3 s hasta 10 min, maneja el popup bloqueado y la caducidad (DESIGN.md §6.2).
+- [x] 3.5 `DisconnectDialog` con confirmación escribiendo el correo.
+- [x] 3.6 Acciones de administración visibles solo con `role === 'admin'`; misma vista reutilizada en `/admin/cuentas`.
+- [x] 3.7 Estado vacío diferente para admin y cliente.
+- [x] 3.8 Pruebas: listado filtrado, flujo OAuth con sondeo simulado, desconexión y error 404.
 
 **Criterio de aceptación:** un admin conecta una cuenta real de Gmail desde la UI y la ve aparecer sin recargar; la desconexión pide confirmación y actualiza la tabla.
 
@@ -204,17 +241,17 @@ apps/web/
 **Endpoints:** `POST /scan` · `POST /scan-sent`.
 **Pantallas Stitch:** Escanear - Facturas Recibidas · Emitidas · Carga y vacío.
 
-- [ ] 4.1 `api/routes/scan.js` con timeout propio de 10 min y soporte de `AbortController`.
-- [ ] 4.2 Hook `useScan(kind: 'received' | 'sent')` con React Query (`useMutation`); los resultados se conservan al cambiar de pestaña.
-- [ ] 4.3 `ScanForm`: cuenta, modo Simple / Consulta avanzada, `sinceDate`, `supplierEmails` o `clientEmails`, "Usar lista por defecto del servidor" y `geminiApiKey` en Opciones avanzadas.
-- [ ] 4.4 Validaciones en cliente iguales a `apps/api/src/validation.ts`; los errores 400 de la API se asocian al campo correspondiente.
-- [ ] 4.5 `ScanProgress` con mensajes rotativos, tiempo transcurrido y botón Cancelar.
-- [ ] 4.6 `ScanResults`: StatCards (total, total por moneda, leídas por IA, fallidas) y alerta de `truncated`.
-- [ ] 4.7 `InvoiceTable` sobre `DataTable`: columnas de `DESIGN.md` §5.3, badges de origen, búsqueda y filtro por origen.
-- [ ] 4.8 `FailedList` para `fallidas`.
-- [ ] 4.9 Exportar CSV de la tabla visible (`lib/csv.js`).
-- [ ] 4.10 Rutas `/escanear/recibidas` y `/escanear/emitidas` compartiendo componentes; los `fileBase64` se guardan aparte de las filas.
-- [ ] 4.11 Pruebas: envío de los dos modos, 404 de cuenta, 429 con cuenta regresiva, `truncated`, fallidas y exportación CSV.
+- [x] 4.1 `api/routes/scan.js` con timeout propio de 10 min y soporte de `AbortController`.
+- [x] 4.2 Hook `useScan(kind: 'received' | 'sent')` con React Query (`useMutation`); los resultados se conservan al cambiar de pestaña.
+- [x] 4.3 `ScanForm`: cuenta, modo Simple / Consulta avanzada, `sinceDate`, `supplierEmails` o `clientEmails`, "Usar lista por defecto del servidor" y `geminiApiKey` en Opciones avanzadas.
+- [x] 4.4 Validaciones en cliente iguales a `apps/api/src/validation.ts`; los errores 400 de la API se asocian al campo correspondiente.
+- [x] 4.5 `ScanProgress` con mensajes rotativos, tiempo transcurrido y botón Cancelar.
+- [x] 4.6 `ScanResults`: StatCards (total, total por moneda, leídas por IA, fallidas) y alerta de `truncated`.
+- [x] 4.7 `InvoiceTable` sobre `DataTable`: columnas de `DESIGN.md` §5.3, badges de origen, búsqueda y filtro por origen.
+- [x] 4.8 `FailedList` para `fallidas`.
+- [x] 4.9 Exportar CSV de la tabla visible (`lib/csv.js`).
+- [x] 4.10 Rutas `/escanear/recibidas` y `/escanear/emitidas` compartiendo componentes; ~~los `fileBase64` se guardan aparte de las filas~~ (no aplica: la API no devuelve `fileBase64`, ver Decisiones).
+- [x] 4.11 Pruebas: envío de los dos modos, 404 de cuenta, 429 con cuenta regresiva, `truncated`, fallidas y exportación CSV.
 
 **Criterio de aceptación:** un escaneo real contra una cuenta conectada muestra facturas, totales y fallidas; cancelar deja el formulario usable.
 
@@ -225,12 +262,12 @@ apps/web/
 **Endpoint:** `GET /download-pdf`.
 **Pantalla Stitch:** Detalle de Factura (Drawer).
 
-- [ ] 5.1 `InvoiceDrawer` con emisor, documento, correo y clave de acceso copiable.
-- [ ] 5.2 `InvoiceItems` con suma de ítems y aviso si no cuadra con el subtotal.
-- [ ] 5.3 `PdfPreview` usando el `fileBase64` ya recibido (sin pedirlo de nuevo).
-- [ ] 5.4 `useDownloadPdf`: si existe el base64 del PDF, descarga local; si no, `GET /download-pdf` con `responseType: 'blob'` y nombre desde `Content-Disposition` (`lib/download.js`).
-- [ ] 5.5 Botón Descargar en la tabla y en el drawer con estado de carga y toast de error.
-- [ ] 5.6 Pruebas: apertura del drawer, descuadre de ítems, descarga local y descarga por API.
+- [x] 5.1 `InvoiceDrawer` con emisor, documento, correo y clave de acceso copiable.
+- [x] 5.2 `InvoiceItems` con suma de ítems y aviso si no cuadra con el subtotal.
+- [x] 5.3 `PdfPreview` ~~usando el `fileBase64` ya recibido~~ con el blob de `GET /download-pdf`, cargado a petición y reutilizado por la descarga (la API no devuelve `fileBase64`).
+- [x] 5.4 `useDownloadPdf`: ~~si existe el base64 del PDF, descarga local; si no,~~ `GET /download-pdf` (o el blob ya cargado por la vista previa) con `responseType: 'blob'` y nombre desde `Content-Disposition` (`lib/download.js`).
+- [x] 5.5 Botón Descargar en la tabla y en el drawer con estado de carga y toast de error.
+- [x] 5.6 Pruebas: apertura del drawer, descuadre de ítems, descarga local y descarga por API.
 
 **Criterio de aceptación:** se descarga el PDF correcto tanto de un adjunto PDF directo como de uno dentro de un ZIP.
 
@@ -241,12 +278,12 @@ apps/web/
 **Endpoints:** `POST /admin/api-keys` · `GET /admin/api-keys` · `DELETE /admin/api-keys/:id`.
 **Pantallas Stitch:** Administración - Claves de API · Crear clave y revelado.
 
-- [ ] 6.1 `api/routes/apiKeys.js` + hooks `useApiKeys`, `useCreateApiKey`, `useRevokeApiKey`.
-- [ ] 6.2 `ApiKeysPage` dentro de `AdminSection`: tabla con prefijo, alcance, creación, último uso y estado; filtro "Mostrar revocadas".
-- [ ] 6.3 `CreateKeyDialog` con `name` (1–100) y `allowedAccounts` sugeridas desde `/accounts`.
-- [ ] 6.4 `SecretRevealDialog`: muestra la clave una vez, botón Copiar, cierre bloqueado hasta confirmar; la clave no se guarda en ningún estado global.
-- [ ] 6.5 `RevokeDialog` y actualización de la tabla tras revocar.
-- [ ] 6.6 Pruebas: crear, revelar, revocar y 404 al revocar una clave inexistente.
+- [x] 6.1 `api/routes/apiKeys.js` + hooks `useApiKeys`, `useCreateApiKey`, `useRevokeApiKey`.
+- [x] 6.2 `ApiKeysPage` dentro de `AdminSection`: tabla con prefijo, alcance, creación, último uso y estado; filtro "Mostrar revocadas".
+- [x] 6.3 `CreateKeyDialog` con `name` (1–100) y `allowedAccounts` sugeridas desde `/accounts`.
+- [x] 6.4 `SecretRevealDialog`: muestra la clave una vez, botón Copiar, cierre bloqueado hasta confirmar; la clave no se guarda en ningún estado global.
+- [x] 6.5 `RevokeDialog` y actualización de la tabla tras revocar.
+- [x] 6.6 Pruebas: crear, revelar, revocar y 404 al revocar una clave inexistente.
 
 **Criterio de aceptación:** una clave creada desde la UI sirve para iniciar sesión como cliente y solo ve sus cuentas permitidas; tras revocarla, esa sesión vuelve a Acceso.
 
@@ -256,15 +293,15 @@ apps/web/
 
 **Pantallas Stitch:** Errores globales · Versión móvil.
 
-- [ ] 7.1 Revisar todos los errores contra la tabla de `DESIGN.md` §6.1 (400, 401, 403, 404, 429, 500, 503, red).
-- [ ] 7.2 Responsive: Sidebar como drawer bajo 768 px, tabla de facturas como tarjetas, objetivos táctiles de 44 px.
-- [ ] 7.3 Modo oscuro completo y selector manual de tema.
-- [ ] 7.4 Accesibilidad: navegación por teclado, `aria-sort`, `role="status"`/`role="alert"`, contraste (DESIGN.md §7).
-- [ ] 7.5 `NotFoundPage` y eliminar la ruta `/_kit` del build de producción.
-- [ ] 7.6 `pnpm lint` y `pnpm build` sin errores; revisar el tamaño del bundle.
-- [ ] 7.7 Despliegue: build estático servido por Caddy (añadir el sitio al `Caddyfile` y al `docker-compose.yml`) con `VITE_API_URL` de producción y `CORS_ORIGINS` actualizado.
-- [ ] 7.8 Actualizar `README.md` y `CLAUDE.md` con los comandos y la arquitectura del frontend.
-- [ ] 7.9 Prueba de punta a punta manual: acceso → conectar cuenta → escanear → detalle → descargar → crear y revocar clave.
+- [x] 7.1 Revisar todos los errores contra la tabla de `DESIGN.md` §6.1 (400, 401, 403, 404, 429, 500, 503, red).
+- [x] 7.2 Responsive: Sidebar como drawer bajo 768 px, tabla de facturas como tarjetas, objetivos táctiles de 44 px.
+- [x] 7.3 Modo oscuro completo y selector manual de tema.
+- [x] 7.4 Accesibilidad: navegación por teclado, `aria-sort`, `role="status"`/`role="alert"`, contraste (DESIGN.md §7).
+- [x] 7.5 `NotFoundPage` y eliminar la ruta `/_kit` del build de producción.
+- [x] 7.6 `pnpm lint` y `pnpm build` sin errores; revisar el tamaño del bundle.
+- [x] 7.7 Despliegue: build estático servido por Caddy (añadir el sitio al `Caddyfile` y al `docker-compose.yml`) con `VITE_API_URL` de producción y `CORS_ORIGINS` actualizado.
+- [x] 7.8 Actualizar `README.md` y `CLAUDE.md` con los comandos y la arquitectura del frontend.
+- [ ] 7.9 🟦 Prueba de punta a punta manual: acceso → conectar cuenta → escanear → detalle → descargar → crear y revocar clave.
 
 **Criterio de aceptación:** la aplicación funciona en producción detrás de Caddy, en escritorio y móvil, con todos los flujos de la API cubiertos.
 
@@ -291,3 +328,16 @@ La Fase 6 solo depende de la sesión (Fase 2), así que puede avanzar en paralel
 | 2026-10-05 | 0 | Bloqueo menor registrado: `pnpm dev` de la API no arranca en Node 26 por `ts-node` 10. |
 | 2026-10-05 | 0 | Tailwind limitado a `src/` con `@import 'tailwindcss' source('.')`: leía los HTML de `design/stitch/` y el CSS subía de 5 kB a 28 kB. README de `apps/web` reescrito con capturas de la Fase 0 (`docs/img/`) y galería de diseños de Stitch. |
 | 2026-10-05 | 0 | 0.9 bloqueada: la generación de "Escanear - Emitidas" en Stitch no terminó (timeout y sin pantalla nueva tras ~25 min). |
+| 2026-10-12 | 0 | 0.9 sigue bloqueada: el MCP de Stitch no está disponible en la sesión. Se continúa con la Fase 1 sin las pantallas que faltan. |
+| 2026-10-12 | 1 | Tareas 1.1–1.14 terminadas: `tokens.css` (claro, oscuro por sistema y `data-theme`, `@theme inline` con alias de Stitch) y `base.css`; componentes `ui/` (Icon, Spinner, Skeleton, Button, Input, Select, Badge, Alert, Toast, Dialog, Drawer), `form/` (Field, TextareaCounter, DateInput, SegmentedControl, EmailChipsInput), `data/` (DataTable, StatCard, EmptyState, MoneyCell) y `layout/` (TopBar, Sidebar, PageHeader, AdminSection, HealthIndicator, Logo) más `layouts/AppLayout`; `lib/cn.js`, `lib/format.js`, `lib/validation.js`. Página `/_kit` solo en desarrollo. 21 pruebas, lint y build en verde. |
+| 2026-10-12 | 1 | Corregido el colapso de la navegación a 1200 px con un breakpoint propio (`nav`). Capturas de `/_kit` en claro y oscuro en `docs/img/`. |
+| 2026-10-12 | 2 | Tareas 2.1–2.8 terminadas: `api/errors.js` (`ApiError` con red, timeout, cancelación y `Retry-After`), interceptores de `api/axios.js` (`x-api-key` desde `lib/storage.js`, manejadores de 401/503), `SessionProvider` + `useSession` + `useLogin` (detección de rol), `LoginPage`, `RequireAuth`, `RequireAdmin`, `AppShell` con `useHealth` cada 60 s, `ServiceUnavailablePage` y rutas de toda la app. 42 pruebas (MSW), lint y build en verde. |
+| 2026-10-12 | 2 | Pendiente verificar el criterio de aceptación con la API real (no hay `.env` ni base de datos en esta copia). |
+| 2026-10-12 | 3 | Tareas 3.1–3.8 terminadas: `getAuthUrl`/`deleteAccount`, `useAccounts`/`useDisconnectAccount`, `AccountProvider` + `AccountSelector` en la barra superior, `useConnectAccount` + `ConnectAccountDialog` (ventana emergente, bloqueo, caducidad y error), `DisconnectDialog` (confirmar escribiendo el correo) y `AccountsPage` en `/cuentas` y `/admin/cuentas`. Variante `dangerGhost` de Button. 62 pruebas, lint y build en verde. |
+| 2026-10-12 | 3 | Como la barra superior carga `/accounts` al entrar, una clave revocada vuelve a Acceso de inmediato (pruebas de la Fase 2 ajustadas). Pendiente verificar la conexión OAuth con una cuenta real. |
+| 2026-10-12 | 4 | Tareas 4.1–4.11 terminadas: `runScan` (timeout de 10 min, `AbortSignal`), `useScan`, `lib/scanForm.js` (validación espejo de `validation.ts`, armado del cuerpo, mapeo de 400 a campos), `lib/invoices.js`, `lib/csv.js`, `lib/download.js`, `ScanForm`, `ScanProgress`, `ScanSummary`, `InvoiceTable`, `FailedList` y `ScanPage` en `/escanear/recibidas` y `/escanear/emitidas`. 90 pruebas, lint y build en verde. |
+| 2026-10-12 | 4 | Hallazgos: la respuesta real del escaneo es plana y sin `fileBase64` (`DESIGN.md` corregido; 4.10 no aplica), y la API no expone `Retry-After` ni `Content-Disposition` por CORS (registrado como bloqueo menor). Revisión visual con API simulada: se rehízo la tabla para que el Total quepa a 1440 px. |
+| 2026-10-12 | 5 | Tareas 5.1–5.6 terminadas: `downloadPdf`, `usePdfPreview`/`useDownloadPdf` (validación `%PDF`, nombre desde `Content-Disposition`, adjunto o número), `InvoiceDrawer`, `InvoiceItems` (suma y descuadre), `PdfPreview` a petición, `CopyButton` y acciones «Ver detalle» / «Descargar PDF» en la tabla. 103 pruebas, lint y build en verde. Revisión visual con API simulada: el PDF se muestra en el drawer. |
+| 2026-10-12 | 6 | Tareas 6.1–6.6 terminadas: `createApiKey`/`revokeApiKey`, `useApiKeys`/`useCreateApiKey`/`useRevokeApiKey`, `CreateKeyDialog` (con sugerencias de cuentas), `SecretRevealDialog`, `RevokeDialog` y `ApiKeysPage`. El criterio de aceptación (clave creada → entra como cliente limitado → revocada → vuelve a Acceso) está cubierto por una prueba con MSW. 113 pruebas, lint y build en verde. |
+| 2026-10-12 | 7 | Tareas 7.1–7.8 terminadas: tono y «Reintentar» de errores (7.1), tarjetas y controles de 44 px en móvil (7.2), selector de tema y contraste AA (7.3, 7.4), saltar al contenido, títulos por página y `NotFoundPage` (7.4, 7.5), carga diferida de páginas (7.6), despliegue con Caddy en `{$WEB_DOMAIN}` + `/api` verificado con Docker y Chrome sin violaciones de CSP (7.7), y README/CLAUDE.md de la raíz (7.8). 120 pruebas, lint y build en verde. |
+| 2026-10-12 | 7 | 7.9 pendiente: requiere la API real con base de datos y una cuenta de Gmail (acceso → conectar cuenta → escanear → detalle → descargar → crear y revocar clave). |

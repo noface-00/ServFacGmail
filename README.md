@@ -2,6 +2,29 @@
 
 Este es un microservicio diseñado para buscar correos de proveedores en Gmail, descargar sus archivos adjuntos (PDF/XML/ZIP), procesar los contenidos y extraer la información estructurada de las facturas (RUC/RUT del emisor, nombre del proveedor, total e ítems). El servicio gestiona internamente el ciclo de vida completo de las cuentas de Gmail conectadas (autorización OAuth, almacenamiento cifrado y renovación de tokens en PostgreSQL), por lo que los llamadores solo necesitan identificar la cuenta a usar por su email.
 
+> **Monorepo:** la API vive en [`apps/api`](./apps/api) y el panel web en [`apps/web`](./apps/web) (ver [Panel web](#panel-web-appsweb)).
+
+---
+
+## Panel web (`apps/web`)
+
+Panel en React 19 + Vite + Tailwind CSS v4 que consume esta API:
+
+- acceso con clave de API, con detección del rol administrador o cliente;
+- cuentas de Gmail: conexión por OAuth y desconexión;
+- escaneo de facturas recibidas y emitidas, con resumen, tabla, exportación CSV y fallidas;
+- detalle de factura con vista previa y descarga del PDF;
+- administración de claves de API.
+
+```bash
+pnpm dev:web                         # http://localhost:5173 (necesita la API en VITE_API_URL)
+pnpm --filter @servfac/web test      # Vitest + Testing Library + MSW (sin red)
+pnpm --filter @servfac/web lint
+pnpm --filter @servfac/web build     # apps/web/dist
+```
+
+En desarrollo, `apps/web/.env` define `VITE_API_URL=http://localhost:3005` y la API necesita `CORS_ORIGINS=http://localhost:5173`. En producción el panel llama a la API por `/api` en su propio dominio (ver [Despliegue con Caddy](#despliegue-con-caddy-https)), así que no hace falta CORS. Detalles: [`apps/web/README.md`](./apps/web/README.md), sistema de diseño en [`apps/web/DESIGN.md`](./apps/web/DESIGN.md) y plan en [`apps/web/PLAN.md`](./apps/web/PLAN.md).
+
 ---
 
 ## Características Principales
@@ -352,16 +375,25 @@ Desconecta una cuenta de Gmail (elimina sus tokens de la base de datos). Requier
 
 ## Despliegue con Caddy (HTTPS)
 
-Alternativa a Dokploy: `docker-compose.yml` levanta el servicio junto con [Caddy](https://caddyserver.com), que actúa como reverse proxy y obtiene certificados TLS automáticamente. La app no publica puertos: solo es accesible a través de Caddy.
+Alternativa a Dokploy: `docker-compose.yml` levanta la API junto con [Caddy](https://caddyserver.com), que actúa como reverse proxy, obtiene certificados TLS automáticamente y sirve el panel web. La app no publica puertos: solo es accesible a través de Caddy.
 
-1. Copia `.env.example` a `.env` y completa las variables (incluyendo `DOMAIN`, p. ej. `facturas.tu-dominio.com`, y `DATABASE_URL` de una base de datos accesible desde el servidor).
-2. Apunta el DNS del dominio al servidor y abre los puertos `80` y `443` (TCP) y `443` (UDP, HTTP/3).
+Caddy atiende dos dominios:
+
+| Variable | Ejemplo | Sirve |
+|---|---|---|
+| `DOMAIN` | `api.tu-dominio.com` | La API (como hasta ahora), incluido `/auth/google/callback` |
+| `WEB_DOMAIN` | `panel.tu-dominio.com` | El panel web (`apps/web`) y la API bajo `/api/*` en el mismo dominio |
+
+La imagen de Caddy se construye con `apps/web/Dockerfile` (compila el panel con `VITE_API_URL=/api`). Como el panel y la API comparten origen, no hace falta `CORS_ORIGINS` para el panel, y el navegador puede leer `Retry-After` y `Content-Disposition`. El sitio del panel añade cabeceras de seguridad y una CSP estricta (ver `Caddyfile`).
+
+1. Copia `.env.example` a `.env` y completa las variables (incluyendo `DOMAIN`, `WEB_DOMAIN` y `DATABASE_URL` de una base de datos accesible desde el servidor).
+2. Apunta el DNS de ambos dominios al servidor y abre los puertos `80` y `443` (TCP) y `443` (UDP, HTTP/3).
 3. Ajusta `GOOGLE_REDIRECT_URI` a `https://<DOMAIN>/auth/google/callback` y regístrala en Google Cloud Console.
 4. Inicia:
    ```bash
    docker compose up -d --build
    ```
-5. Comprueba `https://<DOMAIN>/health`.
+5. Comprueba `https://<DOMAIN>/health`, `https://<WEB_DOMAIN>/api/health` y que `https://<WEB_DOMAIN>` muestre la pantalla de Acceso.
 
 `TRUST_PROXY=1` ya está fijado en el compose (un único proxy delante). Si añades otro proxy o CDN delante de Caddy, súbelo en consecuencia; si no, el rate limiting vería la IP del proxy en lugar de la del cliente. Los certificados se guardan en el volumen `caddy_data`: no lo borres o se volverán a solicitar.
 

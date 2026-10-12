@@ -9,5 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.js'],
     css: false,
+    // Las pruebas apuntan a una URL ficticia que intercepta MSW (src/tests/msw/).
+    env: { VITE_API_URL: 'http://api.test' },
   },
 })

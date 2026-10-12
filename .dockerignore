@@ -14,7 +14,11 @@ docs/
 **/scratch/
 skills-lock.json
 **/*.metadata.json
-apps/web/
+# Del panel solo se necesitan index.html, vite.config.js, public/ y src/ (sin pruebas).
+apps/web/design/
+apps/web/docs/
+apps/web/src/tests/
+apps/web/*.md
 apps/api/jest.config.js
 apps/api/src/**/*.test.ts
 apps/api/src/tests/
