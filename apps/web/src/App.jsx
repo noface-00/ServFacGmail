@@ -6,6 +6,7 @@ import { RequireAuth } from './layouts/RequireAuth.jsx'
 import AccountsPage from './pages/AccountsPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import PendingPage from './pages/PendingPage.jsx'
+import ScanPage from './pages/ScanPage.jsx'
 import ServiceUnavailablePage from './pages/ServiceUnavailablePage.jsx'
 
 // La página /_kit solo se registra en desarrollo; en el build de producción esta rama se elimina.
@@ -22,8 +23,8 @@ function App() {
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
             <Route index element={<Navigate to="/escanear/recibidas" replace />} />
-            <Route path="escanear/recibidas" element={<PendingPage title="Facturas recibidas" phase={4} icon="inbox" />} />
-            <Route path="escanear/emitidas" element={<PendingPage title="Facturas emitidas" phase={4} icon="send" />} />
+            <Route path="escanear/recibidas" element={<ScanPage key="received" kind="received" />} />
+            <Route path="escanear/emitidas" element={<ScanPage key="sent" kind="sent" />} />
             <Route path="cuentas" element={<AccountsPage />} />
             <Route path="admin" element={<RequireAdmin />}>
               <Route path="cuentas" element={<AccountsPage adminView />} />

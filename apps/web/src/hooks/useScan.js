@@ -49,9 +49,10 @@ export function useScan(kind) {
   })
   const running = pending.length > 0 ? pending[pending.length - 1] : null
 
+  const { mutate } = mutation
   const start = useCallback(
-    (payload, form) => mutation.mutate({ payload, form, startedAt: Date.now() }),
-    [mutation],
+    (payload, form, callbacks) => mutate({ payload, form, startedAt: Date.now() }, callbacks),
+    [mutate],
   )
   const cancel = useCallback(() => controllers.get(kind)?.abort(), [kind])
 
