@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { filenameFromContentDisposition, safeFilename } from '../lib/download.js'
 import { checkItems } from '../lib/items.js'
 import { pdfFilename } from '../lib/pdf.js'
@@ -208,5 +208,29 @@ describe('utilidades de PDF e ítems', () => {
     expect(checkItems([{ cantidad: 2, precioUnitario: 1.005 }], 2.01)).toMatchObject({ matches: true })
     expect(checkItems([{ cantidad: 1, precioUnitario: 10 }], 12)).toEqual({ sum: 10, difference: -2, matches: false })
     expect(checkItems([], 12)).toMatchObject({ matches: null })
+  })
+})
+
+describe('Vista móvil', () => {
+  it('shows the invoices as cards instead of a table', async () => {
+    // jsdom no implementa matchMedia: se simula una pantalla estrecha solo en esta prueba.
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: (query) => ({ matches: query.includes('max-width'), media: query, addEventListener() {}, removeEventListener() {} }),
+    })
+    onTestFinished(() => delete window.matchMedia)
+    const user = userEvent.setup()
+    renderApp('/escanear/recibidas', { session: client })
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Cuenta de Gmail' })).toHaveValue('contabilidad@empresa.com'))
+    await user.click(screen.getByLabelText(/Usar lista por defecto del servidor/))
+    await user.click(screen.getByRole('button', { name: 'Escanear' }))
+
+    const list = await screen.findByRole('list', { name: 'Facturas encontradas' })
+    expect(screen.queryByRole('table', { name: 'Facturas encontradas' })).not.toBeInTheDocument()
+    const cards = within(list).getAllByRole('listitem')
+    // Más reciente primero: 2026-09-20 antes que 2026-09-15.
+    expect(cards[0]).toHaveTextContent('Servicios Contables SAC')
+    await user.click(within(cards[1]).getByText('Distribuidora Andina S.A.'))
+    expect(within(screen.getByRole('dialog')).getByRole('heading', { name: 'Distribuidora Andina S.A.' })).toBeInTheDocument()
   })
 })

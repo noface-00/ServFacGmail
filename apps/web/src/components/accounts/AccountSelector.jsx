@@ -26,7 +26,7 @@ export function AccountSelector({ accounts, value, onChange, loading = false, cl
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          'tabular h-9 w-full appearance-none truncate rounded-sm border border-border-strong bg-surface pr-9 pl-9 text-sm text-fg',
+          'tabular h-9 max-md:h-11 w-full appearance-none truncate rounded-sm border border-border-strong bg-surface pr-9 pl-9 text-sm text-fg',
           'outline-none hover:bg-surface-muted focus:border-primary focus:ring-2 focus:ring-primary/20',
         )}
       >

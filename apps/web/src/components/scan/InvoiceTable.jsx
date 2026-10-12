@@ -8,6 +8,7 @@ import { SegmentedControl } from '../form/SegmentedControl.jsx'
 import { Badge } from '../ui/Badge.jsx'
 import { Button } from '../ui/Button.jsx'
 import { Icon } from '../ui/Icon.jsx'
+import { InvoiceCards } from './InvoiceCards.jsx'
 
 const ORIGIN_FILTERS = [
   { value: 'all', label: 'Todas' },
@@ -18,9 +19,10 @@ const ORIGIN_FILTERS = [
 /**
  * Tabla de facturas (DESIGN.md §5.3) con búsqueda, filtro por origen y exportación de lo visible.
  * Las filas que recibe `renderActions` / `onRowClick` llevan además `_key` y `_origin`.
+ * Con `compact` (móvil) se muestran como tarjetas en lugar de tabla.
  * @param {{ invoices: import('../../api/routes/scan.js').Invoice[], kind: 'received' | 'sent', onExport: (rows: any[]) => void, renderActions?: (invoice: any) => import('react').ReactNode, onRowClick?: (invoice: any) => void }} props
  */
-export function InvoiceTable({ invoices, kind, onExport, renderActions, onRowClick }) {
+export function InvoiceTable({ invoices, kind, onExport, renderActions, onRowClick, compact = false }) {
   const [search, setSearch] = useState('')
   const [origin, setOrigin] = useState('all')
 
@@ -88,7 +90,24 @@ export function InvoiceTable({ invoices, kind, onExport, renderActions, onRowCli
     columns.push({ key: 'actions', header: <span className="sr-only">Acciones</span>, align: 'right', render: renderActions })
   }
 
+  // La tabla ordena por su cuenta; las tarjetas van de la más reciente a la más antigua.
+  const cardRows = useMemo(
+    () => [...rows].sort((a, b) => (toDate(b.fechaEmision)?.getTime() ?? 0) - (toDate(a.fechaEmision)?.getTime() ?? 0)),
+    [rows],
+  )
+
   const filtered = rows.length !== invoices.length
+  const emptyState = (
+    filtered ? (
+      <EmptyState icon="filter_alt_off" title="Ninguna factura coincide con el filtro" description="Cambie la búsqueda o el filtro de origen." />
+    ) : (
+      <EmptyState
+        icon="search_off"
+        title="No se encontraron facturas"
+        description="No se encontraron facturas con esos criterios. Pruebe con una fecha anterior o revise la lista de correos."
+      />
+    )
+  )
 
   return (
     <div className="flex flex-col gap-3">
@@ -102,7 +121,7 @@ export function InvoiceTable({ invoices, kind, onExport, renderActions, onRowCli
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por emisor, RUC, número o correo"
-              className="h-9 w-full rounded-sm border border-border-strong bg-surface pr-3 pl-9 text-md text-fg outline-none placeholder:text-fg-subtle focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-9 max-md:h-11 w-full rounded-sm border border-border-strong bg-surface pr-3 pl-9 text-md text-fg outline-none placeholder:text-fg-subtle focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </label>
           <SegmentedControl label="Filtrar por origen" options={ORIGIN_FILTERS} value={origin} onChange={setOrigin} className="sm:w-72" />
@@ -117,25 +136,23 @@ export function InvoiceTable({ invoices, kind, onExport, renderActions, onRowCli
         </div>
       </div>
 
-      <DataTable
-        caption="Facturas encontradas"
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r._key}
-        onRowClick={onRowClick}
-        initialSort={{ key: 'fechaEmision', direction: 'desc' }}
-        empty={
-          filtered ? (
-            <EmptyState icon="filter_alt_off" title="Ninguna factura coincide con el filtro" description="Cambie la búsqueda o el filtro de origen." />
-          ) : (
-            <EmptyState
-              icon="search_off"
-              title="No se encontraron facturas"
-              description="No se encontraron facturas con esos criterios. Pruebe con una fecha anterior o revise la lista de correos."
-            />
-          )
-        }
-      />
+      {compact ? (
+        rows.length > 0 ? (
+          <InvoiceCards rows={cardRows} kind={kind} onOpen={onRowClick} renderActions={renderActions} />
+        ) : (
+          <div className="rounded-md border border-border bg-surface">{emptyState}</div>
+        )
+      ) : (
+        <DataTable
+          caption="Facturas encontradas"
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r._key}
+          onRowClick={onRowClick}
+          initialSort={{ key: 'fechaEmision', direction: 'desc' }}
+          empty={emptyState}
+        />
+      )}
     </div>
   )
 }

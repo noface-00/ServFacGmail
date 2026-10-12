@@ -14,6 +14,7 @@ import { Dialog } from '../components/ui/Dialog.jsx'
 import { Icon } from '../components/ui/Icon.jsx'
 import { useAccounts } from '../hooks/useAccounts.js'
 import { useCountdown } from '../hooks/useCountdown.js'
+import { MOBILE_QUERY, useMediaQuery } from '../hooks/useMediaQuery.js'
 import { useDownloadPdf, usePdfPreview } from '../hooks/usePdf.js'
 import { useScan } from '../hooks/useScan.js'
 import { useSelectedAccount } from '../hooks/useSelectedAccount.js'
@@ -41,6 +42,7 @@ export default function ScanPage({ kind }) {
   const { accounts } = useAccounts()
   const { selectedAccount, selectAccount } = useSelectedAccount()
   const scan = useScan(kind)
+  const isMobile = useMediaQuery(MOBILE_QUERY)
   const toast = useToast()
   const navigate = useNavigate()
 
@@ -199,6 +201,7 @@ export default function ScanPage({ kind }) {
                 onExport={exportCsv}
                 onRowClick={openDetail}
                 renderActions={renderActions}
+                compact={isMobile}
               />
               <FailedList failures={scan.last.result.fallidas} />
             </>

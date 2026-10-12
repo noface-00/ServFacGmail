@@ -73,7 +73,7 @@ function SidebarLink({ link, admin = false, showLabels, onNavigate }) {
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          'flex h-9 items-center gap-2.5 rounded-sm border-l-2 px-2 text-md transition-colors',
+          'flex h-9 max-md:h-11 items-center gap-2.5 rounded-sm border-l-2 px-2 text-md transition-colors',
           isActive
             ? admin
               ? 'border-admin bg-admin-soft font-semibold text-admin'

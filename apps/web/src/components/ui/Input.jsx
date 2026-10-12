@@ -25,7 +25,7 @@ export function Input({ label, hint, error, icon, mono, required, type = 'text',
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(inputId, { hint, error })}
-          className={cn(controlClasses({ error, icon, mono }), 'h-9', isPassword ? 'pr-10' : 'pr-3')}
+          className={cn(controlClasses({ error, icon, mono }), 'h-9 max-md:h-11', isPassword ? 'pr-10' : 'pr-3')}
           {...props}
         />
         {isPassword && (

@@ -12,8 +12,9 @@ const VARIANTS = {
 }
 
 const SIZES = {
-  sm: 'h-7 px-2.5 gap-1.5 text-sm',
-  md: 'h-9 px-3.5 gap-2 text-md',
+  // Bajo md todo botón mide al menos 44 px de alto (objetivo táctil, DESIGN.md §7).
+  sm: 'h-7 max-md:h-11 px-2.5 gap-1.5 text-sm',
+  md: 'h-9 max-md:h-11 px-3.5 gap-2 text-md',
   lg: 'h-11 px-5 gap-2 text-md',
 }
 
@@ -61,7 +62,7 @@ export function Button({
 
 /** Botón cuadrado solo con icono; `label` es obligatorio para accesibilidad. */
 export function IconButton({ icon, label, size = 'md', variant = 'ghost', loading = false, className, ...props }) {
-  const box = { sm: 'h-7 w-7', md: 'h-9 w-9', lg: 'h-11 w-11' }[size]
+  const box = { sm: 'h-7 w-7 max-md:h-11 max-md:w-11', md: 'h-9 w-9 max-md:h-11 max-md:w-11', lg: 'h-11 w-11' }[size]
   return (
     <Button
       variant={variant}

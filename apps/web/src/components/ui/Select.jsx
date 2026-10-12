@@ -23,7 +23,7 @@ export function Select({ label, hint, error, icon, mono, required, options, plac
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(selectId, { hint, error })}
-          className={cn(controlClasses({ error, icon, mono }), 'h-9 appearance-none pr-9')}
+          className={cn(controlClasses({ error, icon, mono }), 'h-9 max-md:h-11 appearance-none pr-9')}
           {...props}
         >
           {placeholder && (

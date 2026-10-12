@@ -16,14 +16,15 @@ export function TopBar({ accountSelector, health, themeToggle, isAdmin, onLogout
       {onOpenMenu && (
         <IconButton icon="menu" label="Abrir navegación" className="md:hidden" onClick={onOpenMenu} />
       )}
-      <div className="nav:w-[200px]">
-        <Logo />
+      <div className="shrink-0 nav:w-[200px]">
+        <Logo collapseOnMobile />
       </div>
       <div className="flex min-w-0 flex-1 justify-center">{accountSelector}</div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <span className="hidden sm:inline-flex">{health}</span>
         {themeToggle}
-        {isAdmin && <Badge preset="admin" />}
+        {/* En móvil el rol ya se ve en el menú lateral (sección Administración). */}
+        {isAdmin && <Badge preset="admin" className="max-sm:hidden" />}
         {onLogout && (
           <Button variant="ghost" size="sm" icon="logout" aria-label="Cerrar sesión" onClick={onLogout}>
             <span className="hidden sm:inline">Cerrar sesión</span>

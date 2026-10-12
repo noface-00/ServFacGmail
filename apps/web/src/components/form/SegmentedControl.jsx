@@ -40,7 +40,7 @@ export function SegmentedControl({ options, value, onChange, label, disabled, cl
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={cn(
-              'flex h-8 items-center justify-center gap-1.5 rounded-sm px-3 text-md transition-colors',
+              'flex h-8 max-md:h-10 items-center justify-center gap-1.5 rounded-sm px-3 text-md transition-colors',
               'disabled:cursor-not-allowed disabled:opacity-50',
               selected ? 'bg-surface font-semibold text-fg shadow-sm' : 'text-fg-muted hover:text-fg',
             )}
