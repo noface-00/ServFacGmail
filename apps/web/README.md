@@ -114,6 +114,16 @@ Al hacer clic en una factura se abre un panel lateral con:
 
 ![Detalle de factura con vista previa del PDF](./docs/img/fase-5-detalle.png)
 
+### Fase 6 — Administración de claves de API
+
+En **Administración → Claves de API** se listan las claves con su prefijo, las cuentas que pueden usar, la fecha de creación, el último uso y su estado. Las revocadas quedan ocultas salvo que se active «Mostrar revocadas».
+
+Para crear una clave se indica un nombre y, si se quiere, las cuentas permitidas (con sugerencias de las cuentas conectadas). La clave se muestra **una sola vez**, y el diálogo no se cierra hasta copiarla o confirmar que se guardó. Revocar una clave pide confirmación y corta el acceso de inmediato.
+
+| Listado | Clave recién creada |
+|---|---|
+| ![Claves de API](./docs/img/fase-6-claves.png) | ![Revelado de la clave](./docs/img/fase-6-revelado.png) |
+
 ### Diseños de referencia (Google Stitch)
 
 Pantallas exportadas a [`design/stitch/`](./design/stitch/) que se integrarán en las próximas fases. Algunos elementos que Stitch añadió no tienen respaldo en la API y no se implementarán: ver [`design/stitch/README.md`](./design/stitch/README.md).

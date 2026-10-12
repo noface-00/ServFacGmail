@@ -10,7 +10,7 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 
 ## Estado del proyecto
 
-**Fase actual:** Fase 6 — Administración de claves de API (Fases 2 a 5 terminadas salvo la verificación con la API real; 0.9 sigue bloqueada)
+**Fase actual:** Fase 7 — Calidad, responsive y despliegue (Fases 2 a 6 terminadas salvo la verificación con la API real; 0.9 sigue bloqueada)
 **Última actualización:** 2026-10-12
 
 | Fase | Nombre | Estado | Avance |
@@ -21,7 +21,7 @@ Documentos relacionados: [`DESIGN.md`](./DESIGN.md) (sistema de diseño) · [`ST
 | 3 | Cuentas de Gmail | ✅ Terminada (falta verificar con la API real) | 8 / 8 |
 | 4 | Escaneo de facturas | ✅ Terminada (falta verificar con la API real) | 11 / 11 |
 | 5 | Detalle de factura y descarga | ✅ Terminada (falta verificar con la API real) | 6 / 6 |
-| 6 | Administración de claves de API | ⬜ Pendiente | 0 / 6 |
+| 6 | Administración de claves de API | ✅ Terminada (falta verificar con la API real) | 6 / 6 |
 | 7 | Calidad, responsive y despliegue | ⬜ Pendiente | 0 / 9 |
 
 Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
@@ -34,19 +34,19 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | Escanear - Facturas Recibidas | `9cdf1f8fb11d4e288b68ebc21dc914bd` | ✅ Generada | Fase 4 | ✅ |
 | Detalle de Factura (Drawer) | `b2dcabfa99da46829f9bbca31ba859aa` | ✅ Generada | Fase 5 | ✅ |
 | Cuentas de Gmail y Conexión OAuth | `d519020c25df43ce860d889af0e34945` | ✅ Generada | Fase 3 | ✅ |
-| Administración - Claves de API | `6b9acbdf9ab0417b9947351579664cc1` | ✅ Generada | Fase 6 | ⬜ |
+| Administración - Claves de API | `6b9acbdf9ab0417b9947351579664cc1` | ✅ Generada | Fase 6 | ✅ |
 | Registro - Crear Cuenta | `279b50da97e74b888807a5879da53033` | ⚠️ Sin endpoint | — (descartar) | — |
 | Escanear - Emitidas (STITCH.md 3.4) | — | ⬜ Falta generar | Fase 4 | ✅ (misma pantalla que Recibidas) |
 | Carga y vacío del escaneo (3.3) | — | ⬜ Falta generar | Fase 4 | ✅ (hecha con el kit, sin diseño de Stitch) |
 | Confirmar desconexión (3.8) | — | ⬜ Falta generar | Fase 3 | ✅ (hecha con el kit, sin diseño de Stitch) |
-| Crear clave y revelado (3.10) | — | ⬜ Falta generar | Fase 6 | ⬜ |
+| Crear clave y revelado (3.10) | — | ⬜ Falta generar | Fase 6 | ✅ (hecha con el kit, sin diseño de Stitch) |
 | Errores globales (3.11) | — | ⬜ Falta generar | Fase 7 | ⬜ |
 | Versión móvil (3.12) | — | ⬜ Falta generar | Fase 7 | ⬜ |
 
 ### Bloqueos y decisiones abiertas
 
 - **La API no expone `Retry-After` ni `Content-Disposition` por CORS** (`cors()` sin `exposedHeaders` en `apps/api/src/index.ts`): desde el navegador, tras un `429` se espera siempre el valor por defecto (60 s) y en la Fase 5 no se podrá leer el nombre del PDF de la cabecera. Propuesta para la API: `cors({ origin, exposedHeaders: ['Retry-After', 'Content-Disposition'] })`. El frontend ya lee ambas cabeceras si llegan.
-- **Criterios de aceptación de las Fases 2 a 5 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login (clave maestra y de cliente), la conexión real de una cuenta de Gmail por OAuth, un escaneo real y la descarga de un PDF directo y de uno dentro de un ZIP solo están cubiertos por las pruebas con MSW. Verificarlos a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173` y `GOOGLE_REDIRECT_URI` apuntando a la API).
+- **Criterios de aceptación de las Fases 2 a 6 sin verificar contra la API real**: en esta copia no hay `apps/api/.env` ni base de datos, así que el login (clave maestra y de cliente), la conexión real de una cuenta de Gmail por OAuth, un escaneo real, la descarga de un PDF directo y de uno dentro de un ZIP, y crear/usar/revocar una clave solo están cubiertos por las pruebas con MSW. Verificarlos a mano con la API levantada (`CORS_ORIGINS=http://localhost:5173` y `GOOGLE_REDIRECT_URI` apuntando a la API).
 
 - **`pnpm dev` de la API falla con Node 26**: `ts-node` 10 no es compatible (`ERR_INVALID_ARG_TYPE` en `fileURLToPath`). No bloquea el frontend: se puede usar `pnpm --filter @servfac/api build && node apps/api/dist/index.js`. Pendiente decidir si se migra el script `dev` a `tsx`.
 - **Generación de pantallas en Stitch (0.9) falló**: `generate_screen_from_text` para "Escanear - Emitidas" agotó el tiempo y la pantalla no apareció tras ~25 min. Pendiente reintentar (desde la interfaz de Stitch o por MCP). No bloquea las fases siguientes: las pantallas que faltan se componen con el kit de la Fase 1 siguiendo `DESIGN.md`.
@@ -89,6 +89,10 @@ Leyenda: ⬜ Pendiente · 🟦 En curso · ✅ Terminada · ⛔ Bloqueada
 | Errores con `responseType: 'blob'` | El interceptor lee el Blob como JSON antes de normalizar | Si no, se perdía el `userMessage` de los errores de descarga |
 | Clave de acceso | Se oculta cuando es igual al `messageId` | La API pone el `messageId` como `claveAcceso` cuando la factura no trae una |
 | Cuenta de descarga | La del escaneo (`payload.accountEmail`), no la elegida en la barra | El usuario puede cambiar de cuenta después de escanear |
+| Clave en claro | La mutación de crear usa `gcTime: 0` y se hace `reset()` tras el éxito; la clave pasa al estado local de `ApiKeysPage` solo mientras está abierto `SecretRevealDialog` | DESIGN.md §6.3: la clave no debe quedar en ningún estado global ni en la caché de React Query |
+| Cuentas permitidas al crear | `EmailChipsInput` con `suggestions` (botones de un clic con las cuentas de `GET /accounts`) | Evita teclear correos y permite cuentas aún no conectadas |
+| Claves revocadas | Ocultas por defecto; con «Mostrar revocadas (n)» se ven al 60 % de opacidad y sin acción | DESIGN.md §5.5 |
+| `PendingPage` | Eliminada | Con la Fase 6 ya no quedan rutas en construcción |
 | Pruebas de API | MSW contra `http://api.test` (`test.env.VITE_API_URL` en `vite.config.js`), `onUnhandledRequest: 'error'` | Ninguna prueba sale a la red |
 
 Si alguna decisión cambia, se registra aquí y en la Bitácora.
@@ -267,12 +271,12 @@ apps/web/
 **Endpoints:** `POST /admin/api-keys` · `GET /admin/api-keys` · `DELETE /admin/api-keys/:id`.
 **Pantallas Stitch:** Administración - Claves de API · Crear clave y revelado.
 
-- [ ] 6.1 `api/routes/apiKeys.js` + hooks `useApiKeys`, `useCreateApiKey`, `useRevokeApiKey`.
-- [ ] 6.2 `ApiKeysPage` dentro de `AdminSection`: tabla con prefijo, alcance, creación, último uso y estado; filtro "Mostrar revocadas".
-- [ ] 6.3 `CreateKeyDialog` con `name` (1–100) y `allowedAccounts` sugeridas desde `/accounts`.
-- [ ] 6.4 `SecretRevealDialog`: muestra la clave una vez, botón Copiar, cierre bloqueado hasta confirmar; la clave no se guarda en ningún estado global.
-- [ ] 6.5 `RevokeDialog` y actualización de la tabla tras revocar.
-- [ ] 6.6 Pruebas: crear, revelar, revocar y 404 al revocar una clave inexistente.
+- [x] 6.1 `api/routes/apiKeys.js` + hooks `useApiKeys`, `useCreateApiKey`, `useRevokeApiKey`.
+- [x] 6.2 `ApiKeysPage` dentro de `AdminSection`: tabla con prefijo, alcance, creación, último uso y estado; filtro "Mostrar revocadas".
+- [x] 6.3 `CreateKeyDialog` con `name` (1–100) y `allowedAccounts` sugeridas desde `/accounts`.
+- [x] 6.4 `SecretRevealDialog`: muestra la clave una vez, botón Copiar, cierre bloqueado hasta confirmar; la clave no se guarda en ningún estado global.
+- [x] 6.5 `RevokeDialog` y actualización de la tabla tras revocar.
+- [x] 6.6 Pruebas: crear, revelar, revocar y 404 al revocar una clave inexistente.
 
 **Criterio de aceptación:** una clave creada desde la UI sirve para iniciar sesión como cliente y solo ve sus cuentas permitidas; tras revocarla, esa sesión vuelve a Acceso.
 
@@ -327,3 +331,4 @@ La Fase 6 solo depende de la sesión (Fase 2), así que puede avanzar en paralel
 | 2026-10-12 | 4 | Tareas 4.1–4.11 terminadas: `runScan` (timeout de 10 min, `AbortSignal`), `useScan`, `lib/scanForm.js` (validación espejo de `validation.ts`, armado del cuerpo, mapeo de 400 a campos), `lib/invoices.js`, `lib/csv.js`, `lib/download.js`, `ScanForm`, `ScanProgress`, `ScanSummary`, `InvoiceTable`, `FailedList` y `ScanPage` en `/escanear/recibidas` y `/escanear/emitidas`. 90 pruebas, lint y build en verde. |
 | 2026-10-12 | 4 | Hallazgos: la respuesta real del escaneo es plana y sin `fileBase64` (`DESIGN.md` corregido; 4.10 no aplica), y la API no expone `Retry-After` ni `Content-Disposition` por CORS (registrado como bloqueo menor). Revisión visual con API simulada: se rehízo la tabla para que el Total quepa a 1440 px. |
 | 2026-10-12 | 5 | Tareas 5.1–5.6 terminadas: `downloadPdf`, `usePdfPreview`/`useDownloadPdf` (validación `%PDF`, nombre desde `Content-Disposition`, adjunto o número), `InvoiceDrawer`, `InvoiceItems` (suma y descuadre), `PdfPreview` a petición, `CopyButton` y acciones «Ver detalle» / «Descargar PDF» en la tabla. 103 pruebas, lint y build en verde. Revisión visual con API simulada: el PDF se muestra en el drawer. |
+| 2026-10-12 | 6 | Tareas 6.1–6.6 terminadas: `createApiKey`/`revokeApiKey`, `useApiKeys`/`useCreateApiKey`/`useRevokeApiKey`, `CreateKeyDialog` (con sugerencias de cuentas), `SecretRevealDialog`, `RevokeDialog` y `ApiKeysPage`. El criterio de aceptación (clave creada → entra como cliente limitado → revocada → vuelve a Acceso) está cubierto por una prueba con MSW. 113 pruebas, lint y build en verde. |
