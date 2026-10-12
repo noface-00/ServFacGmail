@@ -15,6 +15,13 @@ export function AppLayout({ isAdmin = false, accountSelector, health, themeToggl
 
   return (
     <div className="min-h-svh bg-bg">
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-fg focus:shadow-lg"
+        style={{ zIndex: 'var(--sf-z-toast)' }}
+      >
+        Saltar al contenido
+      </a>
       <TopBar
         accountSelector={accountSelector}
         health={health}
@@ -44,7 +51,7 @@ export function AppLayout({ isAdmin = false, accountSelector, health, themeToggl
       )}
 
       <div className="pt-14 md:pl-16 nav:pl-[232px]">
-        <main className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6">{children ?? <Outlet />}</main>
+        <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] px-4 py-6 outline-none sm:px-6">{children ?? <Outlet />}</main>
       </div>
     </div>
   )

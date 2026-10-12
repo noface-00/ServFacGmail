@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { HealthIndicator } from '../components/layout/HealthIndicator.jsx'
+import { PageTitle } from '../components/layout/PageTitle.jsx'
 import { ThemeToggle } from '../components/layout/ThemeToggle.jsx'
 import { Alert } from '../components/ui/Alert.jsx'
 import { Button } from '../components/ui/Button.jsx'
@@ -66,6 +67,7 @@ export default function LoginPage() {
       footer="La clave se guarda solo mientras esta pestaña esté abierta."
     >
       <div className="rounded-lg border border-border bg-surface p-6 shadow-md sm:p-8">
+        <PageTitle>Acceso</PageTitle>
         <div className="mb-6 flex flex-col items-center text-center">
           <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft text-primary">
             <Icon name="key" size={24} />

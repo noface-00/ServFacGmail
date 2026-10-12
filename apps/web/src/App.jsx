@@ -6,6 +6,7 @@ import { RequireAuth } from './layouts/RequireAuth.jsx'
 import AccountsPage from './pages/AccountsPage.jsx'
 import ApiKeysPage from './pages/ApiKeysPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
 import ScanPage from './pages/ScanPage.jsx'
 import ServiceUnavailablePage from './pages/ServiceUnavailablePage.jsx'
 
@@ -33,7 +34,7 @@ function App() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   )

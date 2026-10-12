@@ -6,6 +6,7 @@ import { DataTable } from '../components/data/DataTable.jsx'
 import { EmptyState } from '../components/data/EmptyState.jsx'
 import { AdminSection } from '../components/layout/AdminSection.jsx'
 import { PageHeader } from '../components/layout/PageHeader.jsx'
+import { PageTitle } from '../components/layout/PageTitle.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { useAccounts, useDisconnectAccount } from '../hooks/useAccounts.js'
 import { useConnectAccount } from '../hooks/useConnectAccount.js'
@@ -169,6 +170,7 @@ export default function AccountsPage({ adminView = false }) {
 
   return (
     <>
+      <PageTitle>{adminView ? 'Cuentas de Gmail' : 'Cuentas'}</PageTitle>
       {adminView ? (
         <AdminSection
           title="Cuentas de Gmail"

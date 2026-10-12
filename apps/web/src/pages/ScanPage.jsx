@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router'
 import { EmptyState } from '../components/data/EmptyState.jsx'
 import { InvoiceDrawer } from '../components/invoice/InvoiceDrawer.jsx'
 import { PageHeader } from '../components/layout/PageHeader.jsx'
+import { PageTitle } from '../components/layout/PageTitle.jsx'
 import { FailedList } from '../components/scan/FailedList.jsx'
 import { InvoiceTable } from '../components/scan/InvoiceTable.jsx'
 import { ScanForm } from '../components/scan/ScanForm.jsx'
@@ -147,6 +148,7 @@ export default function ScanPage({ kind }) {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageTitle>{TITLES[kind].title}</PageTitle>
       <PageHeader title={TITLES[kind].title} description={TITLES[kind].description} actions={<ScanTabs />} />
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)]">

@@ -8,7 +8,7 @@ export function AuthLayout({ aside, footer, children }) {
         <Logo />
         {aside}
       </header>
-      <main className="flex flex-1 items-center justify-center px-4 py-8">
+      <main id="contenido" className="flex flex-1 items-center justify-center px-4 py-8">
         <div className="w-full max-w-[400px]">{children}</div>
       </main>
       {footer && <footer className="px-4 pb-6 text-center text-xs text-fg-subtle">{footer}</footer>}

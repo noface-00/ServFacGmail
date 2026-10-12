@@ -5,6 +5,7 @@ import { SecretRevealDialog } from '../components/admin/SecretRevealDialog.jsx'
 import { DataTable } from '../components/data/DataTable.jsx'
 import { EmptyState } from '../components/data/EmptyState.jsx'
 import { AdminSection } from '../components/layout/AdminSection.jsx'
+import { PageTitle } from '../components/layout/PageTitle.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { useAccounts } from '../hooks/useAccounts.js'
@@ -140,6 +141,7 @@ export default function ApiKeysPage() {
       }
     >
       <div className="flex items-center justify-between gap-3">
+      <PageTitle>Claves de API</PageTitle>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-fg-muted select-none">
           <input
             type="checkbox"

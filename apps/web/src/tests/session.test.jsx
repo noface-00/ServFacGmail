@@ -141,3 +141,20 @@ describe('Sesión activa', () => {
     await waitFor(() => expect(screen.getByText('API sin conexión')).toBeInTheDocument())
   })
 })
+
+describe('Navegación accesible', () => {
+  it('titles each page and offers a skip link to the content', async () => {
+    renderApp('/cuentas', { session: { apiKey: CLIENT_KEY, role: 'client' } })
+    await screen.findByRole('heading', { name: 'Cuentas' })
+    await waitFor(() => expect(document.title).toBe('Cuentas · ServFacGmail'))
+    const skip = screen.getByRole('link', { name: 'Saltar al contenido' })
+    expect(skip).toHaveAttribute('href', '#contenido')
+    expect(document.getElementById('contenido')?.tagName).toBe('MAIN')
+  })
+
+  it('shows a not-found page for unknown routes', async () => {
+    renderApp('/no-existe')
+    expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
+  })
+})

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { PageTitle } from '../components/layout/PageTitle.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { Icon } from '../components/ui/Icon.jsx'
 import { useHealth } from '../hooks/useHealth.js'
@@ -22,6 +23,7 @@ export default function ServiceUnavailablePage() {
 
   return (
     <AuthLayout>
+      <PageTitle>Servicio no disponible</PageTitle>
       <div className="flex flex-col items-center rounded-lg border border-border bg-surface p-8 text-center shadow-md">
         <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-danger-soft text-danger">
           <Icon name="cloud_off" size={24} />
